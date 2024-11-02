@@ -28,7 +28,7 @@ export function preencherDadosPDC(resp)
         textareaDescricao.value = data.Descricao_da_compra;
     }
 
-    // Utiliza��ão
+    // Utilizaão
     const textareaUtilizacao = formDadosPDC.querySelector('#utilizacao');
     if (data.Utilizacao) {
         textareaUtilizacao.value = data.Utilizacao;
@@ -278,7 +278,11 @@ export async function prenchTabCot(resp) {
                 icon.classList.add('x-icon', 'icons');
                 removeButton.appendChild(icon);
                 removeButton.addEventListener('click', () => {
-                    customModal({botao: removeButton, tipo: 'remover_fornecedor'});
+                    customModal({
+                        botao: removeButton, 
+                        tipo: 'remover_fornecedor', 
+                        mensagem: `Deseja realmente remover o fornecedor ${fornecedorObj.Fornecedor}?\nTodos os valores deste fornecedor serão removidos.`
+                    });
                 });
                 
                 // Cria um container para o nome do fornecedor//
@@ -815,7 +819,7 @@ export function addSupplierColumn() {
         // Handler de clique na opção do fornecedor
         opcao.onclick = () => {
             let nome_forn = opcao.innerText;
-            const nomeCompleto = nome_forn;
+            
 
             if (nome_forn.length > qtdCaract) {
                 nome_forn = nome_forn.substring(0, qtdCaract) + '...';
@@ -825,7 +829,7 @@ export function addSupplierColumn() {
             const celulaCabecalho = document.createElement('th');
             celulaCabecalho.colSpan = 2;
             celulaCabecalho.dataset.id_forn = id_forn;
-            celulaCabecalho.title = nomeCompleto;
+            celulaCabecalho.title = nome_forn;
             
             const nomeFornText = document.createTextNode(nome_forn);
 
@@ -833,7 +837,11 @@ export function addSupplierColumn() {
             const removeButton = document.createElement('button');
             removeButton.classList.add('remove-btn', 'remove-forn-btn');
             removeButton.addEventListener('click', () => {
-                customModal({botao: removeButton, tipo: 'remover_fornecedor'});
+                customModal({
+                    botao: removeButton, 
+                    tipo: 'remover_fornecedor',
+                    mensagem: `Deseja realmente remover o fornecedor <b>${nomeCompleto}</b>?<br>Todos os valores deste fornecedor serão removidos.`
+                });
             });
 
             const icon = document.createElement('i');
@@ -984,49 +992,63 @@ export function addSupplierColumn() {
  * @returns {void}
  * 
  * @description
- * - Remove as colunas relacionadas ao fornecedor selecionado da tabela principal
+ * - Remove as colunas relacionadas ao fornecedor selecionado da tabela principal (valor unitário e total)
+ * - Remove a célula mesclada do fornecedor no cabeçalho
+ * - Remove as células de totalizadores para o fornecedor
  * - Remove a linha correspondente na tabela de dados adicionais
- * - Atualiza os índices das células após a remoção
  * - Mantém a estrutura e formatação da tabela
+ * - Usa o ID do fornecedor armazenado no dataset para garantir remoção correta
  */
 export function removeSupplierColumn(button) {
     const table = document.getElementById('priceTable');
-    const headerRow1 = table.rows[0]; // Linha do cabeçalho com nome do fornecedor
-    const headerRow2 = table.rows[1]; // Linha do cabeçalho com valores unitário/total
+    const headerRow1 = table.rows[0];
+    const headerRow2 = table.rows[1];
+    const tbody = table.getElementsByTagName('tbody')[0];
 
-    // Obtém o índice da coluna do fornecedor a ser removido
-    const colIndex = Array.prototype.indexOf.call(headerRow1.cells, button.parentNode);
-    const supplierId = headerRow1.cells[colIndex].dataset.id_forn;
+    // Encontra a célula do cabeçalho e índices
+    const headerCell = button.closest('th');
+    const colIndex = Array.from(headerRow1.cells).indexOf(headerCell);
+    const supplierId = headerCell.dataset.id_forn;
 
-    // Remove a célula do nome do fornecedor
-    headerRow1.deleteCell(colIndex);
+    // Função auxiliar para remover célula com verificação de índice válido
+    const safeDeleteCell = (row, index) => {
+        if (index >= 0 && index < row.cells.length) {
+            row.deleteCell(index);
+        }
+    };
 
-    // Remove as colunas de valores do cabeçalho
-    headerRow2.deleteCell((colIndex * 2 - 1)); // Remove coluna de valor unitário
-    headerRow2.deleteCell((colIndex * 2 - 2)); // Remove coluna de valor total
-
-    // Remove as células correspondentes nas linhas de produtos
-    const rows = table.getElementsByTagName('tbody')[0].rows;
-    for (let i = 0; i < rows.length-1; i++) {
-        if(i < rows.length - 3) {
-            // Remove células de valores dos produtos
-            rows[i].deleteCell((colIndex * 2 - 1)); // Remove valor unitário
-            rows[i].deleteCell((colIndex * 2 - 2)); // Remove valor total
+    // Remove células do corpo da tabela
+    const rows = tbody.rows;
+    for (let i = rows.length - 1; i >= 0; i--) {
+        const row = rows[i];
+        
+        if (i < rows.length - qlt) {
+            // Remove células de produtos (2 colunas por fornecedor)
+            const baseIndex = colIndex * 2 - 2;
+            safeDeleteCell(row, baseIndex); // Valor unitário
+            safeDeleteCell(row, baseIndex); // Valor total
         } else {
-            // Remove células de frete e valor total
-            rows[i].deleteCell(colIndex-1);
+            // Remove células de totalizadores (células mescladas)
+            safeDeleteCell(row, colIndex - 1);
         }
     }
 
-    // Remove a linha do fornecedor na tabela de dados adicionais
-    const otherTableBody = document.getElementById('otherDataTable').getElementsByTagName('tbody')[0];
-    const otherRows = otherTableBody.rows;
+    // Remove células do cabeçalho
+    if (colIndex + 1 < headerRow2.cells.length) {
+        const headerBaseIndex = colIndex * 2 - 2;
+        safeDeleteCell(headerRow2, headerBaseIndex); // Valor Total
+        safeDeleteCell(headerRow2, headerBaseIndex); // Valor Unitário
+    }
+    safeDeleteCell(headerRow1, colIndex); // Célula mesclada do fornecedor
 
-    // Localiza e remove a linha do fornecedor na tabela de dados adicionais
+    // Remove linha correspondente na tabela de dados adicionais
+    const otherTable = document.getElementById('otherDataTable');
+    const otherRows = otherTable.getElementsByTagName('tbody')[0].rows;
+    
     for (let i = 0; i < otherRows.length; i++) {
         const fornecedorCell = otherRows[i].cells[0];
-        if (fornecedorCell && fornecedorCell.dataset.id_forn === supplierId) {
-            otherTableBody.deleteRow(i);
+        if (fornecedorCell?.dataset.id_forn === supplierId) {
+            otherTable.getElementsByTagName('tbody')[0].deleteRow(i);
             break;
         }
     }
@@ -1240,6 +1262,10 @@ export function autalizarOuvintesTabCot() {
     for (let i = 0; i < lv.length - 2; i++) {
         const linha = lv[i];
         
+        // Adiciona apenas o listener de paste para a primeira coluna
+        linha.cells[0].addEventListener('paste', (event) => handlePasteEventPriceTable(event));
+        
+        // Adiciona todos os listeners para as demais colunas
         for (let j = 1; j < linha.cells.length - 1; j++) {
             const celula = linha.cells[j];
             celula.addEventListener('paste', (event) => handlePasteEventPriceTable(event));

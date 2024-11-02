@@ -341,8 +341,12 @@ export function convertNumberFormat(number) {
 }
 
 //==============================Cria uma tela de confirmação customizada====================================//
-export async function customModal(botao = null, tipo, titulo, mensagem) {
+export async function customModal({botao = null, tipo, titulo = null, mensagem}) {
     console.log('[ENTROU NO CUSTOM BUTTON]');
+    console.log("Botao:", botao);
+    console.log("Tipo:", tipo);
+    console.log("Titulo:", titulo);
+    console.log("Mensagem:", mensagem);
 
     // Criação do overlay
     const overlay = document.createElement('div');
@@ -354,17 +358,21 @@ export async function customModal(botao = null, tipo, titulo, mensagem) {
 
     // Título
     const titleElement = document.createElement('h3');
-    titleElement.classList.add('customConfirm-title');
-    titleElement.textContent = titulo;
+    if(titulo)
+    {
+        titleElement.classList.add('customConfirm-title');
+        titleElement.innerHTML = titulo;
+        popup.appendChild(titleElement);
+    }
 
     // Mensagem
     const messageElement = document.createElement('p');
-    messageElement.textContent = mensagem;
+    messageElement.innerHTML = mensagem;
     messageElement.classList.add('customConfirm-message');
 
     // Botão Confirmar
     const confirmButton = document.createElement('button');
-    confirmButton.textContent = 'Confirmar';
+    confirmButton.innerHTML = 'Confirmar';
     confirmButton.classList.add('customConfirm-confirmButton');
 
     // Adiciona classe específica baseada no tipo e campo de texto
@@ -388,7 +396,7 @@ export async function customModal(botao = null, tipo, titulo, mensagem) {
 
     // Botão Cancelar
     const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancelar';
+    cancelButton.innerHTML = 'Cancelar';
     cancelButton.classList.add('customConfirm-cancelButton');
 
     // Elemento de carregamento
@@ -400,7 +408,6 @@ export async function customModal(botao = null, tipo, titulo, mensagem) {
     confirmButton.addEventListener('click', async function () {
         // Esconde os botões e a mensagem original, exibe o carregamento
         const elementsToHide = [confirmButton, cancelButton, titleElement, messageElement];
-        if (inputElement) elementsToHide.push(inputElement);
         elementsToHide.forEach(el => el.style.display = 'none');
         loadingElement.style.display = 'flex';
 
@@ -460,7 +467,6 @@ export async function customModal(botao = null, tipo, titulo, mensagem) {
     });
 
     // Montar estrutura do modal
-    popup.appendChild(titleElement);
     popup.appendChild(messageElement);
     popup.appendChild(confirmButton);
     popup.appendChild(cancelButton);

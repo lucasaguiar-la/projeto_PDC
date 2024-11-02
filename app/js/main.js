@@ -47,10 +47,10 @@ document.addEventListener('DOMContentLoaded', () => {
    //=====Mapeia as classes dos botões às suas respectivas funções=====//
     const buttonActions = {
         "add-supplier-btn": () => addSupplierColumn(),
-        "remove-supplier-btn": (elemento) => customModal({botao: elemento, tipo: 'remover_fornecedor'}),
+        "remove-supplier-btn": (elemento) => customModal({botao: elemento, tipo: 'remover_fornecedor', mensagem: 'Deseja realmente remover este fornecedor?'}),
         "add-product-btn": () => addProductRow(),
-        "remove-product-btn": (elemento) => customModal({botao: elemento, tipo: 'remover_produto'}),
-        "save-btn": (elemento) => customModal({botao: elemento, tipo: 'salvar_cot', titulo: 'Salvar cotação', mensagem: 'Deseja realmente salvar esta cotação?'}),
+        "remove-product-btn": (elemento) => customModal({botao: elemento, tipo: 'remover_produto', mensagem: 'Deseja realmente remover este produto?'}),
+        "save-btn": (elemento) => customModal({botao: elemento, tipo: 'salvar_cot', mensagem: 'Deseja realmente salvar esta cotação?'}),
         "formas-pagamento": (elemento) => mostrarCamposPagamento(),
         "button-up": (elemento) => scrollToSection(currentSection -1),
         "button-down": (elemento) => scrollToSection(currentSection +1)
