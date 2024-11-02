@@ -1229,11 +1229,11 @@ export function autalizarOuvintesTabCot() {
     for (let i = 0; i < atpl.cells.length; i++) {
         const celula = atpl.cells[i];
         celula.addEventListener('blur', () => {
-            const valor = parseFloat(celula.innerText);
+            const valor = converterParaDecimal(celula.innerText);
             if (!isNaN(valor)) {
                 celula.innerText = convertToNegative(valor);
             }
-        });
+        }, {capture: true});
     }
 
     // Adiciona listeners para células da tabela principal

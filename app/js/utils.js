@@ -211,14 +211,13 @@ export async function executar_apiZoho({ tipo = null, criterios = null, ID = nul
 }
 
 //=====Formata as células de valores para o formato BRL=====//
-export function formatToBRL(v) {
-    let cell = undefined;
-    let av;
-    let int = false;
-    let isNegative = false;
+export function formatToBRL(v) {;
+    let av; //Apoio ao valor
+    let int = false; //Flag para inteiro
+    let isNeg = false; //Flag para negativo
 
     if ((typeof v == "string" || typeof v == "number") && v !== "") {
-        av = parseFloat(v);
+        av = converterParaDecimal(v);
         let f = Math.pow(10, 2);
         av = (Math.round(av * f) / f).toString();
     } else {
@@ -228,7 +227,7 @@ export function formatToBRL(v) {
 
     // Verifica se é negativo
     if (av.toString().startsWith('-')) {
-        isNegative = true;
+        isNeg = true;
         av = av.toString().substring(1);
     }
 
@@ -243,7 +242,7 @@ export function formatToBRL(v) {
     let vf = int ? `${pi}${pd}` : `${pi},${pd}`;
     
     // Adiciona o sinal negativo de volta se necessário
-    if (isNegative) {
+    if (isNeg) {
         vf = `-${vf}`;
     }
 
@@ -300,7 +299,6 @@ export function converterParaDecimal(v) {
 export function convertToNegative(v) {
 
     return v > 0 ? (v * -1) : v;
-
 }
 
 /*Restringe células a apenas conteúdo numérico*/
