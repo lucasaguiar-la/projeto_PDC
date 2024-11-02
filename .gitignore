@@ -1,0 +1,9 @@
+node_modules/
+server/
+dist/
+cert.pem
+key.pem
+package-lock.json
+package.json
+plugin-manifest.json
+ZET-debug.log
