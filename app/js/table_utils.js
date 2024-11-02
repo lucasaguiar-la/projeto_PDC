@@ -10,10 +10,10 @@ export function preencherDadosPDC(resp)
 {
     globais.cotacaoExiste = true;
 
-    //=====Preparando dados da cotação (Fornecedores, produtos, valores e etc...)=====//
+    //==========Preparando dados da cotação==========//
     const data = resp.data[0];
 
-    // =====[SESSÃO 1]=====//
+    //==========SESSÃO 1==========//
     const formDadosPDC = document.querySelector('#dados-PDC');
     
     // Select da Entidade
@@ -28,7 +28,7 @@ export function preencherDadosPDC(resp)
         textareaDescricao.value = data.Descricao_da_compra;
     }
 
-    // Utilização
+    // Utiliza��ão
     const textareaUtilizacao = formDadosPDC.querySelector('#utilizacao');
     if (data.Utilizacao) {
         textareaUtilizacao.value = data.Utilizacao;
@@ -114,12 +114,23 @@ export function preencherDadosPDC(resp)
 }
     
 //===========================PREENCHE A TABELA DAS COTAÇÃOES===========================//
-export async function prenchTabCot(resp)
-{
+export async function prenchTabCot(resp) {
     if (resp && resp.code === 3000 && Array.isArray(resp.data) && resp.data.length > 0) {
+        console.log('Código da resposta:', resp.code);
+        
+        if (resp.data && resp.data.length > 0) {
+            console.log('=== Campos do primeiro registro ===');
+            Object.entries(resp.data[0]).forEach(([campo, valor]) => {
+                console.log(`${campo}:`, valor);
+            });
+        }
+
         globais.cotacaoExiste = true;
         const table = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
-        document.getElementById('linha-inicial').remove();
+        const linhaInicial = document.getElementById('linha-inicial');
+        if (linhaInicial) {
+            linhaInicial.remove();
+        }
 
         //=====Preparando dados da cotação (Fornecedores, produtos, valores e etc...)=====//
         const data = resp.data;
@@ -133,12 +144,12 @@ export async function prenchTabCot(resp)
         })))].map(item => JSON.parse(item)).sort((a, b) => a.Fornecedor.localeCompare(b.Fornecedor));
         const valoresFrete = [...new Set(data.map(item => item.Valor_do_frete))];
         const valoresAprovado = data.map(item => item.Aprovado);
+        const valoresDescontos = [...new Set(data.map(item => item.Descontos))];
 
         idsCotacao = [...new Set(data.map(item => item.ID))].sort((a, b) => a - b);
 
         //=====Cria linhas dos produtos=====//
         idProdutos.forEach((idProduto, index) => {
-
             //Busca dados do produto atual//
             let objProduto = data.filter(item => item.id_produto === idProduto);
 
@@ -159,7 +170,6 @@ export async function prenchTabCot(resp)
             quantidadeCell.contentEditable = 'true';
             restrictIntegerInput()({ target: quantidadeCell });
 
-
             //Insere as colunas dos fornecedores na ordem correta
             fornecedores.forEach((fornecedorObj, fornecedorIndex) => {
                 //VALOR UNITÁRIO//
@@ -175,15 +185,13 @@ export async function prenchTabCot(resp)
                 const valoresFornProd = objProduto.filter(item => item.Fornecedor === fornecedorObj.Fornecedor);
                 //Preenche os valores
                 if (valoresFornProd.length > 0) {
-
                     valorUnitarioCell.innerText = formatToBRL(valoresFornProd[0].Valor_unitario || '');
                     valorTotalCell.innerText = formatToBRL(valoresFornProd[0].Valor_total || '');
                 }
             });
-            //Cria os botões de excluir as linhas de produto//
-            if(fornecedores.length > 0)
-            {
 
+            //Cria os botões de excluir as linhas de produto//
+            if(fornecedores.length > 0) {
                 // Cria a nova célula na linha//
                 const cell = newRow.insertCell(fornecedores.length * 2 + 2);
                 
@@ -205,9 +213,7 @@ export async function prenchTabCot(resp)
 
                 // Anexa o botão à célula//
                 cell.appendChild(removeButton);
-
-            }else
-            {
+            } else {
                 // Cria a nova célula na linha
                 const cell = newRow.insertCell(2);
 
@@ -234,22 +240,20 @@ export async function prenchTabCot(resp)
         
         //Função para adicionar os cabeçalhos de fornecedores na ordem correta//
         function addHeaderForn(fornecedores) {
-
             //Busca as 2 primeiras linhas da tabela (1 - Nome do fornecedor e 2 - Valor unitário e Valor total)//
             const headerRow1 = table.parentElement.querySelector('thead tr:nth-child(1)');
             const headerRow2 = table.parentElement.querySelector('thead tr:nth-child(2)');
-            //
-            const linhaFrete = table.rows[table.rows.length-3];
+            
+            const linhaFrete = table.rows[table.rows.length-4];
+            const linhaDescontos = table.rows[table.rows.length-3];
             const linhaTotal = table.rows[table.rows.length-2];
             
             fornecedores.forEach((fornecedorObj, index) => {
-
                 //Cria a célula com o nome do fornecedor//
                 const celulaCabecalho = document.createElement('th');
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
-                console.log(valoresAprovado[index]);
-                checkbox.checked = valoresAprovado[index] == 'true'?true:false;
+                checkbox.checked = valoresAprovado[index] == 'true' ? true : false;
                 checkbox.classList.add('supplier-checkbox');
 
                 checkbox.addEventListener('change', function () {
@@ -262,7 +266,6 @@ export async function prenchTabCot(resp)
                         selectedCheckbox = null;
                     }
                 });
-                
 
                 celulaCabecalho.dataset.id_forn = fornecedorObj.id_fornecedor;
                 celulaCabecalho.colSpan = 2;
@@ -278,7 +281,6 @@ export async function prenchTabCot(resp)
                     customModal({botao: removeButton, tipo: 'remover_fornecedor'});
                 });
                 
-        
                 // Cria um container para o nome do fornecedor//
                 const container = document.createElement('div');
                 container.classList.add('supplier-name-container');
@@ -314,6 +316,16 @@ export async function prenchTabCot(resp)
                 cellFrete.style.margin = '0 auto';
                 linhaFrete.insertBefore(cellFrete, linhaFrete.cells[linhaFrete.cells.length -1]);
 
+                //=====ADICIONA A CELULA DE DESCONTO=====//
+                const cellDescontos = document.createElement('th');
+                cellDescontos.innerText = valoresDescontos[index] || '0,00';
+                cellDescontos.classList.add('numeric-cell');
+                cellDescontos.addEventListener('blur', calcularTotais());
+                cellDescontos.colSpan = 2;
+                cellDescontos.contentEditable = "true";
+                cellDescontos.style.margin = '0 auto';
+                linhaDescontos.insertBefore(cellDescontos, linhaDescontos.cells[linhaDescontos.cells.length -1]);
+
                 //=====ADICIONA A CELULA DE TOTAL===//
                 const totalFornecedor = data
                     .filter(item => item.id_fornecedor === fornecedorObj.id_fornecedor)
@@ -325,9 +337,23 @@ export async function prenchTabCot(resp)
                 cellTotal.colSpan = 2;
                 cellTotal.contentEditable = "true";
                 cellTotal.style.margin = '0 auto';
-
                 linhaTotal.insertBefore(cellTotal, linhaTotal.cells[linhaTotal.cells.length -1]);
 
+                // Adiciona linha na tabela de detalhes das propostas
+                const otherTable = document.getElementById('otherDataTable');
+                const tbodyOther = otherTable.getElementsByTagName('tbody')[0];
+
+                const detailRow = tbodyOther.insertRow();
+
+                const fornCell = detailRow.insertCell();
+                fornCell.textContent = fornecedorObj.Fornecedor;
+
+                const condPagCell = detailRow.insertCell();
+                const dadosFornecedor = data.find(item => item.id_fornecedor === fornecedorObj.id_fornecedor);
+                condPagCell.textContent = dadosFornecedor?.Condicoes_de_pagamento || '';
+
+                const obsCell = detailRow.insertCell();
+                obsCell.textContent = dadosFornecedor?.Observacoes || '';
             });
         }
         // Adiciona os cabeçalhos dos fornecedores na ordem correta
@@ -843,15 +869,15 @@ export function addSupplierColumn() {
             celulaCabecalho.style.position = 'relative';
 
             // Inserção das colunas no cabeçalho
-            cabecalhoLinha1.insertBefore(celulaCabecalho, cabecalhoLinha1.cells[cabecalhoLinha1.cells.length - 1]);
+            cabecalhoLinha1.insertBefore(celulaCabecalho, cabecalhoLinha1.cells[cabecalhoLinha1.cells.length -1]);
 
             const celulaPrecoUnitario = document.createElement('th');
             celulaPrecoUnitario.innerText = 'Valor Unitário';
-            cabecalhoLinha2.insertBefore(celulaPrecoUnitario, cabecalhoLinha2.cells[cabecalhoLinha2.cells.length - 1]);
+            cabecalhoLinha2.insertBefore(celulaPrecoUnitario, cabecalhoLinha2.cells[cabecalhoLinha2.cells.length -1]);
 
             const celulaPrecoTotal = document.createElement('th');
             celulaPrecoTotal.innerText = 'Valor Total';
-            cabecalhoLinha2.insertBefore(celulaPrecoTotal, cabecalhoLinha2.cells[cabecalhoLinha2.cells.length - 1]);
+            cabecalhoLinha2.insertBefore(celulaPrecoTotal, cabecalhoLinha2.cells[cabecalhoLinha2.cells.length -1]);
 
             //==========Adição das Células nas Linhas==========//
             const linhas = tabela.getElementsByTagName('tbody')[0].rows;
