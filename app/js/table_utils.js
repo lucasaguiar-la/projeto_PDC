@@ -200,10 +200,14 @@ export async function prenchTabCot(resp) {
                 removeButton.classList.add('remove-btn', 'remove-product-btn');
 
                 // Adiciona o evento de clique ao botão//
+                console.log('[ADICIONANDO O EVENTO DE CLIQUE]');
                 removeButton.addEventListener('click', () => {
-                    customModal({botao: removeButton, tipo: 'remover_produto'});
+                    customModal({
+                        botao: removeButton, 
+                        tipo: 'remover_produto', 
+                        mensagem: 'Deseja realmente remover este produto?<br>Todos os valores deste produto serão removidos.'});
                 });
-
+                console.log('[EVENTO DE CLIQUE ADICIONADO]');
                 // Cria o ícone dentro do botão//
                 const icon = document.createElement('i');
                 icon.classList.add('trash-icon', 'icons');
@@ -220,11 +224,15 @@ export async function prenchTabCot(resp) {
                 // Cria o botão
                 const removeButton = document.createElement('button');
                 removeButton.classList.add('remove-btn', 'remove-product-btn');
-
+                console.log('[ADICIONANDO O EVENTO DE CLIQUE 2]');
                 // Adiciona o evento de clique ao botão
                 removeButton.addEventListener('click', () => {
-                    customModal({botao: removeButton, tipo: 'remover_produto'});
+                    customModal({
+                        botao: removeButton, 
+                        tipo: 'remover_produto', 
+                        mensagem: 'Deseja realmente remover este produto?<br>Todos os valores deste produto serão removidos.'});
                 });
+                console.log('[EVENTO DE CLIQUE 2 ADICIONADO]');
 
                 // Cria o ícone dentro do botão
                 const icon = document.createElement('i');
@@ -700,9 +708,15 @@ export function addProductRow() {
             const removeButton = document.createElement('button');
             removeButton.classList.add('remove-btn', 'remove-product-btn');
 
+            console.log('[ADICIONANDO O EVENTO DE CLIQUE 1]');
             removeButton.addEventListener('click', () => {
-                customModal({botao: removeButton, tipo: 'remover_produto'});
+                customModal({
+                    botao: removeButton, 
+                    tipo: 'remover_produto', 
+                    mensagem: 'Deseja realmente remover este produto?<br>Todos os valores deste produto serão removidos.'
+                });
             });
+            console.log('[EVENTO DE CLIQUE 1 ADICIONADO]');
 
             const icon = document.createElement('i');
             icon.classList.add('trash-icon', 'icons');
@@ -745,6 +759,7 @@ export function removeRow(button) {
         // Impede remoção da última linha
         alert("Não é possível remover a última linha.");
     }
+    calcularTotais();
 }
 
 /**
@@ -1236,7 +1251,7 @@ export function autalizarOuvintesTabCot() {
 
     for (let i = 0; i < lv.length - 1; i++) {
         const c = lv[i].cells;
-        for (let j = 0; j < c.length; j++) {
+        for (let j = 0; j < c.length-1; j++) {
             removeAllListeners(c[j]);
         }
     }
