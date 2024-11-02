@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Levantamento de Preços</title>
+    <link rel="stylesheet" href="./styles/main_styles.css">
+    <style>
+    </style>
+</head>
+
+<body>
+    <div class="container" id="container">
+
+        <div class="form-compra section" id="section1">
+            <h2 class="titulos">DADOS DO PEDIDO</h2>
+            <div class="form-container">
+                <form action="#" method="post" id="dados-PDC">
+                    <label for="entidade">Entidade:</label>
+                    <select type="text" id="entidade" name="Entidade" class="entidade">
+                        <option value="" disabled selected>Selecione uma entidade...</option>
+                        <option value="3938561000066182595">ASSOCIAÇÃO SERVIR</option>
+                        <option value="3938561000066182591">CONDOMÍNIO LARANJEIRAS</option>
+                    </select>
+                    <div id="container-campos-texto">
+                        <div class="campos-texto">
+                            <label for="Descricao_da_compra">Descrição da Compra/Serviço:</label>
+                            <textarea id="descricao" name="Descricao_da_compra" rows="4"></textarea>
+                            
+                        </div>
+                        <div class="campos-texto">
+                            <label for="Utilizacao">Utilização:</label>
+                            <textarea id="utilizacao" name="Utilizacao" rows="4"></textarea>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class="tabela-cotacoes section" id="section2">
+            <h2 class="titulos">LEVANTAMENTO DE PREÇOS</h2>
+            <table id="priceTable" class="tabela">
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Quantidade</th>
+                        <th></th>
+                    </tr>
+                    <tr>
+                        <th></th>
+                        <th></th>
+                        <th class="action-buttons">
+                            <button class="add-supplier-btn add-btn">
+                                <i class="plus-icon icons"></i>
+                            </button>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr id="linha-inicial" data-id_produto="1">
+                        <td contenteditable="true" data-idProd="1"></td>
+                        <td contenteditable="true" class="numeric-cell integer-cell"></td>
+                        <td class="action-buttons">
+                            <button class="remove-btn remove-product-btn">
+                                <i class="trash-icon icons"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    <tr id="linha-frete" class="linhas-totalizadoras">
+                        <td contenteditable="false" colspan="2">Frete</td>
+                        <td class="action-buttons">
+                        </td>
+                    </tr>
+                    <tr id="linha-descontos" class="linhas-totalizadoras">
+                        <td contenteditable="false" colspan="2">Descontos</td>
+                        <td class="action-buttons">
+                        </td>
+                    </tr>
+                    <tr id="linha-valor-total" class="linhas-totalizadoras"> 
+                        <td contenteditable="false" colspan="2">Valor total</td>
+                        <td class="action-buttons">
+
+                        </td>
+                    </tr>
+                    <tr class="borda-oculta">
+                        <td class="borda-oculta">
+                            <button class="add-product-btn add-btn"><i class="plus-icon icons"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+            <h4 class="titulos">DETALHES DAS PROPOSTAS</h4>
+            <table id="otherDataTable" class="tabela">
+                <thead>
+                    <tr>
+                        <th>Fornecedor</th>
+                        <th>Condições de pagamento</th>
+                        <th>Observações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr style="height: 35px;">
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+
+        </div>
+        <div class="section form-compra" id="section3">
+            <h4 class="titulos">DADOS DE PAGAMENTO</h4>
+            <div class="form-container">
+                <form action="#" id="form-pagamento">
+                    <label>Forma de Pagamento:</label>
+                    <div class="radio-group">
+                        <input type="radio" id="boleto" name="Forma_de_pagamento" value="Boleto" class="formas-pagamento">
+                        <label for="boleto">Boleto</label>
+                        <input type="radio" id="dep_cc" name="Forma_de_pagamento" value="Dep. em CC" class="formas-pagamento">
+                        <label for="dep_cc">Dep. em CC</label>
+                        <input type="radio" id="dep_cp" name="Forma_de_pagamento" value="Dep. em CP" class="formas-pagamento">
+                        <label for="dep_cp">Dep. em CP</label>
+                        <input type="radio" id="cheque" name="Forma_de_pagamento" value="Emissão de Cheque" class="formas-pagamento">
+                        <label for="cheque">Emissão de Cheque</label>
+                    </div>
+                    <div id="campos-boleto">
+                        <div class="campo hidden">
+                            <label for="favorecido">Dados do Favorecido:</label>
+                            <input type="text" id="favorecido" name="Favorecido">
+                        </div>
+                    </div>
+                    <div id="campos-deposito">
+                        <div class="campo hidden">
+
+                            <label for="banco">Banco:</label>
+                            <input type="text" id="banco" name="Banco">
+                        </div>
+                        <div class="campo hidden">
+
+                            <label for="agencia">Agência:</label>
+                            <input type="text" id="agencia" name="AG">
+                        </div>
+                        <div class="campo hidden">
+
+                            <label for="conta">Número da Conta:</label>
+                            <input type="text" id="conta" name="N_Conta">
+                        </div>
+                        <div class="campo hidden">
+
+                            <label for="favorecido-deposito">Favorecido:</label>
+                            <input type="text" id="favorecido-deposito" name="Favorecido">
+                        </div>
+                    </div>
+                    <label for="observacoes">Vencimento previsto:</label>
+                    <form id="meuFormulario">
+                        <div id="camposData">
+                            <div class="parcela">
+                                <label>Parcela nº 1:</label>
+                                <input type="date" name="data[]" />
+                                <button type="button" class="removerCampo">Remover</button>
+                            </div>
+                        </div>
+                        <button type="button" id="adicionarCampo">+</button>
+                    </form>
+                    
+                    <script>
+                        let numeroParcela = 1;
+                    
+                        function atualizarLabels() {
+
+                            const parcelas = document.querySelectorAll('#camposData .parcela');
+                            parcelas.forEach((parcela, index) => {
+                                parcela.querySelector('label').innerText = `Parcela nº ${index + 1}:`;
+                            });
+                        }
+                    
+                        document.getElementById('adicionarCampo').addEventListener('click', function () {
+                            numeroParcela++;
+
+                            // Cria um novo contêiner para o campo de data e o botão de remover
+                            const novoCampo = document.createElement('div');
+                            novoCampo.classList.add('parcela');
+                    
+                            const novoLabel = document.createElement('label');
+                            novoLabel.innerText = `Parcela nº ${numeroParcela}:`;
+                    
+                            const novoInput = document.createElement('input');
+                            novoInput.type = 'date';
+                            novoInput.name = 'data[]';
+                    
+                            const removerButton = document.createElement('button');
+                            removerButton.type = 'button';
+                            removerButton.classList.add('removerCampo');
+                            removerButton.innerText = 'Remover';
+                            
+                            removerButton.addEventListener('click', function () {
+                                novoCampo.remove();
+                                numeroParcela--;
+                                atualizarLabels();
+                            });
+                    
+                            // Adiciona o rótulo, campo de data, e botão de remoção ao contêiner
+                            novoCampo.appendChild(novoLabel);
+                            novoCampo.appendChild(novoInput);
+                            novoCampo.appendChild(removerButton);
+                    
+                            // Adiciona o novo campo ao contêiner de campos
+                            document.getElementById('camposData').appendChild(novoCampo);
+                    
+                            // Atualiza os rótulos de parcela para manter a sequência correta
+                            atualizarLabels();
+                        });
+                    
+                        // Adiciona funcionalidade de remoção ao primeiro botão de remoção já existente
+                        document.querySelector('.removerCampo').addEventListener('click', function () {
+                            this.parentElement.remove();
+                            numeroParcela--;
+                            atualizarLabels();
+                        });
+                    </script>
+                </form>
+            </div>
+        </div>
+        
+        <!--TABELA DE CLASSIFICAÇÃO CONTÁBIL
+
+        <div class="classificacao-contabil section" id="section3">
+            <h4 style="margin-top: 5%;">CLASSIFICAÇÃO CONTÁBIL</h4>
+            <table id="accounting-classification">
+                <thead>
+                    <tr>
+                        <th>Conta a debitar</th>
+                        <th>Classe operacional</th>
+                        <th>Centro de custo</th>
+                        <th>Valor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+        </div>
+        -->
+        <div class="section" id="section5"></div>
+
+            <div class="save-btn-container"></div>
+
+                <button class="save-btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+    <div class="section-indicator">
+
+        <div class="dot" data-section="1"></div>
+        <div class="dot" data-section="2"></div>
+    </div>
+</body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="https://js.zohostatic.com/creator/widgets/version/1.0/widgetsdk-min.js"></script>
+<script type="module" src="./js/main.js"></script>
+
+</html>

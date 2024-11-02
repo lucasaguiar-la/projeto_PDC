@@ -1,0 +1,622 @@
+html,
+body {
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background-color: #ffff;
+    margin: 0;
+    padding: 0;
+    /*overflow: hidden;*/
+}
+
+.container{
+    position: relative;
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 20px;
+    padding-top: 2%;
+    padding-left: 8%;
+    padding-right: 8%;
+    width: fit-content;
+    border-radius: 10px;
+    box-shadow: 4px 4px 5px #00000040;
+    background-color: #d3d3d342;
+}
+.section:not(:first-child) {
+    padding-top: 50px;
+}
+
+.tab-cot-container {
+    width: 80%;
+    margin: 20px auto;
+    background-color: #fff;
+    padding: 20px;
+    box-shadow: 0 0 10px rgba(215, 142, 142, 0.1);
+}
+
+.titulos {
+    font-size: 100%;
+    color: #333;
+    margin-bottom: 0px;
+    
+    text-align: center;
+}
+
+/* CSS */
+th {
+    position: relative;
+    line-height: 12pt;
+}
+
+th .remove-forn-btn {
+    position: absolute;
+    right: 0%;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/*==========SECAO 01==========*/
+.form-compra {
+    font-family: Arial, sans-serif;
+    color: #333;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-direction: column;
+}
+
+.form-compra .form-container {
+    border: 1px solid #ddd;
+    padding: 3.5%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 1%;
+    margin-bottom: 1%;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
+
+.entidade {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.vencimento {
+    padding: 5px;
+}
+
+.form-compra #container-campos-texto {
+    display: flex;
+    justify-content: space-between;
+}
+
+.form-compra .campos-texto {
+    width: 49.5%;
+}
+
+.form-compra label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+    font-size: 100%;
+}
+
+.form-compra textarea,
+.form-compra input[type="text"],
+.form-compra input[type="date"] {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 6px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 90%;
+    color: #333;
+}
+
+.form-compra textarea {
+    min-width: 250px;
+    max-width: 250px;
+    min-height: 100px;
+    max-height: 200px;
+}
+
+.form-compra input[type="radio"] {
+    margin-right: 5px;
+}
+
+.form-compra .radio-group label {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.form-compra #campos-boleto,
+.form-compra #campos-deposito {
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+/**/
+#campos-deposito {
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    /* Duas colunas de igual largura */
+}
+
+/* Ocupa a primeira linha inteira */
+#campos-deposito .campo:nth-child(1) {
+    grid-column: 1 / -1;
+}
+
+/* Colocando os campos de Agência e Número da Conta lado a lado */
+#campos-deposito .campo:nth-child(2) {
+    grid-column: 1;
+    /* Primeira coluna para Agência */
+}
+
+#campos-deposito .campo:nth-child(3) {
+    grid-column: 2;
+    /* Segunda coluna para Número da Conta */
+}
+
+/* Ocupa a última linha inteira */
+#campos-deposito .campo:nth-child(4) {
+    grid-column: 1 / -1;
+}
+
+.hidden {
+    display: none;
+}
+
+
+/*==========SECAO 02==========*/
+#priceTable,
+#otherDataTable {
+
+    border-collapse: collapse;
+    margin: 10px auto 0px auto;
+    min-width: 100%; 
+}
+
+.tabela th,
+.tabela td
+{
+    border: 1px solid #0000003d;
+    padding: 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#priceTable th,
+#otherDataTable th {
+    background-color: #8294b4;
+}
+
+
+.linhas-totalizadoras td
+{
+    font-weight: bold;
+    background-color: #D2D6D8;
+}
+
+.linhas-totalizadoras td:first-child
+{
+    text-align: left;
+}
+
+
+[contenteditable="true"] {
+    background-color: #f9f9f9;
+    cursor: text;
+}
+
+[contenteditable="true"]:hover,
+[contenteditable="true"]:focus {
+    filter: brightness(1.05);
+    outline: none;
+}
+
+.action-buttons {
+    width: 20px;
+}
+
+button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: center;
+    width: 20px;
+    height: 21px;
+    font-size: 18px;
+    padding: 0;
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    filter: brightness(0.9);
+}
+
+.remove-btn,
+.add-btn {
+    align-items: center;
+    justify-content: center;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0;
+    margin: 0;
+    transition: color 0.3s ease;
+}
+
+.add-product-btn
+{
+    margin-left: 3%;
+}
+
+.remove-product-btn {
+    margin-right: -1px;
+    margin-top: 2px;
+}
+
+.borda-oculta
+{
+    border: none !important;
+    text-align: left !important;
+}
+
+.save-btn-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.save-btn {
+    width: fit-content;
+    height: fit-content;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+
+}
+
+.save-btn:hover {
+    background-color: #45a049;
+}
+/*========================BOTÕES EDIÇÃO=================*/
+.approve-btn,
+.adjust-btn,
+.archive-btn {
+    width: fit-content;
+    height: fit-content;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    margin: 0px 10px 0px 10px;
+}
+
+.approve-btn:hover,
+.adjust-btn:hover,
+.archive-btn:hover {
+    transform: translateY(-2px);
+    filter: brightness(0.9);
+}
+
+.approve-btn {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.adjust-btn {
+    background-color: #2a8add;
+    color: white;
+}
+
+.archive-btn {
+    background-color: #ce1010;
+    color: white;
+}
+
+/*========================ÍCONES========================*/
+.icons {
+    width: -webkit-fill-available;
+    height: -webkit-fill-available;
+    background-repeat: no-repeat;
+    display: inline-block;
+}
+
+.x-icon {
+
+    background-image: url("../imagens/icons/times-solid-red.svg");
+}
+
+.trash-icon {
+
+    background-image: url("../imagens/icons/trash-can-solid-red.svg");
+}
+
+.plus-icon {
+    background-image: url("../imagens/icons/plus-solid-green.svg");
+}
+
+/*======================TESTE==========================*/
+.dropdown-btn {
+    background-color: #fff;
+    padding: 12px 15px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    cursor: pointer;
+    border-radius: 5px;
+    height: 100%;
+    width: 100%;
+    text-align: left;
+    transition: background-color 0.3s;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #fff;
+    width: 100%;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    max-height: 200px;
+    overflow-y: hidden;
+    border-radius: 5px;
+    margin-top: 5px;
+    padding-top: 60px;
+
+}
+
+.opcoes-container {
+    overflow-y: auto;
+    height: 40vh;
+}
+
+.campo-pesquisa-fornecedor {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 10px 10px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    box-sizing: border-box;
+
+}
+
+.dropdown-opcao {
+    padding: 12px 15px;
+    font-size: 16px;
+    cursor: pointer;
+    background-color: #fff;
+    border-bottom: 1px solid #ddd;
+    transition: background-color 0.3s;
+    text-align: left;
+}
+
+.dropdown-opcao:hover {
+    background-color: #f1f1f1;
+}
+
+.popup-fornecedor {
+    position: fixed !important;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #fff;
+    border: 1px solid #ddd;
+    padding: 25px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    border-radius: 10px;
+    min-width: 30vw;
+    width: fit-content;
+    height: fit-content;
+    text-align: center;
+    position: relative;
+}
+
+.cabecalho-popup {
+    font-size: 20px;
+    margin-bottom: 20px;
+    font-weight: bold;
+    color: #333;
+}
+
+.btn-fechar {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: transparent;
+    border: none;
+    font-size: 18px;
+    cursor: pointer;
+    color: #999;
+}
+
+/*========================JANELA DE CONFIRMAÇÃO========================*/
+.customConfirm-overlay-div {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.customConfirm-div {
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.customConfirm-title {
+    margin-bottom: 10px;
+}
+
+.customConfirm-message {
+    margin-bottom: 20px;
+}
+
+.customConfirm-confirmButton {
+    margin-right: 10px;
+    padding: 8px 16px;
+    width: fit-content;
+    height: fit-content;
+    border: none;
+    background-color: #28a745;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.customConfirm-cancelButton {
+    padding: 8px 16px;
+    width: fit-content;
+    height: fit-content;
+    border: none;
+    background-color: #dc3545;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.customConfirm-loading {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    font-size: 18px;
+    color: #333;
+}
+
+.customConfirm-loading-spinner {
+    margin-right: 10px;
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    border-left-color: #333;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+}
+
+/*==========Botões de mudar de seção==========*/
+/* Estilos para os botões flutuantes */
+.button-up,
+.button-down {
+    position: fixed;
+    width: 50px;
+    height: 50px;
+    background-color: rgb(0 0 0 / 30%);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1000;
+    /* Mantém os botões acima do conteúdo */
+}
+
+.button-up:hover,
+.button-down:hover {
+    background-color: rgb(0 0 0 / 50%);
+}
+
+.button-up {
+    bottom: 100px;
+    /* Distância do fundo da tela */
+    right: 30px;
+    /* Centraliza horizontalmente */
+}
+
+.button-down {
+    bottom: 30px;
+    /* Distância do fundo da tela */
+    right: 30px;
+    /* Centraliza horizontalmente */
+}
+
+/*==========BARRA DE ROLAGEM==========*/
+::-webkit-scrollbar {
+    width: 12px; /* Largura da barra vertical */
+    height: 12px; /* Altura da barra horizontal */
+}
+
+::-webkit-scrollbar-track {
+    background: #f0f0f0; /* Cor do fundo da barra */
+    border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888; /* Cor da barra de rolagem */
+    border-radius: 6px;
+    border: 3px solid #f0f0f0; /* Dá um efeito de borda */
+    transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555; /* Cor ao passar o mouse */
+}
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Indicador de seção */
+.section-indicator {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #ddd;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid #999;
+}
+
+.dot:hover {
+    transform: scale(1.2);
+}
+
+.dot.active {
+    background-color: #666;
+    border-color: #666;
+}
+
