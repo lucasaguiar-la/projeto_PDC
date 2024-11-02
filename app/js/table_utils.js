@@ -1176,7 +1176,16 @@ export function handlePasteEventPriceTable(event) {
                 continue;
             }
 
-            cells[startCellIndex + cellIndex].innerText = pastedRows[rowIndex][cellIndex];
+            const cell = cells[startCellIndex + cellIndex];
+            let value = pastedRows[rowIndex][cellIndex];
+
+            // Converte para formato apropriado baseado na classe da célula
+            if (cell.classList.contains('numeric-cell') || cell.classList.contains('integer-cell')) {
+                value = converterParaDecimal(value);
+                value = formatToBRL(value);
+            }
+
+            cell.innerText = value;
         }
 
         calculateTotalPrices(startRowIndex + rowIndex);
