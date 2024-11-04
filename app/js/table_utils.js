@@ -2,6 +2,7 @@ import{formatToBRL, converterParaDecimal, convertToNegative,restrictNumericInput
 import{globais, mostrarCamposPagamento} from './main.js'
 let selectedCheckbox = null;
 const qlt = 4; //Total de linhas de totalizadores, considerando linha com botão de adicionar produto
+let numeroParcela = 1;
 
 let idsCotacao = new Array();
 
@@ -375,6 +376,7 @@ export async function prenchTabCot(resp) {
 
 //===========================Salvar a tabela===========================//
 export async function saveTableData() {
+    console.log('[SALVANDO A TABELA]');
     if (globais.cotacaoExiste) {
         for (const id of idsCotacao) {
             let payload = {
@@ -387,14 +389,14 @@ export async function saveTableData() {
         globais.cotacaoExiste = false;
         await saveTableData();
     } else {
-
+        console.log('[NÃO EXISTE COTAÇÃO]');
 
         //====================BUSCA OS DADOS INICIAIS DO PDC====================//
-        const fromDdsInicais = document.querySelector('#dados-PDC');
+        const formDdsInicais = document.querySelector('#dados-PDC');
         const dadosIniciaisPdc = {};
     
         // Obter todos os elementos do formulário
-        const elementos = fromDdsInicais.elements;
+        const elementos = formDdsInicais.elements;
         for (let elemento of elementos) {
             // Verifica se o campo tem um valor e se está visível (caso de campos ocultos)
             if (elemento.name && (elemento.type !== 'radio' || elemento.checked)) {
@@ -410,6 +412,35 @@ export async function saveTableData() {
             }
         }
         dadosIniciaisPdc["id_temp"] = globais.numPDC_temp;
+        /*
+        //====================BUSCA OS DADOS DETALHES DO PDC====================//
+        const formDdsDetalhes = document.querySelector('#dados-detalhes');
+        const dadosDetalhesPag = {};
+    
+        // Obter todos os elementos do formulário
+        const elementosDetalhes = formDdsDetalhes.elements;
+        for (let elemento of elementosDetalhes) {
+            // Verifica se o campo tem um valor e se está visível (caso de campos ocultos)
+            if (elemento.name && (elemento.type !== 'radio' || elemento.checked)) {
+                if (elemento.type === 'date' && elemento.value) {
+                    const data = new Date(elemento.value);
+                    const dia = String(data.getDate()).padStart(2, '0');
+                    const mes = String(data.getMonth() + 1).padStart(2, '0');
+                    const ano = data.getFullYear();
+                    dadosDetalhesPag[elemento.name] = `${dia}/${mes}/${ano}`;
+                } else {
+                    dadosDetalhesPag[elemento.name] = elemento.value;
+                }
+            }
+        }
+        dadosDetalhesPag["id_temp"] = globais.numPDC_temp;
+
+
+
+
+
+
+        */
 
         //====================BUSCA OS DADOS DA TABELA DE PREÇOS====================//
         
@@ -435,7 +466,7 @@ export async function saveTableData() {
                 suplierIds.push(supplierIdForn);
                 suppliers.push(supplierName);
 
-                const dc = parseFloat((rowFrete.cells[i - 1].innerText).replace(".", "").replace(",", ".") || '0');
+                const dc = converterParaDecimal((rowFrete.cells[i - 1].innerText).replace(".", "").replace(",", ".") || '0');
                 deliveryCosts.push(dc);
             }
             
@@ -456,8 +487,8 @@ export async function saveTableData() {
                     const fornecedor = suppliers[j];
                     const valor_frete = deliveryCosts[j];
 
-                    const valor_unitario = parseFloat((row.cells[unitPriceIndex]?.innerText).replace(".", "").replace(",", ".") || '0');
-                    const valor_total = parseFloat((row.cells[totalPriceIndex]?.innerText).replace(".", "").replace(",", ".") || '0');
+                    const valor_unitario = converterParaDecimal((row.cells[unitPriceIndex]?.innerText) || '0');
+                    const valor_total = converterParaDecimal((row.cells[totalPriceIndex]?.innerText) || '0');
 
                     const condicao_pagamento = otherRows[j].cells[1]?.innerText || '';
                     const observacao = otherRows[j].cells[2]?.innerText || '';
@@ -497,12 +528,16 @@ export async function saveTableData() {
             }
         }
         //====================CRIAR O REGISTRO DO PDC====================//
-
+        console.log('[CRIANDO O REGISTRO DO PDC]');
+        console.log(JSON.stringify(dadosIniciaisPdc, null, 2));
         let respPDC = await executar_apiZoho({ tipo: "add_reg", corpo: JSON.stringify(dadosIniciaisPdc, null, 2),  nomeF: globais.nomeFormPDC});
-
+        console.log('resposta do PDC: ', respPDC);
         //====================CRIAR O REGISTRO DA COTAÇÃO====================//
         const json = JSON.stringify(data, null, 2);
+        console.log('[CRIANDO O REGISTRO DA COTAÇÃO]');
+        console.log(json);
         let respCot = await executar_apiZoho({ tipo: "add_reg", corpo: json });
+        console.log('resposta da cotação: ', respCot);
         
         /**
         *TODO: PRECISA CRIAR O CÓDIGO PARA ATUALIZAR O STATUS DO PDC
@@ -859,10 +894,6 @@ export function addSupplierColumn() {
                 });
             });
 
-            const icon = document.createElement('i');
-            icon.classList.add('x-icon', 'icons');
-            removeButton.appendChild(icon);
-
             // Checkbox de seleção do fornecedor
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
@@ -883,6 +914,7 @@ export function addSupplierColumn() {
             container.classList.add('container-fornecedor');
             container.style.display = 'flex';
             container.style.alignItems = 'center';
+            container.style.justifyContent = 'space-between';
             container.style.gap = '5px';
 
             container.appendChild(checkbox);
@@ -1323,5 +1355,74 @@ export function atualizarOuvintesTabDetlhesForn()
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
         row.addEventListener('paste', handlePasteEventDetailtable);
+    }
+}
+
+/**
+ * Adiciona um campo de data para parcelas de pagamento
+ * 
+ * @function adicionarCampoVenc
+ * @returns {void}
+ * 
+ * @description
+ * - Cria um novo campo de data para parcelas de pagamento
+ */
+export function adicionarCampoVenc(){
+    
+    function atualizarLabels() {
+
+        const parcelas = document.querySelectorAll('#camposData .parcela');
+        parcelas.forEach((parcela, index) => {
+            parcela.querySelector('label').innerText = `Parcela nº ${index + 1}:`;
+        });
+    }
+
+    numeroParcela++;
+
+    //====================CRIA UM NOVO CONTAINER PARA O CAMPO DE DATA E O BOTÃO DE REMOVER====================//
+    const novoCampo = document.createElement('div');
+    novoCampo.classList.add('parcela');
+
+    //====================CRIA O RÓTULO PARA O CAMPO DE DATA====================//
+    const novoLabel = document.createElement('label');
+    novoLabel.innerText = `Parcela nº ${numeroParcela}:`;
+
+    //====================CRIA O CAMPO DE DATA====================//
+    const novoInput = document.createElement('input');
+    novoInput.type = 'date';
+    novoInput.name = 'data[]';
+
+    //====================CRIA O BOTÃO DE REMOVER====================//
+    const removerButton = document.createElement('button');
+    removerButton.type = 'button';
+    removerButton.classList.add('remover-parcela');
+
+    //====================ADICIONA A FUNÇÃO DE REMOVER AO BOTÃO DE REMOVER====================//
+    removerButton.addEventListener('click', function () {
+        novoCampo.remove();
+        numeroParcela--;
+        atualizarLabels();
+    });
+
+    //====================ADICIONA O CAMPO DE DATA, O RÓTULO E O BOTÃO DE REMOVER AO CONTAINER====================//
+    novoCampo.appendChild(novoLabel);
+    novoCampo.appendChild(novoInput);
+    novoCampo.appendChild(removerButton);
+
+    //====================ADICIONA O NOVO CAMPO AO CONTAINER DE CAMPOS====================//
+    document.getElementById('camposData').appendChild(novoCampo);
+
+    //====================ATUALIZA OS RÓTULOS DE PARCELA PARA MANTER A SEQUÊNCIA CORRETA====================//
+    atualizarLabels();
+}
+
+export function removerCampoVenc(elemento) {
+    const parentElement = elemento.parentElement;
+    const parentClass = parentElement.className;
+    const elementosSimilares = document.getElementsByClassName(parentClass);
+    if (elementosSimilares.length > 1) {
+        parentElement.remove();
+        numeroParcela--;
+        atualizarLabels();
     }
 }

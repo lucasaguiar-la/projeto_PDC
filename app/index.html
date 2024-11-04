@@ -51,7 +51,6 @@
                         <th></th>
                         <th class="action-buttons">
                             <button class="add-supplier-btn add-btn">
-                                <i class="plus-icon icons"></i>
                             </button>
                         </th>
                     </tr>
@@ -84,7 +83,7 @@
                     </tr>
                     <tr class="borda-oculta">
                         <td class="borda-oculta">
-                            <button class="add-product-btn add-btn"><i class="plus-icon icons"></i></button>
+                            <button class="add-product-btn add-btn"></button>
                         </td>
                     </tr>
                 </tbody>
@@ -152,72 +151,14 @@
                         </div>
                     </div>
                     <label for="observacoes">Vencimento previsto:</label>
-                    <form id="meuFormulario">
-                        <div id="camposData">
-                            <div class="parcela">
-                                <label>Parcela nº 1:</label>
-                                <input type="date" name="data[]" />
-                                <button type="button" class="removerCampo">Remover</button>
-                            </div>
+                    <div id="camposData">
+                        <div class="parcela">
+                            <label>Parcela nº 1:</label>
+                            <input type="date" name="data[]" />
+                            <button type="button" class="remover-parcela"></button>
                         </div>
-                        <button type="button" id="adicionarCampo">+</button>
-                    </form>
-                    
-                    <script>
-                        let numeroParcela = 1;
-                    
-                        function atualizarLabels() {
-
-                            const parcelas = document.querySelectorAll('#camposData .parcela');
-                            parcelas.forEach((parcela, index) => {
-                                parcela.querySelector('label').innerText = `Parcela nº ${index + 1}:`;
-                            });
-                        }
-                    
-                        document.getElementById('adicionarCampo').addEventListener('click', function () {
-                            numeroParcela++;
-
-                            // Cria um novo contêiner para o campo de data e o botão de remover
-                            const novoCampo = document.createElement('div');
-                            novoCampo.classList.add('parcela');
-                    
-                            const novoLabel = document.createElement('label');
-                            novoLabel.innerText = `Parcela nº ${numeroParcela}:`;
-                    
-                            const novoInput = document.createElement('input');
-                            novoInput.type = 'date';
-                            novoInput.name = 'data[]';
-                    
-                            const removerButton = document.createElement('button');
-                            removerButton.type = 'button';
-                            removerButton.classList.add('removerCampo');
-                            removerButton.innerText = 'Remover';
-                            
-                            removerButton.addEventListener('click', function () {
-                                novoCampo.remove();
-                                numeroParcela--;
-                                atualizarLabels();
-                            });
-                    
-                            // Adiciona o rótulo, campo de data, e botão de remoção ao contêiner
-                            novoCampo.appendChild(novoLabel);
-                            novoCampo.appendChild(novoInput);
-                            novoCampo.appendChild(removerButton);
-                    
-                            // Adiciona o novo campo ao contêiner de campos
-                            document.getElementById('camposData').appendChild(novoCampo);
-                    
-                            // Atualiza os rótulos de parcela para manter a sequência correta
-                            atualizarLabels();
-                        });
-                    
-                        // Adiciona funcionalidade de remoção ao primeiro botão de remoção já existente
-                        document.querySelector('.removerCampo').addEventListener('click', function () {
-                            this.parentElement.remove();
-                            numeroParcela--;
-                            atualizarLabels();
-                        });
-                    </script>
+                    </div>
+                    <button type="button" id="adicionarCampo" class="add-parcela"></button>
                 </form>
             </div>
         </div>

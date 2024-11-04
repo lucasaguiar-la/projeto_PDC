@@ -1,7 +1,8 @@
 html,
 body {
     height: 100%;
-    font-family: Arial, sans-serif;
+    font-family: 'Century Gothic', sans-serif;
+    font-family: 'Avenir Next LT Pro', sans-serif;
     background-color: #ffff;
     margin: 0;
     padding: 0;
@@ -47,11 +48,22 @@ th {
     line-height: 12pt;
 }
 
-th .remove-forn-btn {
-    position: absolute;
-    right: 0%;
-    top: 50%;
-    transform: translateY(-50%);
+.remove-forn-btn {
+    background: none;
+    border: none;
+    color: #921414;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.remove-forn-btn::before {
+    content: "⨯";
 }
 
 /*==========SECAO 01==========*/
@@ -238,7 +250,7 @@ button {
 }
 
 button:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     filter: brightness(0.9);
 }
 
@@ -248,7 +260,6 @@ button:hover {
     justify-content: center;
     border: none;
     cursor: pointer;
-    font-size: 18px;
     padding: 0;
     margin: 0;
     transition: color 0.3s ease;
@@ -336,8 +347,7 @@ button:hover {
 }
 
 .x-icon {
-
-    background-image: url("../imagens/icons/times-solid-red.svg");
+    display: none;
 }
 
 .trash-icon {
@@ -503,7 +513,7 @@ button:hover {
     width: fit-content;
     height: fit-content;
     border: none;
-    background-color: #dc3545;
+    background-color: #921414;
     color: #fff;
     border-radius: 4px;
     cursor: pointer;
@@ -628,4 +638,100 @@ button:hover {
     background-color: #666;
     border-color: #666;
 }
+
+/* Estilização dos campos de data */
+#camposData {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.parcela {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.parcela label {
+    font-weight: bold;
+    font-size: 90%;
+    min-width: 85px;
+    color: #666;
+    margin: 0;
+}
+
+.parcela input[type="date"] {
+    flex: 1;
+    padding: 6px 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 90%;
+    color: #333;
+    background-color: #fff;
+    margin: 0;
+}
+
+.remover-parcela {
+    background: none;
+    border: none;
+    color: #921414;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.remover-parcela::before {
+    content: "⨯";
+}
+
+.add-parcela {
+    background: none;
+    border: none;
+    color: #187124;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.add-parcela::before {
+    content: "+";
+}
+
+.add-supplier-btn,
+.add-product-btn {
+    background: none;
+    border: none;
+    color: #187124;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.add-supplier-btn::before,
+.add-product-btn::before {
+    content: "+";
+}
+
+/* Remover estilos antigos que não são mais necessários */
+.add-product-btn {
+    margin-left: 3%;
+}
+
 

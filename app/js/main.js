@@ -1,4 +1,4 @@
-import {addProductRow, addSupplierColumn} from './table_utils.js'
+import {addProductRow, addSupplierColumn, adicionarCampoVenc, removerCampoVenc} from './table_utils.js'
 import {executarProcessosInicias, customModal } from './utils.js'
 
 const _nomeApp = "app-envio-de-notas-boletos-guillaumon";
@@ -53,7 +53,9 @@ document.addEventListener('DOMContentLoaded', () => {
         "save-btn": (elemento) => customModal({botao: elemento, tipo: 'salvar_cot', mensagem: 'Deseja realmente salvar esta cotação?'}),
         "formas-pagamento": (elemento) => mostrarCamposPagamento(),
         "button-up": (elemento) => scrollToSection(currentSection -1),
-        "button-down": (elemento) => scrollToSection(currentSection +1)
+        "button-down": (elemento) => scrollToSection(currentSection +1),
+        "add-parcela": () => adicionarCampoVenc(),
+        "remover-parcela": (elemento) => removerCampoVenc(elemento)
     };
 
     //=====Itera sobre o mapeamento, adicionando o evento a cada classe=====//
