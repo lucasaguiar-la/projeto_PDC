@@ -2,6 +2,7 @@ import { globais } from './main.js';
 import { prenchTabCot, saveTableData, preencherDadosPDC, autalizarOuvintesTabCot, removeSupplierColumn, removeRow } from './table_utils.js'
 
 export let baseFornecedores = new Map();
+export let classificacoes = new Map();
 
 //==========Busca os dados iniciais da página==========//
 export async function executarProcessosInicias() {
@@ -23,6 +24,7 @@ export async function executarProcessosInicias() {
     }
     console.log(`numPDC => ${globais.numPDC}`);
     console.log(`numPDC_temp => ${globais.numPDC_temp}`);
+    console.log(`pag => ${globais.pag}`);
     //=====BUSCA OS DADOS INICIAIS DO PDC, CASO EXISTAM=====//
     let cPDC = "(" + (globais.numPDC ? `numero_de_PDC=="${globais.numPDC}"` : (globais.numPDC_temp ? `id_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
 
@@ -55,16 +57,7 @@ export async function executarProcessosInicias() {
 
     //=====BUSCA OS FORNECEDORES=====//
     executar_apiZoho();
-
-    //=====BUSCA O PLANO DE CONTAS=====//
-    /*
-    console.log("[BUSCANDO PLANO DE CONTAS]");
-    let cPlanContas = "(ID!=0)";
-    console.log(globais.nomeRelPlanContas);
-    const planContas = await executar_apiZoho({tipo: "busc_reg", criterios: cPlanContas, nomeR: globais.nomeRelPlanoContas});
-    console.log(JSON.stringify(planContas));
-    console.log("[FIM BUSCANDO PLANO DE CONTAS]");
-    */
+    //buscarPlanContas();
 
     if (globais.pag == "aprovar_cotacao") {
         function replaceSaveButton() {
@@ -82,7 +75,7 @@ export async function executarProcessosInicias() {
             approveButton.className = 'approve-btn';
             approveButton.textContent = 'Aprovar';
             approveButton.onclick = function () {
-                customConfirm(this, "aprov_cot", "Aprovar proposta", "Tem certeza que deseja APROVAR a proposta do fornecedor selecionado?");
+                customModal({botao:this, tipo:"aprov_cot", titulo:"Aprovar proposta", mensagem:"Tem certeza que deseja APROVAR a proposta do fornecedor selecionado?"});
             };
 
             // Cria o botão "Solicitar Ajuste"
@@ -90,7 +83,7 @@ export async function executarProcessosInicias() {
             adjustButton.className = 'adjust-btn';
             adjustButton.textContent = 'Solicitar Ajuste';
             adjustButton.onclick = function () {
-                customAdjust(this, "ajuste", "Solicitação de Ajuste", "Por favor, descreva abaixo o ajuste que deseja fazer:");
+                customModal({botao:this, tipo:"ajustar_cot", titulo:"Solicitação de Ajuste", mensagem:"Por favor, descreva abaixo o ajuste que deseja fazer:"});
             };
 
             // Cria o botão "Arquivar"
@@ -98,7 +91,7 @@ export async function executarProcessosInicias() {
             archiveButton.className = 'archive-btn';
             archiveButton.textContent = 'Arquivar';
             archiveButton.onclick = function () {
-                customArchive(this, "arquivar", "Arquivar", "Você tem certeza de que deseja arquivar este registro?");
+                customModal({botao:this, tipo:"arquivar_cot", titulo:"Arquivar", mensagem:"Você tem certeza de que deseja arquivar este registro?"});
             };
 
             // Adiciona os novos botões ao contêiner
@@ -113,6 +106,116 @@ export async function executarProcessosInicias() {
     autalizarOuvintesTabCot();
 }
 
+//=====BUSCA O PLANO DE CONTAS=====//
+export function buscarPlanContas() {
+    console.log("[BUSCANDO PLANO DE CONTAS]");
+    let cPlanContas = "(ID!=0)";
+    
+    // Busca os dados do plano de contas
+    executar_apiZoho({
+        tipo: "busc_reg_recursivo", 
+        criterios: cPlanContas, 
+        nomeR: globais.nomeRelPlanoContas
+    }).then((resp) => {
+        // Mapeia as classificações e centros de custo
+        const classificacoesMap = new Map();
+        const centrosCustoMap = new Map();
+        const relacionamentos = new Map(); // Para armazenar relações entre classe e centros
+        console.log("[CRIANDO OS MAPAS DE CLASSIFICAÇÕES E CENTROS DE CUSTO]");
+        resp.forEach((item) => {
+            // Monta o par classe operacional
+            const codigoClasse = item.C_digo_da_classe_operacional;
+            const nomeClasse = item.Nome_da_classe;
+            const classeKey = `${codigoClasse} - ${nomeClasse}`;
+            classificacoesMap.set(codigoClasse, classeKey);
+    
+            // Monta o par centro de custo
+            const codigoCentro = item.Cod_do_centro_de_custo;
+            const nomeCentro = item.Nome_do_centro_de_custo;
+            const centroKey = `${codigoCentro} - ${nomeCentro}`;
+            centrosCustoMap.set(codigoCentro, centroKey);
+    
+            // Armazena relacionamento
+            if (!relacionamentos.has(codigoClasse)) {
+                relacionamentos.set(codigoClasse, new Set());
+            }
+            relacionamentos.get(codigoClasse).add(codigoCentro);
+        });
+    
+        // Armazena os dados em variáveis globais para uso posterior
+        globais.classificacoes = classificacoesMap;
+        globais.centrosCusto = centrosCustoMap;
+        globais.relacionamentosCentroCusto = relacionamentos;
+    
+        // Popula os selects
+        popularSelects(classificacoesMap, centrosCustoMap);
+    });
+}
+console.log("[POPULANDO OS SELECTS]");
+export function popularSelects(classificacoes, centrosCusto) {
+    // Busca todos os conjuntos de selects dentro do form-classificacao
+    const classificacaoForm = document.getElementById('form-classificacao');
+    const todasClassificacoes = classificacaoForm.querySelectorAll('.classificacao');
+    
+    todasClassificacoes.forEach(container => {
+        // Seleciona os selects dentro de cada container de classificação
+        const selectCentro = container.querySelector('select[name="Centro"]');
+        const selectClassificacao = container.querySelector('select[name="Classe"]');
+        
+        // Popula select de centros de custo primeiro
+        if (selectCentro) {
+            selectCentro.innerHTML = '<option value="">Selecione...</option>';
+            Array.from(centrosCusto.values()).forEach(centro => {
+                selectCentro.innerHTML += `<option value="${centro}">${centro}</option>`;
+            });
+
+            // Adiciona listener para filtrar classes operacionais
+            selectCentro.addEventListener('change', (e) => {
+                const codigoCentro = e.target.value.split(' - ')[0];
+                const classeSelect = e.target.closest('.classificacao').querySelector('select[name="Classe"]');
+                filtrarClassesOperacionais(codigoCentro, classeSelect);
+            });
+        }
+
+        // Popula select de classificações com todas as opções inicialmente
+        if (selectClassificacao) {
+            selectClassificacao.innerHTML = '<option value="">Selecione...</option>';
+            Array.from(classificacoes.values()).forEach(classe => {
+                selectClassificacao.innerHTML += `<option value="${classe}">${classe}</option>`;
+            });
+        }
+    });
+}
+
+export function filtrarClassesOperacionais(codigoCentro, selectClasse) {
+    if (!selectClasse) return;
+
+    selectClasse.innerHTML = '<option value="">Selecione...</option>';
+    
+    if (!codigoCentro) {
+        // Se nenhum centro selecionado, mostra todas as classes
+        Array.from(globais.classificacoes.values()).forEach(classe => {
+            selectClasse.innerHTML += `<option value="${classe}">${classe}</option>`;
+        });
+        return;
+    }
+
+    // Filtra apenas as classes relacionadas ao centro de custo selecionado
+    const classesRelacionadas = new Set();
+    globais.relacionamentosCentroCusto.forEach((centros, codigoClasse) => {
+        if (centros.has(codigoCentro)) {
+            const classe = globais.classificacoes.get(codigoClasse);
+            if (classe) {
+                classesRelacionadas.add(classe);
+            }
+        }
+    });
+
+    classesRelacionadas.forEach(classe => {
+        selectClasse.innerHTML += `<option value="${classe}">${classe}</option>`;
+    });
+}
+
 //===========================Executar quaisquer requisições do zoho===========================//
 export async function executar_apiZoho({ tipo = null, criterios = null, ID = null, corpo = null, nomeR = null, nomeF = null } = {}) {
     try {
@@ -123,7 +226,6 @@ export async function executar_apiZoho({ tipo = null, criterios = null, ID = nul
 
         // Função de buscar registro
         async function busc_reg(nomeR, criterio, numPag) {
-            ;
             const config = {
                 appName: globais.nomeApp,
                 reportName: nomeR,
@@ -149,7 +251,7 @@ export async function executar_apiZoho({ tipo = null, criterios = null, ID = nul
         // Função de atualizar registro
         async function atualizar_reg(nomeR, ID, corpo) {
 
-            return recOps.updateRecord({
+            return await recOps.updateRecord({
                 appName: globais.nomeApp,
                 reportName: nomeR,
                 id: ID,
@@ -192,6 +294,45 @@ export async function executar_apiZoho({ tipo = null, criterios = null, ID = nul
             }
         }
 
+        async function buscarRecursivamente(nomeR, criterio) {
+            let baseApoio = new Map();
+            let paginaAtual = 1;
+
+            try {
+                while (true) {
+                    const resp = await busc_reg(nomeR, criterio, paginaAtual);
+                    
+                    // Verifica se a resposta é válida e tem dados
+                    if (!resp || resp.code !== 3000 || !Array.isArray(resp.data)) {
+                        break;
+                    }
+
+                    // Se não há mais dados, interrompe o loop
+                    if (resp.data.length === 0) {
+                        break;
+                    }
+
+                    // Processa os dados recebidos
+                    resp.data.forEach((item) => {
+                        const id = item.ID || item.C_digo_da_classe_operacional;
+                        baseApoio.set(id, item);
+                    });
+
+                    // Log dos dados (se necessário em ambiente de desenvolvimento)
+                    if (process.env.NODE_ENV === 'development') {
+                        console.log(`Dados da página ${paginaAtual} processados`);
+                    }
+
+                    paginaAtual++;
+                }
+            } catch (err) {
+                console.error("Erro ao buscar dados:", err);
+            }
+
+            // Retorna os dados coletados, mesmo que vazio
+            return Array.from(baseApoio.values());
+        }
+
         // Funções solicitadas conforme tipo
         if (tipo === "add_reg") {
 
@@ -202,6 +343,8 @@ export async function executar_apiZoho({ tipo = null, criterios = null, ID = nul
         } else if (tipo === "busc_reg") {
 
             return await busc_reg(nomeR, criterios, 1);
+        } else if (tipo === "busc_reg_recursivo") {
+            return await buscarRecursivamente(nomeR, criterios);
         } else {
             buscarFornecedores();
         }
@@ -296,6 +439,7 @@ export function converterParaDecimal(v) {
         return vf;
     }
 }
+
 export function convertToNegative(v) {
 
     return v > 0 ? (v * -1) : v;
@@ -311,11 +455,17 @@ export function restrictNumericInput(obj) {
 }
 
 /*Restringe células a apenas conteúdo inteiro*/
-export function restrictIntegerInput(obj) {
-    const input = obj.innerText;
+export function restrictIntegerInput(event) {
+    // Verifica se recebeu um evento ou um elemento direto
+    const element = event.target || event;
+    
+    if (!element || !element.innerText) return;
+    
+    const input = element.innerText;
     const filteredInput = input.replace(/[^0-9]/g, '');
+    
     if (input !== filteredInput) {
-        obj.innerText = filteredInput;
+        element.innerText = filteredInput;
     }
 }
 
@@ -374,7 +524,7 @@ export async function customModal({botao = null, tipo, titulo = null, mensagem})
     const confirmButton = document.createElement('button');
     confirmButton.innerHTML = 'Confirmar';
     confirmButton.classList.add('customConfirm-confirmButton');
-
+    let inputElement;
     // Adiciona classe específica baseada no tipo e campo de texto
     if (tipo === 'ajustar_cot') {
         // CLasse do botão
@@ -384,6 +534,8 @@ export async function customModal({botao = null, tipo, titulo = null, mensagem})
         inputElement.classList.add('customAdjust-textarea');
         inputElement.placeholder = 'Ex.: Gostaria que o valor de frete fosse alterado...';
         popup.appendChild(inputElement);
+        inputElement.style.width = '100%';
+        inputElement.style.height = '100px';
     } else if (tipo === 'arquivar_cot') {
         // CLasse do botão
         confirmButton.classList.add('customArchive-confirmButton');
@@ -392,7 +544,10 @@ export async function customModal({botao = null, tipo, titulo = null, mensagem})
         inputElement.classList.add('customAdjust-textarea');
         inputElement.placeholder = 'Ex.: Arquivo devido a não resposta do fornecedor...';
         popup.appendChild(inputElement);
+        inputElement.style.width = '100%';
+        inputElement.style.height = '100px';
     }
+    
 
     // Botão Cancelar
     const cancelButton = document.createElement('button');
@@ -426,18 +581,46 @@ export async function customModal({botao = null, tipo, titulo = null, mensagem})
                         alert("Por favor, preencha o campo de ajuste.");
                         return;
                     }
+                    console.log("É ajustar cot");
                     await executar_apiZoho({
-                        tipo: "atualizar_reg", ID: botao.dataset.idRegistro, corpo: {
+                        tipo: "atualizar_reg", ID: globais.idPDC, corpo: {
                             Solicitacao_de_ajuste: textoAjuste,
                             Status_geral: "Ajuste solicitado"
                         }, nomeR: globais.nomeRelPDC
                     });
-                    window.open(`${url}#Script:page.close`, '_top');
+                    // Aguarda a conclusão da atualização do registro
+                    console.log("Vai atualizar o registro");
+                    console.log("Botao:", botao);
+                    console.log("ID do registro:", globais.idPDC);
+                    console.log("Corpo:", {
+                        Solicitacao_de_ajuste: textoAjuste,
+                        Status_geral: "Ajuste solicitado"
+                    });
+                    console.log("Nome do relatório:", globais.nomeRelPDC);
+                    const resultado = await executar_apiZoho({
+                        tipo: "atualizar_reg", 
+                        ID: globais.idPDC, 
+                        corpo: {data:{
+                                Solicitacao_de_ajuste: textoAjuste,
+                                Status_geral: "Ajuste solicitado"
+                            }
+                        }, 
+                        nomeR: globais.nomeRelPDC
+                    });
+
+                    // Verifica se a atualização foi bem-sucedida antes de redirecionar
+                    if (resultado && resultado.code === 3000) {
+                        console.log("Vai atualizar a página");
+                        window.open(`${url}#Script:page.refresh`, '_top');
+                    } else {
+                        console.log("Erro =>", resultado);
+                        throw new Error('Falha ao atualizar o registro');
+                    }
                     break;
 
                 case 'arquivar_cot':
                     await executar_apiZoho({
-                        tipo: "atualizar_reg", ID: botao.dataset.idRegistro, corpo: {
+                        tipo: "atualizar_reg", ID: globais.idPDC, corpo: {
                             Status_geral: "Proposta arquivada"
                         }, nomeR: globais.nomeRelPDC
                     });
@@ -474,430 +657,3 @@ export async function customModal({botao = null, tipo, titulo = null, mensagem})
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
 }
-
-/*
-export function customConfirm(botao, tipo, titulo, mensagem) {
-    console.log('[ENTROU NO CUSTOM CONFIRM]');
-     // Criação do overlay
-    const overlay = document.createElement('div');
-    overlay.classList.add('customConfirm-overlay-div');
-
-     // Criação da janela do popup
-    const popup = document.createElement('div');
-    popup.classList.add('customConfirm-div');
-
-     // Título
-    const titleElement = document.createElement('h3');
-    titleElement.classList.add('customConfirm-title');
-    titleElement.textContent = titulo;
-    
-     // Mensagem
-    const messageElement = document.createElement('p');
-    messageElement.textContent = mensagem;
-    messageElement.classList.add('customConfirm-message');
-
-     // Botão Confirmar
-    const confirmButton = document.createElement('button');
-    confirmButton.textContent = 'Confirmar';
-    confirmButton.classList.add('customConfirm-confirmButton');
-
-     // Botão Cancelar
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancelar';
-    cancelButton.classList.add('customConfirm-cancelButton');
-
-     // Elemento de carregamento
-    const loadingElement = document.createElement('div');
-    loadingElement.classList.add('customConfirm-loading');
-    loadingElement.innerHTML = '<div class="customConfirm-loading-spinner"></div> Carregando, aguarde...';
-
-     // Ação ao clicar em Confirmar
-    confirmButton.addEventListener('click', function() {
-             // Esconde os botões e a mensagem original, exibe o carregamento
-            confirmButton.style.display = 'none';
-            cancelButton.style.display = 'none';
-            titleElement.style.display = 'none';
-            messageElement.style.display = 'none';
-             loadingElement.style.display = 'flex'; // Exibe o "Carregando, aguarde..."
-        if (tipo === 'salvar_cot') {
-
-             // Executa a função com o await
-            async function executar() {
-                await saveTableData();
-                window.open('https://guillaumon.zohocreatorportal.com/#Script:page.refresh', '_top');
-            }
-
-             // Chama a função com atraso para simular carregamento
-            executar().then(() => {
-                 document.body.removeChild(overlay); // Fecha o popup
-            });
-        }else if(tipo === 'aprov_cot')
-        {
-             // Executa a função com o await
-            async function executar() {
-                await saveTableData();
-                window.open('https://guillaumon.zohocreatorportal.com/#Script:dialog.close', '_top');
-            }
-        }else if (tipo === 'ajuste' && textoAjuste != "") {
-            // Esconde os botões e a mensagem original, exibe o carregamento
-            confirmButton.style.display = 'none';
-            cancelButton.style.display = 'none';
-            titleElement.style.display = 'none';
-            messageElement.style.display = 'none';
-            inputElement.style.display = 'none';
-            loadingElement.style.display = 'flex';
-
-            // Função para salvar o ajuste no Zoho Creator
-            async function executar() {
-                const payload = {
-                    data: {
-                        Solicitacao_de_ajuste: textoAjuste,
-                        Status_geral: "Ajuste solicitado"
-                    }
-                };
-
-                const registroID = botao.dataset.idRegistro; // Obtém o ID do registro a partir do botão
-
-                // Função para atualizar o registro no Zoho
-                respAjuste = await executar_apiZoho({ tipo: "atualizar_reg", ID: registroID, corpo: payload,  nomeR: "Laranj_PDC_Digital_ADM"});
-                if (respAjuste) {
-                    console.log("Ajuste salvo no Zoho Creator:", textoAjuste);
-                    window.open('https://creatorapp.zoho.com/guillaumon/app-envio-de-notas-boletos-guillaumon/#Script:page.close', '_top');
-                }
-
-                // Fechar o popup
-                document.body.removeChild(overlay);
-            }
-            // Chama a função para salvar o ajuste
-            executar();
-        }else if (tipo === 'arquivar') {
-            // Esconde os botões e a mensagem original, exibe o carregamento
-            confirmButton.style.display = 'none';
-            cancelButton.style.display = 'none';
-            titleElement.style.display = 'none';
-            messageElement.style.display = 'none';
-            loadingElement.style.display = 'flex';
-
-            // Função para arquivar a proposta no Zoho Creator
-            async function executar() {
-                const payload = {
-                    data: {
-                        Status_geral: "Proposta arquivada"
-                    }
-                };
-
-                //const registroID = botao.dataset.idRegistro; // Obtém o ID do registro a partir do botão
-
-                // Função para atualizar o registro no Zoho
-                const respArquivo = await executar_apiZoho({ tipo: "atualizar_reg", ID: registroID, corpo: payload, nomeR: "Laranj_PDC_Digital_ADM" });
-                if (respArquivo) {
-                    console.log("Proposta arquivada no Zoho Creator");
-                    window.open('https://creatorapp.zoho.com/guillaumon/app-envio-de-notas-boletos-guillaumon/#Script:page.refresh', '_top');
-                }
-
-                // Fechar o popup
-                document.body.removeChild(overlay);
-            }
-            // Chama a função para arquivar a proposta
-            executar();
-        }else {
-            alert("Por favor, preencha o campo de ajuste.");
-        }
-    });
-
-     // Ação ao clicar em Cancelar
-    cancelButton.addEventListener('click', function() {
-         document.body.removeChild(overlay); // Fecha o popup
-    });
-
-     // Montagem do popup
-    popup.appendChild(titleElement);
-    popup.appendChild(messageElement);
-    popup.appendChild(confirmButton);
-    popup.appendChild(cancelButton);
-     popup.appendChild(loadingElement); // Adiciona o elemento de carregamento, inicialmente oculto
-    overlay.appendChild(popup);
-    document.body.appendChild(overlay);
-    /*
-    if(globais.pag = 'criar_cotacao')
-    {
-
-    }else if(globais.pag = 'aprovar_cotacao')
-    {
-
-        // Criação do overlay
-        const overlay = document.createElement('div');
-        overlay.classList.add('customConfirm-overlay-div');
-
-        // Criação da janela do popup
-        const popup = document.createElement('div');
-        popup.classList.add('customConfirm-div');
-
-        // Título
-        const titleElement = document.createElement('h3');
-        titleElement.classList.add('customConfirm-title');
-        titleElement.textContent = titulo;
-        
-        // Mensagem
-        const messageElement = document.createElement('p');
-        messageElement.textContent = mensagem;
-        messageElement.classList.add('customConfirm-message');
-
-        // Container dos botões
-        const buttonContainer = document.createElement('div');
-        buttonContainer.classList.add('customConfirm-buttonContainer');
-
-        // Botão Confirmar
-        const confirmButton = document.createElement('button');
-        confirmButton.textContent = 'Confirmar';
-        confirmButton.classList.add('customConfirm-confirmButton');
-        buttonContainer.appendChild(confirmButton);
-
-        // Botão Cancelar
-        const cancelButton = document.createElement('button');
-        cancelButton.textContent = 'Cancelar';
-        cancelButton.classList.add('customConfirm-cancelButton');
-        buttonContainer.appendChild(cancelButton);
-
-        // Elemento de carregamento
-        const loadingElement = document.createElement('div');
-        loadingElement.classList.add('customConfirm-loading');
-        loadingElement.innerHTML = '<div class="customConfirm-loading-spinner"></div> Carregando, aguarde...';
-
-        // Ação ao clicar em Confirmar
-        confirmButton.addEventListener('click', function() {
-            if (tipo === 'cotação') {
-                // Esconde os botões e a mensagem original, exibe o carregamento
-                confirmButton.style.display = 'none';
-                cancelButton.style.display = 'none';
-                titleElement.style.display = 'none';
-                messageElement.style.display = 'none';
-                loadingElement.style.display = 'flex'; // Exibe o "Carregando, aguarde..."
-
-                // Executa a função com o await
-                async function executar() {
-                    await saveTableData();
-                    window.open('https://creatorapp.zoho.com/guillaumon/app-envio-de-notas-boletos-guillaumon/#Script:page.refresh', '_top');
-
-                    //const urlAtual = window.location.href;
-                    //history.pushState({}, '', urlAtual);
-                    //window.history.go(-1);
-                }
-
-                // Chama a função com atraso para simular carregamento
-                executar().then(() => {
-                    document.body.removeChild(overlay); // Fecha o popup
-                });
-            }
-        });
-
-        // Ação ao clicar em Cancelar
-        cancelButton.addEventListener('click', function() {
-            document.body.removeChild(overlay); // Fecha o popup
-        });
-
-        // Montagem do popup
-        popup.appendChild(titleElement);
-        popup.appendChild(messageElement);
-        popup.appendChild(buttonContainer);
-        popup.appendChild(loadingElement); // Adiciona o elemento de carregamento, inicialmente oculto
-        overlay.appendChild(popup);
-        document.body.appendChild(overlay);
-    }
-}
-function customAdjust(botao, tipo, titulo, mensagem){
-    console.log("[ACIONOU O BOTÃO DE AJUSTE]");
-
-    // Criação do overlay
-    const overlay = document.createElement('div');
-    overlay.classList.add('customAdjust-overlay-div');
-
-    // Criação da janela do popup
-    const popup = document.createElement('div');
-    popup.classList.add('customAdjust-div');
-
-    // Título
-    const titleElement = document.createElement('h3');
-    titleElement.classList.add('customAdjust-title');
-    titleElement.textContent = titulo;
-
-    // Mensagem
-    const messageElement = document.createElement('p');
-    messageElement.textContent = mensagem;
-    messageElement.classList.add('customAdjust-message');
-
-    // Container dos botões
-    const buttonContainer = document.createElement('div');
-    buttonContainer.classList.add('customConfirm-buttonContainer');
-
-    // Campo de texto para inserir ajuste
-    const inputElement = document.createElement('textarea');
-    inputElement.classList.add('customAdjust-textarea');
-    inputElement.placeholder = 'Ex.: Gostaria que o valor de frete fosse alterado...';
-
-    // Botão Confirmar
-    const confirmButton = document.createElement('button');
-    confirmButton.textContent = 'Confirmar';
-    confirmButton.classList.add('customAdjust-confirmButton');
-    buttonContainer.appendChild(confirmButton);
-
-    // Botão Cancelar
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancelar';
-    cancelButton.classList.add('customAdjust-cancelButton');
-    buttonContainer.appendChild(cancelButton);
-
-    // Elemento de carregamento
-    const loadingElement = document.createElement('div');
-    loadingElement.classList.add('customConfirm-loading');
-    loadingElement.innerHTML = '<div class="customConfirm-loading-spinner"></div> Carregando, aguarde...';
-
-    // Ação ao clicar em Confirmar
-    confirmButton.addEventListener('click', function() {
-        const textoAjuste = inputElement.value.trim(); // Pega o valor do campo de texto
-
-        if (tipo === 'ajuste' && textoAjuste != "") {
-            // Esconde os botões e a mensagem original, exibe o carregamento
-            confirmButton.style.display = 'none';
-            cancelButton.style.display = 'none';
-            titleElement.style.display = 'none';
-            messageElement.style.display = 'none';
-            inputElement.style.display = 'none';
-            loadingElement.style.display = 'flex';
-
-            // Função para salvar o ajuste no Zoho Creator
-            async function executar() {
-                const payload = {
-                    data: {
-                        Solicitacao_de_ajuste: textoAjuste,
-                        Status_geral: "Ajuste solicitado"
-                    }
-                };
-
-                const registroID = botao.dataset.idRegistro; // Obtém o ID do registro a partir do botão
-
-                // Função para atualizar o registro no Zoho
-                respAjuste = await executar_apiZoho({ tipo: "atualizar_reg", ID: registroID, corpo: payload,  nomeR: "Laranj_PDC_Digital_ADM"});
-                if (respAjuste) {
-                    console.log("Ajuste salvo no Zoho Creator:", textoAjuste);
-                    window.open('https://creatorapp.zoho.com/guillaumon/app-envio-de-notas-boletos-guillaumon/#Script:page.close', '_top');
-                }
-
-                // Fechar o popup
-                document.body.removeChild(overlay);
-            }
-            // Chama a função para salvar o ajuste
-            executar();
-        } else {
-            alert("Por favor, preencha o campo de ajuste.");
-        }
-    });
-
-    // Ação ao clicar em Cancelar
-    cancelButton.addEventListener('click', function() {
-        console.log('Ação cancelada');
-        document.body.removeChild(overlay); // Fecha o popup
-    });
-
-    // Montagem do popup
-    popup.appendChild(titleElement);
-    popup.appendChild(messageElement);
-    popup.appendChild(inputElement);
-    popup.appendChild(buttonContainer);
-    popup.appendChild(loadingElement);
-    overlay.appendChild(popup);
-    document.body.appendChild(overlay);
-}
-
-function customArchive(botao, tipo, titulo, mensagem) {
-    console.log("[ACIONOU O BOTÃO DE ARQUIVAR]");
-
-    // Criação do overlay
-    const overlay = document.createElement('div');
-    overlay.classList.add('customArchive-overlay-div');
-
-    // Criação da janela do popup
-    const popup = document.createElement('div');
-    popup.classList.add('customArchive-div');
-
-    // Título
-    const titleElement = document.createElement('h3');
-    titleElement.classList.add('customArchive-title');
-    titleElement.textContent = titulo;
-
-    // Mensagem
-    const messageElement = document.createElement('p');
-    messageElement.textContent = mensagem;
-    messageElement.classList.add('customArchive-message');
-
-    // Container dos botões
-    const buttonContainer = document.createElement('div');
-    buttonContainer.classList.add('customConfirm-buttonContainer');
-
-    // Botão Confirmar
-    const confirmButton = document.createElement('button');
-    confirmButton.textContent = 'Confirmar';
-    confirmButton.classList.add('customArchive-confirmButton');
-    buttonContainer.appendChild(confirmButton)
-
-    // Botão Cancelar
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancelar';
-    cancelButton.classList.add('customArchive-cancelButton');
-    buttonContainer.appendChild(cancelButton)
-
-    // Elemento de carregamento
-    const loadingElement = document.createElement('div');
-    loadingElement.classList.add('customConfirm-loading');
-    loadingElement.innerHTML = '<div class="customConfirm-loading-spinner"></div> Carregando, aguarde...';
-
-    // Ação ao clicar em Confirmar
-    confirmButton.addEventListener('click', function() {
-        if (tipo === 'arquivar') {
-            // Esconde os botões e a mensagem original, exibe o carregamento
-            confirmButton.style.display = 'none';
-            cancelButton.style.display = 'none';
-            titleElement.style.display = 'none';
-            messageElement.style.display = 'none';
-            loadingElement.style.display = 'flex';
-
-            // Função para arquivar a proposta no Zoho Creator
-            async function executar() {
-                const payload = {
-                    data: {
-                        Status_geral: "Proposta arquivada"
-                    }
-                };
-
-                //const registroID = botao.dataset.idRegistro; // Obtém o ID do registro a partir do botão
-
-                // Função para atualizar o registro no Zoho
-                const respArquivo = await executar_apiZoho({ tipo: "atualizar_reg", ID: registroID, corpo: payload, nomeR: "Laranj_PDC_Digital_ADM" });
-                if (respArquivo) {
-                    console.log("Proposta arquivada no Zoho Creator");
-                    window.open('https://creatorapp.zoho.com/guillaumon/app-envio-de-notas-boletos-guillaumon/#Script:page.refresh', '_top');
-                }
-
-                // Fechar o popup
-                document.body.removeChild(overlay);
-            }
-            // Chama a função para arquivar a proposta
-            executar();
-        }
-    });
-
-    // Ação ao clicar em Cancelar
-    cancelButton.addEventListener('click', function() {
-        console.log('Ação cancelada');
-        document.body.removeChild(overlay); // Fecha o popup
-    });
-
-    // Montagem do popup
-    popup.appendChild(titleElement);
-    popup.appendChild(messageElement);
-    popup.appendChild(buttonContainer);
-    popup.appendChild(loadingElement);
-    overlay.appendChild(popup);
-    document.body.appendChild(overlay);
-}
-*/

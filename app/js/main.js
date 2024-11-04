@@ -4,14 +4,13 @@ import {executarProcessosInicias, customModal } from './utils.js'
 const _nomeApp = "app-envio-de-notas-boletos-guillaumon";
 
 const _nomeFormCot = "cotacao_Laranjeiras";
-const _nomeRelCot = "cotacao_Laranjeiras_Report";
+const _nomeRelCot = "Laranj_cotacoes_ADM";
 
 const _nomeFormPDC = "PDC_Digital";
 const _nomeRelPDC = "Laranj_PDC_Digital_ADM";
 
 const _nomeFormPlanoContas = "Classe_operacional";
 const _nomeRelPlanoContas = "Classe_operacional_Report";
-
 class Globais {
     constructor() {
         this.state = {
@@ -26,7 +25,10 @@ class Globais {
             numPDC_temp: null,
             cotacaoExiste: false,
             idProduto: 2,
-            pag: 'criar_cotacao'
+            pag: 'criar_cotacao',
+            classificacoes: null,
+            centrosCusto: null,
+            relacionamentosCentroCusto: null
         }
         return new Proxy(this.state, {
             get: (target, prop) => {
@@ -55,10 +57,14 @@ document.addEventListener('DOMContentLoaded', () => {
         "button-up": (elemento) => scrollToSection(currentSection -1),
         "button-down": (elemento) => scrollToSection(currentSection +1),
         "add-parcela": () => adicionarCampoVenc(),
-        "remover-parcela": (elemento) => removerCampoVenc(elemento),
+        "remover-parcela": (elemento) => removerCampoVenc(elemento)
+    };
+
+    /*
+    ,
         "add-classificacao": () => adicionarLinhaClassificacao(),
         "remover-classificacao": (elemento) => removerLinhaClassificacao(elemento)
-    };
+    */
 
     //=====Itera sobre o mapeamento, adicionando o evento a cada classe=====//
     Object.keys(buttonActions).forEach((className) => {

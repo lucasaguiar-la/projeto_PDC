@@ -1,4 +1,4 @@
-import{formatToBRL, converterParaDecimal, convertToNegative,restrictNumericInput, restrictIntegerInput, executar_apiZoho, baseFornecedores, customModal} from './utils.js'
+import{formatToBRL, converterParaDecimal, convertToNegative,restrictNumericInput, restrictIntegerInput, executar_apiZoho, baseFornecedores, classificacoes,customModal, buscarPlanContas, popularSelects,filtrarClassesOperacionais} from './utils.js'
 import{globais, mostrarCamposPagamento} from './main.js'
 let selectedCheckbox = null;
 const qlt = 4; //Total de linhas de totalizadores, considerando linha com botão de adicionar produto
@@ -10,9 +10,16 @@ let idsCotacao = new Array();
 export function preencherDadosPDC(resp)
 {
     globais.cotacaoExiste = true;
+    const data = resp.data[0];
+    globais.idPDC = data.ID;
 
     //==========Preparando dados da cotação==========//
-    const data = resp.data[0];
+    if (resp.data && resp.data.length > 0) {
+        console.log('=== Campos do registro ===');
+        Object.entries(resp.data[0]).forEach(([campo, valor]) => {
+            console.log(`${campo}:`, valor);
+        });
+    }
 
     //==========SESSÃO 1==========//
     const formDadosPDC = document.querySelector('#dados-PDC');
@@ -69,8 +76,7 @@ export function preencherDadosPDC(resp)
     }
 
     // Preenche as datas de vencimento
-    if (data.Vencimento_previsto) {
-        const datas = data.Vencimento_previsto.split(',');
+    if (data.Datas && Array.isArray(data.Datas)) {
         const camposData = document.getElementById('camposData');
         
         // Remove campos existentes
@@ -79,31 +85,38 @@ export function preencherDadosPDC(resp)
         }
 
         // Adiciona campos para cada data
-        datas.forEach((data, index) => {
-            const [dia, mes, ano] = data.trim().split('/');
-            const dataFormatada = `${ano}-${mes}-${dia}`;
+        data.Datas.forEach((dataObj, index) => {
+            if (!dataObj.display_value) return; // Pula datas vazias
+            
+            const [dia, mes, ano] = dataObj.display_value.split('/');
+            const dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
 
-            const divParcela = document.createElement('div');
-            divParcela.className = 'parcela';
-            
-            const label = document.createElement('label');
-            label.textContent = `Parcela nº ${index + 1}:`;
-            
-            const input = document.createElement('input');
-            input.type = 'date';
-            input.name = 'data[]';
-            input.value = dataFormatada;
-            
-            const btnRemover = document.createElement('button');
-            btnRemover.type = 'button';
-            btnRemover.className = 'removerCampo';
-            btnRemover.textContent = 'Remover';
-            
-            divParcela.appendChild(label);
-            divParcela.appendChild(input);
-            divParcela.appendChild(btnRemover);
-            
-            camposData.appendChild(divParcela);
+            if (index === 0) {
+                // Primeira data usa o campo existente
+                const primeiraParcela = document.createElement('div');
+                primeiraParcela.className = 'parcela';
+                
+                const label = document.createElement('label');
+                label.textContent = 'Parcela nº 1:';
+                
+                const input = document.createElement('input');
+                input.type = 'date';
+                input.name = 'Datas';
+                input.value = dataFormatada;
+                
+                const btnRemover = document.createElement('button');
+                btnRemover.type = 'button';
+                btnRemover.className = 'remover-parcela';
+                
+                primeiraParcela.appendChild(label);
+                primeiraParcela.appendChild(input);
+                primeiraParcela.appendChild(btnRemover);
+                
+                camposData.appendChild(primeiraParcela);
+            } else {
+                // Para datas adicionais, cria novos campos
+                adicionarCampoVenc(dataFormatada);
+            }
         });
     }
 
@@ -117,7 +130,7 @@ export function preencherDadosPDC(resp)
 //===========================PREENCHE A TABELA DAS COTAÇÃOES===========================//
 export async function prenchTabCot(resp) {
     if (resp && resp.code === 3000 && Array.isArray(resp.data) && resp.data.length > 0) {
-        console.log('Código da resposta:', resp.code);
+        //console.log('Código da resposta:', resp.code);
         
         if (resp.data && resp.data.length > 0) {
             console.log('=== Campos do primeiro registro ===');
@@ -135,6 +148,12 @@ export async function prenchTabCot(resp) {
 
         //=====Preparando dados da cotação (Fornecedores, produtos, valores e etc...)=====//
         const data = resp.data;
+
+        // Adicionar logs para debug
+        console.log('Produtos antes do filtro:', data.map(item => ({
+            id: item.id_produto,
+            produto: item.Produto
+        })));
 
         const idProdutos = [...new Set(data.map(item => item.id_produto))].sort((a, b) => a - b);
         globais.idProduto = Math.max(...idProdutos) + 1;
@@ -169,7 +188,7 @@ export async function prenchTabCot(resp) {
             quantidadeCell.classList.add('numeric-cell', 'integer-cell');
             quantidadeCell.innerText = objProduto[0].Quantidade || '';
             quantidadeCell.contentEditable = 'true';
-            restrictIntegerInput()({ target: quantidadeCell });
+            quantidadeCell.addEventListener('input', restrictIntegerInput);
 
             //Insere as colunas dos fornecedores na ordem correta
             fornecedores.forEach((fornecedorObj, fornecedorIndex) => {
@@ -253,9 +272,9 @@ export async function prenchTabCot(resp) {
             const headerRow1 = table.parentElement.querySelector('thead tr:nth-child(1)');
             const headerRow2 = table.parentElement.querySelector('thead tr:nth-child(2)');
             
-            const linhaFrete = table.rows[table.rows.length-4];
-            const linhaDescontos = table.rows[table.rows.length-3];
-            const linhaTotal = table.rows[table.rows.length-2];
+            const linhaFrete = table.querySelector('#linha-frete');
+            const linhaDescontos = table.querySelector('#linha-descontos');
+            const linhaTotal = table.querySelector('#linha-valor-total');
             
             fornecedores.forEach((fornecedorObj, index) => {
                 //Cria a célula com o nome do fornecedor//
@@ -322,7 +341,7 @@ export async function prenchTabCot(resp) {
 
                 //=====ADICIONA A CELULA DE FRETE=====//
                 const cellFrete = document.createElement('th');
-                cellFrete.innerText = valoresFrete[index];
+                cellFrete.innerText = formatToBRL(valoresFrete[index] || '0,00');
                 cellFrete.classList.add('numeric-cell');
                 cellFrete.colSpan = 2;
                 cellFrete.contentEditable = "true";
@@ -331,9 +350,9 @@ export async function prenchTabCot(resp) {
 
                 //=====ADICIONA A CELULA DE DESCONTO=====//
                 const cellDescontos = document.createElement('th');
-                cellDescontos.innerText = valoresDescontos[index] || '0,00';
+                cellDescontos.innerText = formatToBRL(valoresDescontos[index] || '0,00');
                 cellDescontos.classList.add('numeric-cell');
-                cellDescontos.addEventListener('blur', calcularTotais());
+                cellDescontos.addEventListener('blur', () => calcularTotais());
                 cellDescontos.colSpan = 2;
                 cellDescontos.contentEditable = "true";
                 cellDescontos.style.margin = '0 auto';
@@ -356,6 +375,13 @@ export async function prenchTabCot(resp) {
                 const otherTable = document.getElementById('otherDataTable');
                 const tbodyOther = otherTable.getElementsByTagName('tbody')[0];
 
+                if (tbodyOther.rows.length === 1 && 
+                    !tbodyOther.rows[0].cells[0].textContent.trim() && 
+                    !tbodyOther.rows[0].cells[1].textContent.trim() && 
+                    !tbodyOther.rows[0].cells[2].textContent.trim()) {
+                    tbodyOther.deleteRow(0);
+                }
+
                 const detailRow = tbodyOther.insertRow();
 
                 const fornCell = detailRow.insertCell();
@@ -371,6 +397,8 @@ export async function prenchTabCot(resp) {
         }
         // Adiciona os cabeçalhos dos fornecedores na ordem correta
         addHeaderForn(fornecedores);
+        // Calcula os totais
+        calcularTotais();
     }
 }
 
@@ -474,7 +502,7 @@ export async function saveTableData() {
         }
         
         // Captura os produtos e valores da tabela //
-        for (let i = 0; i < rowsBody.length - 3; i++) {
+        for (let i = 0; i < rowsBody.length - qlt; i++) {
             const row = rowsBody[i];
             const produtoId = row.dataset.id_produto;
             const produto = row.cells[0]?.innerText || '';
@@ -1171,7 +1199,8 @@ function calcularTotais() {
             const valorTotalCell = linha.cells[(index * 2) + ci];
             vt += (converterParaDecimal(valorTotalCell.textContent || '0') || 0);
         }
-        totalCell.textContent = formatToBRL((vt + vlrsFrete + vlrsDesconto).toFixed(2));
+        const valorTotal = (vt + vlrsFrete + vlrsDesconto).toFixed(2);
+        totalCell.textContent = formatToBRL(valorTotal);
     });
 }
 
@@ -1376,53 +1405,32 @@ export function atualizarOuvintesTabDetlhesForn()
  * @description
  * - Cria um novo campo de data para parcelas de pagamento
  */
-export function adicionarCampoVenc(){
+export function adicionarCampoVenc(dataInicial = '') {
+    const camposData = document.getElementById('camposData');
+    const qtdParcelas = camposData.getElementsByClassName('parcela').length;
+
+    const divParcela = document.createElement('div');
+    divParcela.className = 'parcela';
     
-    function atualizarLabels() {
-
-        const parcelas = document.querySelectorAll('#camposData .parcela');
-        parcelas.forEach((parcela, index) => {
-            parcela.querySelector('label').innerText = `Parcela nº ${index + 1}:`;
-        });
+    const label = document.createElement('label');
+    label.textContent = `Parcela nº ${qtdParcelas + 1}:`;
+    
+    const input = document.createElement('input');
+    input.type = 'date';
+    input.name = 'Datas';
+    if (dataInicial) {
+        input.value = dataInicial;
     }
-
-    numeroParcela++;
-
-    //====================CRIA UM NOVO CONTAINER PARA O CAMPO DE DATA E O BOTÃO DE REMOVER====================//
-    const novoCampo = document.createElement('div');
-    novoCampo.classList.add('parcela');
-
-    //====================CRIA O RÓTULO PARA O CAMPO DE DATA====================//
-    const novoLabel = document.createElement('label');
-    novoLabel.innerText = `Parcela nº ${numeroParcela}:`;
-
-    //====================CRIA O CAMPO DE DATA====================//
-    const novoInput = document.createElement('input');
-    novoInput.type = 'date';
-    novoInput.name = 'Datas';
-
-    //====================CRIA O BOTÃO DE REMOVER====================//
-    const removerButton = document.createElement('button');
-    removerButton.type = 'button';
-    removerButton.classList.add('remover-parcela');
-
-    //====================ADICIONA A FUNÇÃO DE REMOVER AO BOTÃO DE REMOVER====================//
-    removerButton.addEventListener('click', function () {
-        novoCampo.remove();
-        numeroParcela--;
-        atualizarLabels();
-    });
-
-    //====================ADICIONA O CAMPO DE DATA, O RÓTULO E O BOTÃO DE REMOVER AO CONTAINER====================//
-    novoCampo.appendChild(novoLabel);
-    novoCampo.appendChild(novoInput);
-    novoCampo.appendChild(removerButton);
-
-    //====================ADICIONA O NOVO CAMPO AO CONTAINER DE CAMPOS====================//
-    document.getElementById('camposData').appendChild(novoCampo);
-
-    //====================ATUALIZA OS RÓTULOS DE PARCELA PARA MANTER A SEQUÊNCIA CORRETA====================//
-    atualizarLabels();
+    
+    const btnRemover = document.createElement('button');
+    btnRemover.type = 'button';
+    btnRemover.className = 'remover-parcela';
+    
+    divParcela.appendChild(label);
+    divParcela.appendChild(input);
+    divParcela.appendChild(btnRemover);
+    
+    camposData.appendChild(divParcela);
 }
 
 export function removerCampoVenc(elemento) {
@@ -1434,6 +1442,117 @@ export function removerCampoVenc(elemento) {
         numeroParcela--;
         atualizarLabels();
     }
+}
+
+/**
+ * Adiciona uma nova linha de classificação contábil
+ * 
+ * @function adicionarLinhaClassificacao
+ * @returns {void}
+ * 
+ * @description
+ * - Cria uma nova linha com todos os campos necessários
+ * - Mantém a mesma estrutura e estilo das linhas existentes
+ */
+export function adicionarLinhaClassificacao() {
+    const camposClassificacao = document.getElementById('camposClassificacao');
+    
+    // Cria a nova linha
+    const novaLinha = document.createElement('div');
+    novaLinha.classList.add('classificacao');
+    
+    // Função auxiliar para criar campos
+    const criarCampo = (inputType, inputName, options = null) => {
+        const campo = document.createElement('div');
+        campo.classList.add('campo');
+        
+        let input;
+        if (inputType === 'select') {
+            input = document.createElement('select');
+            const optionPadrao = document.createElement('option');
+            optionPadrao.value = '';
+            optionPadrao.disabled = true;
+            optionPadrao.selected = true;
+            optionPadrao.textContent = 'Selecione...';
+            input.appendChild(optionPadrao);
+
+            // Adiciona as opções se fornecidas
+            if (options) {
+                options.forEach(([value, text]) => {
+                    const option = document.createElement('option');
+                    option.value = value;
+                    option.textContent = text;
+                    input.appendChild(option);
+                });
+            }
+        } else {
+            input = document.createElement('input');
+            input.type = inputType;
+            if (inputType === 'number') {
+                input.step = '0.01';
+            }
+        }
+        input.name = inputName;
+        
+        campo.appendChild(input);
+        return campo;
+    };
+
+    // Prepara as opções para os selects
+    const opcoesClasse = Array.from(classificacoes.entries()).map(([codigo, [nome]]) => [
+        codigo,
+        `${codigo} - ${nome}`
+    ]);
+
+    const opcoesCentro = Array.from(classificacoes.entries()).map(([codigo, [, codCentro, nomeCentro]]) => [
+        codCentro,
+        `${codCentro} - ${nomeCentro}`
+    ]).filter((value, index, self) => 
+        index === self.findIndex((t) => t[0] === value[0])
+    );
+    
+    // Cria os campos
+    const campoConta = criarCampo('select', 'Conta');
+    const campoClasse = criarCampo('select', 'Classe', opcoesClasse);
+    const campoCentro = criarCampo('select', 'Centro', opcoesCentro);
+    const campoValor = criarCampo('number', 'Valor');
+
+    // Adiciona evento de mudança na classe para filtrar centro de custo
+    campoClasse.querySelector('select').addEventListener('change', (e) => {
+        const classeSelecionada = e.target.value;
+        const selectCentro = campoCentro.querySelector('select');
+        
+        // Limpa as opções atuais
+        selectCentro.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+        
+        // Obtém o centro de custo correspondente à classe selecionada
+        const [, codCentro, nomeCentro] = classificacoes.get(classeSelecionada) || [];
+        
+        if (codCentro && nomeCentro) {
+            const option = document.createElement('option');
+            option.value = codCentro;
+            option.textContent = `${codCentro} - ${nomeCentro}`;
+            selectCentro.appendChild(option);
+            selectCentro.value = codCentro;
+        }
+    });
+    
+    // Cria o botão de remoção
+    const botaoRemover = document.createElement('button');
+    botaoRemover.type = 'button';
+    botaoRemover.classList.add('remover-classificacao');
+    botaoRemover.addEventListener('click', () => removerLinhaClassificacao(botaoRemover));
+    
+    // Adiciona todos os elementos à nova linha
+    novaLinha.appendChild(campoConta);
+    novaLinha.appendChild(campoClasse);
+    novaLinha.appendChild(campoCentro);
+    novaLinha.appendChild(campoValor);
+    novaLinha.appendChild(botaoRemover);
+    
+    // Adiciona a nova linha ao container
+    camposClassificacao.appendChild(novaLinha);
+    //popularSelects(globais.classificacoes,globais.centrosCusto);
 }
 
 /**
@@ -1462,72 +1581,4 @@ export function removerLinhaClassificacao(botao) {
     // Remove a linha específica
     const linhaAtual = botao.closest('.classificacao');
     linhaAtual.remove();
-}
-
-/**
- * Adiciona uma nova linha de classificação contábil
- * 
- * @function adicionarLinhaClassificacao
- * @returns {void}
- * 
- * @description
- * - Cria uma nova linha com todos os campos necessários
- * - Mantém a mesma estrutura e estilo das linhas existentes
- */
-export function adicionarLinhaClassificacao() {
-    const camposClassificacao = document.getElementById('camposClassificacao');
-    
-    // Cria a nova linha
-    const novaLinha = document.createElement('div');
-    novaLinha.classList.add('classificacao');
-    
-    // Função auxiliar para criar campos
-    const criarCampo = (inputType, inputName) => {
-        const campo = document.createElement('div');
-        campo.classList.add('campo');
-        
-        let input;
-        if (inputType === 'select') {
-            input = document.createElement('select');
-            const optionPadrao = document.createElement('option');
-            optionPadrao.value = '';
-            optionPadrao.disabled = true;
-            optionPadrao.selected = true;
-            optionPadrao.textContent = 'Selecione...';
-            input.appendChild(optionPadrao);
-        } else {
-            input = document.createElement('input');
-            input.type = inputType;
-            if (inputType === 'number') {
-                input.step = '0.01';
-            }
-        }
-        input.name = inputName;
-        
-        campo.appendChild(input);
-        
-        return campo;
-    };
-    
-    // Cria os campos
-    const campoConta = criarCampo('select', 'Conta');
-    const campoClasse = criarCampo('select', 'Classe');
-    const campoCentro = criarCampo('select', 'Centro');
-    const campoValor = criarCampo('number', 'Valor');
-    
-    // Cria o botão de remoção
-    const botaoRemover = document.createElement('button');
-    botaoRemover.type = 'button';
-    botaoRemover.classList.add('remover-classificacao');
-    botaoRemover.addEventListener('click', () => removerLinhaClassificacao(botaoRemover));
-    
-    // Adiciona todos os elementos à nova linha
-    novaLinha.appendChild(campoConta);
-    novaLinha.appendChild(campoClasse);
-    novaLinha.appendChild(campoCentro);
-    novaLinha.appendChild(campoValor);
-    novaLinha.appendChild(botaoRemover);
-    
-    // Adiciona a nova linha ao container
-    camposClassificacao.appendChild(novaLinha);
 }
