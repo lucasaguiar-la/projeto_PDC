@@ -400,53 +400,46 @@ export async function saveTableData() {
         for (let elemento of elementos) {
             // Verifica se o campo tem um valor e se está visível (caso de campos ocultos)
             if (elemento.name && (elemento.type !== 'radio' || elemento.checked)) {
-                if (elemento.type === 'date' && elemento.value) {
-                    const data = new Date(elemento.value);
-                    const dia = String(data.getDate()).padStart(2, '0');
-                    const mes = String(data.getMonth() + 1).padStart(2, '0');
-                    const ano = data.getFullYear();
-                    dadosIniciaisPdc[elemento.name] = `${dia}/${mes}/${ano}`;
-                } else {
-                    dadosIniciaisPdc[elemento.name] = elemento.value;
-                }
+                dadosIniciaisPdc[elemento.name] = elemento.value;
             }
         }
         dadosIniciaisPdc["id_temp"] = globais.numPDC_temp;
-        /*
+
         //====================BUSCA OS DADOS DETALHES DO PDC====================//
-        const formDdsDetalhes = document.querySelector('#dados-detalhes');
-        const dadosDetalhesPag = {};
-    
+        const formDdsDetalhes = document.querySelector('#form-pagamento');
+
         // Obter todos os elementos do formulário
         const elementosDetalhes = formDdsDetalhes.elements;
         for (let elemento of elementosDetalhes) {
             // Verifica se o campo tem um valor e se está visível (caso de campos ocultos)
             if (elemento.name && (elemento.type !== 'radio' || elemento.checked)) {
                 if (elemento.type === 'date' && elemento.value) {
-                    const data = new Date(elemento.value);
-                    const dia = String(data.getDate()).padStart(2, '0');
-                    const mes = String(data.getMonth() + 1).padStart(2, '0');
-                    const ano = data.getFullYear();
-                    dadosDetalhesPag[elemento.name] = `${dia}/${mes}/${ano}`;
+                    // Ajusta o fuso horário para evitar problemas com UTC
+                    const [ano, mes, dia] = elemento.value.split('-');
+                    
+                    if (!dadosIniciaisPdc[elemento.name]) {
+                        dadosIniciaisPdc[elemento.name] = [];
+                        // Adiciona o primeiro vencimento em um campo separado
+                        dadosIniciaisPdc["Vencimento_previsto"] = `${dia}/${mes}/${ano}`;
+                    }
+                    
+                    dadosIniciaisPdc[elemento.name].push({
+                        "Vencimento_previsto": `${dia}/${mes}/${ano}`
+                    });
                 } else {
-                    dadosDetalhesPag[elemento.name] = elemento.value;
+                    dadosIniciaisPdc[elemento.name] = elemento.value;
                 }
             }
         }
-        dadosDetalhesPag["id_temp"] = globais.numPDC_temp;
-
-
-
-
-
-
-        */
 
         //====================BUSCA OS DADOS DA TABELA DE PREÇOS====================//
         
         const table = document.getElementById('priceTable');
         const headerRow1 = table.rows[0];
-        const rowFrete = table.rows[table.rows.length -3];
+        const rowFrete = table.rows[table.rows.length - qlt];
+        const rowDescontos = table.rows[table.rows.length -(qlt-1)];
+        const rowTotal = table.rows[table.rows.length -(qlt-2)];
+
         const rowsBody = table.getElementsByTagName('tbody')[0].rows;
         const data = [];
         // Variáveis da segunda tabela (Detalhes das Cotações)
@@ -455,6 +448,8 @@ export async function saveTableData() {
 
         const suppliers = [];
         const deliveryCosts = [];
+        const descontos = [];
+        const totalGeral = [];
         const suplierIds = [];
 
         // Captura os fornecedores da tabela
@@ -466,8 +461,14 @@ export async function saveTableData() {
                 suplierIds.push(supplierIdForn);
                 suppliers.push(supplierName);
 
-                const dc = converterParaDecimal((rowFrete.cells[i - 1].innerText).replace(".", "").replace(",", ".") || '0');
-                deliveryCosts.push(dc);
+                const frt = converterParaDecimal((rowFrete.cells[i - 1].innerText) || '0');
+                deliveryCosts.push(frt);
+
+                const d = converterParaDecimal((rowDescontos.cells[i - 1].innerText) || '0');
+                descontos.push(d);
+
+                const total = converterParaDecimal((rowTotal.cells[i - 1].innerText) || '0');
+                totalGeral.push(total);
             }
             
         }
@@ -486,6 +487,8 @@ export async function saveTableData() {
                     const totalPriceIndex = unitPriceIndex + 1;
                     const fornecedor = suppliers[j];
                     const valor_frete = deliveryCosts[j];
+                    const valor_descontos = descontos[j];
+                    const valor_totalGeral = totalGeral[j];
 
                     const valor_unitario = converterParaDecimal((row.cells[unitPriceIndex]?.innerText) || '0');
                     const valor_total = converterParaDecimal((row.cells[totalPriceIndex]?.innerText) || '0');
@@ -494,6 +497,10 @@ export async function saveTableData() {
                     const observacao = otherRows[j].cells[2]?.innerText || '';
 
                     const fornecedorAprovado = headerRow1.cells[j + 2].querySelector('input[type="checkbox"]').checked;
+                    if(fornecedorAprovado){
+                        dadosIniciaisPdc["Beneficiario"] = fornecedor;
+
+                    }
 
                     const rowData = {
                         id_produto: produtoId,
@@ -504,6 +511,8 @@ export async function saveTableData() {
                         Valor_unitario: valor_unitario,
                         Valor_total: valor_total,
                         Valor_do_frete: valor_frete,
+                        Descontos: valor_descontos,
+                        Total_geral: valor_totalGeral,
                         Condicoes_de_pagamento: condicao_pagamento,
                         Observacoes: observacao,
                         numero_de_PDC: globais.numPDC,
@@ -538,7 +547,7 @@ export async function saveTableData() {
         console.log(json);
         let respCot = await executar_apiZoho({ tipo: "add_reg", corpo: json });
         console.log('resposta da cotação: ', respCot);
-        
+
         /**
         *TODO: PRECISA CRIAR O CÓDIGO PARA ATUALIZAR O STATUS DO PDC
         */ 
@@ -1390,7 +1399,7 @@ export function adicionarCampoVenc(){
     //====================CRIA O CAMPO DE DATA====================//
     const novoInput = document.createElement('input');
     novoInput.type = 'date';
-    novoInput.name = 'data[]';
+    novoInput.name = 'Datas';
 
     //====================CRIA O BOTÃO DE REMOVER====================//
     const removerButton = document.createElement('button');
