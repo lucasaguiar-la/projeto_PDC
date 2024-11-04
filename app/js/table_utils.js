@@ -1435,3 +1435,99 @@ export function removerCampoVenc(elemento) {
         atualizarLabels();
     }
 }
+
+/**
+ * Remove uma linha de classificação contábil
+ * 
+ * @function removerLinhaClassificacao
+ * @param {HTMLElement} botao - O botão de remoção que foi clicado
+ * @returns {void}
+ * 
+ * @description
+ * - Verifica se existe mais de uma linha antes de permitir a remoção
+ * - Remove a linha de classificação contábil correspondente ao botão clicado
+ */
+export function removerLinhaClassificacao(botao) {
+    // Busca o form pai mais próximo
+    const formPai = botao.closest('form');
+    
+    // Busca todas as linhas de classificação dentro deste form específico
+    const linhas = formPai.getElementsByClassName('classificacao');
+    
+    // Impede a remoção se houver apenas uma linha
+    if (linhas.length <= 1) {
+        return;
+    }
+    
+    // Remove a linha específica
+    const linhaAtual = botao.closest('.classificacao');
+    linhaAtual.remove();
+}
+
+/**
+ * Adiciona uma nova linha de classificação contábil
+ * 
+ * @function adicionarLinhaClassificacao
+ * @returns {void}
+ * 
+ * @description
+ * - Cria uma nova linha com todos os campos necessários
+ * - Mantém a mesma estrutura e estilo das linhas existentes
+ */
+export function adicionarLinhaClassificacao() {
+    const camposClassificacao = document.getElementById('camposClassificacao');
+    
+    // Cria a nova linha
+    const novaLinha = document.createElement('div');
+    novaLinha.classList.add('classificacao');
+    
+    // Função auxiliar para criar campos
+    const criarCampo = (inputType, inputName) => {
+        const campo = document.createElement('div');
+        campo.classList.add('campo');
+        
+        let input;
+        if (inputType === 'select') {
+            input = document.createElement('select');
+            const optionPadrao = document.createElement('option');
+            optionPadrao.value = '';
+            optionPadrao.disabled = true;
+            optionPadrao.selected = true;
+            optionPadrao.textContent = 'Selecione...';
+            input.appendChild(optionPadrao);
+        } else {
+            input = document.createElement('input');
+            input.type = inputType;
+            if (inputType === 'number') {
+                input.step = '0.01';
+            }
+        }
+        input.name = inputName;
+        
+        campo.appendChild(input);
+        
+        return campo;
+    };
+    
+    // Cria os campos
+    const campoConta = criarCampo('select', 'Conta');
+    const campoClasse = criarCampo('select', 'Classe');
+    const campoCentro = criarCampo('select', 'Centro');
+    const campoValor = criarCampo('number', 'Valor');
+    
+    // Cria o botão de remoção
+    const botaoRemover = document.createElement('button');
+    botaoRemover.type = 'button';
+    botaoRemover.classList.add('remover-classificacao');
+    botaoRemover.addEventListener('click', () => removerLinhaClassificacao(botaoRemover));
+    
+    // Adiciona todos os elementos à nova linha
+    novaLinha.appendChild(campoConta);
+    novaLinha.appendChild(campoClasse);
+    novaLinha.appendChild(campoCentro);
+    novaLinha.appendChild(campoValor);
+    novaLinha.appendChild(botaoRemover);
+    
+    // Adiciona a nova linha ao container
+    camposClassificacao.appendChild(novaLinha);
+}

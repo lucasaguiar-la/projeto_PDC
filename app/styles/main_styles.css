@@ -48,27 +48,8 @@ body {
 }
 
 /* CSS */
-th {
-    position: relative;
-    line-height: 12pt;
-}
-
-.remove-forn-btn {
-    background: none;
-    border: none;
-    color: #921414;
-    font-size: 30px;
-    cursor: pointer;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: color 0.2s ease;
-}
-
-.remove-forn-btn::before {
-    content: "⨯";
+select option[disabled] {
+    color: #999999; /* ou qualquer outra cor que desejar */
 }
 
 /*==========SECAO 01==========*/
@@ -191,6 +172,7 @@ th {
 
 
 /*==========SECAO 02==========*/
+
 #priceTable,
 #otherDataTable {
 
@@ -213,6 +195,10 @@ th {
     background-color: #8294b4;
 }
 
+th {
+    position: relative;
+    line-height: 12pt;
+}
 
 .linhas-totalizadoras td
 {
@@ -270,6 +256,24 @@ button:hover {
     transition: color 0.3s ease;
 }
 
+.remove-forn-btn {
+    background: none;
+    border: none;
+    color: #921414;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.remove-forn-btn::before {
+    content: "⨯";
+}
+
 .add-product-btn
 {
     margin-left: 3%;
@@ -324,7 +328,7 @@ button:hover {
 .approve-btn:hover,
 .adjust-btn:hover,
 .archive-btn:hover {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
     filter: brightness(0.9);
 }
 
@@ -739,4 +743,177 @@ button:hover {
     margin-left: 3%;
 }
 
+/* Estilização do formulário de classificação contábil */
+.form-classificacao .form-container {
+    border: 1px solid #ddd;
+    padding: 3.5%;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 1%;
+    margin-bottom: 1%;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+}
 
+/* Novo estilo para os cabeçalhos das colunas */
+.form-classificacao .campo-headers {
+    display: flex;
+    gap: 15px;
+    padding: 10px 0;
+    border-bottom: 2px solid #8294b4;
+    margin-bottom: 10px;
+}
+
+.form-classificacao .campo-header {
+    flex: 1;
+    font-weight: bold;
+    color: #333;
+    font-size: 90%;
+}
+
+/* Ajuste na classificação para remover labels repetidos */
+.classificacao {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) auto;
+    gap: 15px;
+    padding: 10px 0;
+    align-items: start;
+}
+
+.classificacao .campo {
+    display: grid;
+    grid-template-rows: auto 35px;
+    gap: 8px;
+}
+
+.classificacao .campo label {
+    font-weight: bold;
+    color: #333;
+    font-size: 90%;
+}
+
+.classificacao select,
+.classificacao input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 90%;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.remover-classificacao {
+    background: none;
+    border: none;
+    color: #921414;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+    align-self: end; /* Alinha o botão com os inputs */
+}
+
+.remover-classificacao::before {
+    content: "⨯";
+}
+
+/* Remove estilos conflitantes */
+.classificacao:first-of-type .remover-classificacao {
+    transform: none;
+}
+
+.classificacao:first-of-type .remover-classificacao:hover {
+    transform: translateY(-1px);
+}
+
+/* Estilos para o container de classificação */
+#camposClassificacao {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+/* Estilo para cada linha de classificação */
+.classificacao {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr) auto;
+    gap: 15px;
+    align-items: end;
+    padding: 4px 0;
+}
+
+/* Estilo para os campos */
+.classificacao .campo {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Estilo para labels - apenas na primeira linha */
+.classificacao:first-child .campo label {
+    font-weight: bold;
+    color: #333;
+    font-size: 90%;
+    margin-bottom: 15px;
+}
+
+/* Estilo comum para selects e inputs */
+.classificacao select,
+.classificacao input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 90%;
+    background-color: #fff;
+    box-sizing: border-box;
+    height: 35px;
+}
+
+/* Estilo para o botão de remover */
+.remover-classificacao {
+    background: none;
+    border: none;
+    color: #921414;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+    height: 35px;
+}
+
+.remover-classificacao::before {
+    content: "⨯";
+}
+
+/* Estilo para o botão de adicionar */
+.add-classificacao {
+    background: none;
+    border: none;
+    color: #187124;
+    font-size: 30px;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s ease;
+}
+
+.add-classificacao::before {
+    content: "+";
+}
+
+/* Hover effects */
+.remover-classificacao:hover,
+.add-classificacao:hover {
+    transform: translateY(-1px);
+}

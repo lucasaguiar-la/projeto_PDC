@@ -1,4 +1,4 @@
-import {addProductRow, addSupplierColumn, adicionarCampoVenc, removerCampoVenc} from './table_utils.js'
+import {addProductRow, addSupplierColumn, adicionarCampoVenc, removerCampoVenc, adicionarLinhaClassificacao, removerLinhaClassificacao} from './table_utils.js'
 import {executarProcessosInicias, customModal } from './utils.js'
 
 const _nomeApp = "app-envio-de-notas-boletos-guillaumon";
@@ -55,7 +55,9 @@ document.addEventListener('DOMContentLoaded', () => {
         "button-up": (elemento) => scrollToSection(currentSection -1),
         "button-down": (elemento) => scrollToSection(currentSection +1),
         "add-parcela": () => adicionarCampoVenc(),
-        "remover-parcela": (elemento) => removerCampoVenc(elemento)
+        "remover-parcela": (elemento) => removerCampoVenc(elemento),
+        "add-classificacao": () => adicionarLinhaClassificacao(),
+        "remover-classificacao": (elemento) => removerLinhaClassificacao(elemento)
     };
 
     //=====Itera sobre o mapeamento, adicionando o evento a cada classe=====//

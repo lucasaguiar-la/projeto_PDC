@@ -162,32 +162,43 @@
                 </form>
             </div>
         </div>
-        
-        <!--TABELA DE CLASSIFICAÇÃO CONTÁBIL
-
-        <div class="classificacao-contabil section" id="section3">
-            <h4 style="margin-top: 5%;">CLASSIFICAÇÃO CONTÁBIL</h4>
-            <table id="accounting-classification">
-                <thead>
-                    <tr>
-                        <th>Conta a debitar</th>
-                        <th>Classe operacional</th>
-                        <th>Centro de custo</th>
-                        <th>Valor</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                    </tr>
-                </tbody>
-            </table>
-            
+        <!--FORM DE CLASSIFICAÇÃO CONTÁBIL-->
+        <div class="form-classificacao section" id="section4">
+            <h2 class="titulos">CLASSIFICAÇÃO CONTÁBIL</h2>
+            <div class="form-container">
+                <form action="#" method="post" id="form-classificacao">
+                    <div id="camposClassificacao">
+                        <div class="classificacao">
+                            <div class="campo">
+                                <label for="conta">Conta a debitar:</label>
+                                <select id="conta" name="Conta">
+                                    <option value="" disabled selected>Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="campo">
+                                <label for="classe">Classe operacional:</label>
+                                <select id="classe" name="Classe">
+                                    <option value="" disabled selected>Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="campo">
+                                <label for="centro">Centro de custo:</label>
+                                <select id="centro" name="Centro">
+                                    <option value="" disabled selected>Selecione...</option>
+                                </select>
+                            </div>
+                            <div class="campo">
+                                <label for="valor">Valor:</label>
+                                <input type="number" id="valor" name="Valor" step="0.01">
+                            </div>
+                            <button type="button" class="remover-classificacao"></button>
+                        </div>
+                    </div>
+                    <button type="button" id="adicionarClassificacao" class="add-classificacao"></button>
+                </form>
+            </div>
         </div>
-        -->
+        <!--BOTÃO SALVAR-->
         <div class="section" id="section5">
             <div class="save-btn-container">
                 <button class="save-btn">Salvar</button>
