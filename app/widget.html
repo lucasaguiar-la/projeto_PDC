@@ -1,111 +1,59 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Exemplo de Tabela</title>
-</head>
-
-<body>
-  <table id="minhaTabela">
-    <thead>
-      <tr>
-        <th>Cabeçalho 1</th>
-        <th>Cabeçalho 2</th>
-        <th>Cabeçalho 3</th>
-        <th>Cabeçalho 4</th>
-        <th>Cabeçalho 5</th>
-        <th>Cabeçalho 6</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>1A</td>
-        <td>1B</td>
-        <td>1C</td>
-        <td>1D</td>
-        <td>1E</td>
-        <td>1F</td>
-      </tr>
-      <tr>
-        <td>2A</td>
-        <td>2B</td>
-        <td>2C</td>
-        <td>2D</td>
-        <td>2E</td>
-        <td>2F</td>
-      </tr>
-      <tr>
-        <td>3A</td>
-        <td>3B</td>
-        <td>3C</td>
-        <td>3D</td>
-        <td>3E</td>
-        <td>3F</td>
-      </tr>
-      <tr>
-        <td>4A</td>
-        <td>4B</td>
-        <td>4C</td>
-        <td>4D</td>
-        <td>4E</td>
-        <td>4F</td>
-      </tr>
-      <tr>
-        <td>5A</td>
-        <td>5B</td>
-        <td>5C</td>
-        <td>5D</td>
-        <td>5E</td>
-        <td>5F</td>
-      </tr>
-      <tr>
-        <td>6A</td>
-        <td>6B</td>
-        <td>6C</td>
-        <td>6D</td>
-        <td>6E</td>
-        <td>6F</td>
-      </tr>
-      <tr>
-        <td>7A</td>
-        <td>7B</td>
-        <td>7C</td>
-        <td>7D</td>
-        <td>7E</td>
-        <td>7F</td>
-      </tr>
-    </tbody>
-  </table>
-
-
-  <script>
-    // Função para extrair os dados da tabela
-    function extrairTrechoTabela() {
-      const tabela = document.getElementById('minhaTabela'); // Seleciona a tabela
-      const resultado = []; // Array para armazenar os dados extraídos
-
-      // Percorre as linhas da tabela (começando da linha 3 até a linha 7)
-      for (let i = 2; i < 7; i++) { // Linhas 3 a 7 (índices 2 a 6)
-        const linha = tabela.rows[i];
-        const dadosLinha = []; // Array para armazenar os dados da linha atual
-
-        // Percorre as células da linha (da coluna 2 até a coluna 5)
-        for (let j = 1; j < 5; j++) { // Colunas 2 a 5 (índices 1 a 4)
-          dadosLinha.push(linha.cells[j].innerText); // Adiciona o texto da célula ao array
-        }
-
-        resultado.push(dadosLinha); // Adiciona a linha de dados ao resultado
-      }
-
-      console.log(resultado); // Exibe os dados extraídos no console
+  <title>Modal Exemplo</title>
+  <style>
+    /* Estilos do Modal */
+    .modal {
+      display: none; /* Começa invisível */
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
     }
 
-    // Chama a função para extrair os dados
-    extrairTrechoTabela();
+    .modal-content {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 5px;
+      width: 300px;
+      text-align: center;
+    }
 
-  </script>
+    .modal button {
+      background-color: #333;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<button onclick="showModal()">Abrir Modal</button>
+
+<div id="modal" class="modal">
+  <div class="modal-content">
+    <p>Este é um modal de exemplo!</p>
+    <button onclick="closeModal()">Fechar</button>
+  </div>
+</div>
+
+<script>
+  function showModal() {
+    document.getElementById('modal').style.display = 'flex';
+  }
+
+  function closeModal() {
+    document.getElementById('modal').style.display = 'none';
+  }
+</script>
+
 </body>
-
 </html>

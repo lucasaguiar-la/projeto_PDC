@@ -354,41 +354,42 @@ export async function executar_apiZoho({ tipo = null, criterios = null, ID = nul
 }
 
 //=====Formata as células de valores para o formato BRL=====//
-export function formatToBRL(v) {;
+export function formatToBRL(v) {
+    console.log("[FORMATANDO PARA BRL]");
+    console.log("Valor:", v);
     let av; //Apoio ao valor
     let int = false; //Flag para inteiro
     let isNeg = false; //Flag para negativo
 
     if ((typeof v == "string" || typeof v == "number") && v !== "") {
-        av = converterParaDecimal(v);
-        let f = Math.pow(10, 2);
-        av = (Math.round(av * f) / f).toString();
+        av = converterStringParaDecimal(v);
     } else {
         av = v.innerText;
         int = v.classList.contains("integer-cell");
     }
+    console.log("Valor após conversão:", av);
 
     // Verifica se é negativo
     if (av.toString().startsWith('-')) {
         isNeg = true;
         av = av.toString().substring(1);
     }
-
-    av = int ? av : converterParaDecimal(av);
+    console.log("Valor após verificar se é negativo:", av);
+    av = int ? av : converterStringParaDecimal(av);
     av = /[.,]/.test(av) || int ? av : `${av}00`;
 
     let avc = (av.toString().split('.')[1] || '').length == 1 ? (`${av}0`).replace(/[^0-9]/g, '') : av.toString().replace(/[^0-9]/g, '');
 
     let pi = (avc.slice(0, -2) || (int ? '' : '0')).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
     let pd = avc.slice(-2);
-
+    console.log("Valor após formatar:", av);
     let vf = int ? `${pi}${pd}` : `${pi},${pd}`;
     
     // Adiciona o sinal negativo de volta se necessário
     if (isNeg) {
         vf = `-${vf}`;
     }
-
+    console.log("Valor final:", vf);
     if (v.innerText) {
         v.innerText = vf;
         return;
@@ -397,47 +398,71 @@ export function formatToBRL(v) {;
     }
 }
 
-export function converterParaDecimal(v) {
-    let cell = undefined;
-    let av;
-    let isNegative = false;
-
-    if (typeof v == "string" || typeof v == "number") {
-        av = v.toString().trim();
-    } else {
-        av = v.innerText.trim();
-        cell = v.target;
+/**
+ * Converte uma string em um valor decimal, removendo caracteres não numéricos
+ * e padronizando a formatação
+ * 
+ * @function converterStringParaDecimal 
+ * @param {string|number|HTMLElement} valor - Valor ou elemento a ser convertido
+ * @returns {number} Valor decimal formatado
+ *
+ * @example
+ * converterStringParaDecimal("ABC123") // retorna 123.00
+ * converterStringParaDecimal("ABC123.12") // retorna 123.12
+ * converterStringParaDecimal(elementoHTML) // atualiza o innerText e retorna o valor
+ */
+export function converterStringParaDecimal(valor) {
+    // Verifica se é um elemento HTML
+    const isElement = valor && typeof valor === 'object' && 'innerText' in valor;
+    const valorOriginal = isElement ? valor.innerText : valor;
+    
+    if (!valorOriginal) return 0.00;
+    
+    // Remove todos os caracteres não numéricos exceto ponto e vírgula
+    let numeroLimpo = valorOriginal.toString().replace(/[^\d.,\-]/g, '');
+    
+    // Trata números negativos
+    const isNegative = numeroLimpo.startsWith('-');
+    numeroLimpo = numeroLimpo.replace('-', '');
+    
+    // Conta quantos pontos e vírgulas existem
+    const qtdPontos = (numeroLimpo.match(/\./g) || []).length;
+    const qtdVirgulas = (numeroLimpo.match(/,/g) || []).length;
+    
+    // Se tiver mais de um separador do mesmo tipo, considera como separador de milhar
+    if (qtdPontos > 1 || qtdVirgulas > 1) {
+        numeroLimpo = numeroLimpo.replace(/[.,]/g, '');
+    } else if (qtdPontos === 1 && qtdVirgulas === 1) {
+        const posicaoPonto = numeroLimpo.lastIndexOf('.');
+        const posicaoVirgula = numeroLimpo.lastIndexOf(',');
+        
+        if (posicaoPonto > posicaoVirgula) {
+            numeroLimpo = numeroLimpo.replace(',', '');
+        } else {
+            numeroLimpo = numeroLimpo.replace('.', '').replace(',', '.');
+        }
+    } else if (qtdVirgulas === 1) {
+        numeroLimpo = numeroLimpo.replace(',', '.');
     }
-
-    // Verifica se é negativo
-    if (av.startsWith('-')) {
-        isNegative = true;
-        av = av.substring(1);
-    }
-
-    av = (av.split('.')[1] || '').length == 1 ? `${av}0` : av;
-    av = (av.split(',')[1] || '').length == 1 ? `${av}0` : av;
-
-    av = /[.,]/.test(av) ? av : `${av}00`;
-
-    let avc = av.replace(/[^0-9]/g, '');
-    let pi = avc.slice(0, -2) || '0';
-    let pd = avc.slice(-2);
-
-    // Monta o número formatado em decimal
-    let vf = parseFloat(`${pi}.${pd}`);
-
+    
+    // Converte para número e fixa em 2 casas decimais
+    let numeroFinal = parseFloat(numeroLimpo);
+    numeroFinal = isNaN(numeroFinal) ? 0.00 : Number(numeroFinal.toFixed(2));
+    
     // Aplica o sinal negativo se necessário
     if (isNegative) {
-        vf = -vf;
+        numeroFinal = -numeroFinal;
     }
-
-    if (cell) {
-        cell.innerText = vf;
-        return;
-    } else {
-        return vf;
+    
+    // Se for um elemento HTML, atualiza o innerText com o valor formatado
+    if (isElement) {
+        valor.innerText = numeroFinal.toLocaleString('pt-BR', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        });
     }
+    
+    return numeroFinal;
 }
 
 export function convertToNegative(v) {

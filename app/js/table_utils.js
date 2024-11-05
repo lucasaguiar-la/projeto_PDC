@@ -1,4 +1,4 @@
-import{formatToBRL, converterParaDecimal, convertToNegative,restrictNumericInput, restrictIntegerInput, executar_apiZoho, baseFornecedores, classificacoes,customModal, buscarPlanContas, popularSelects,filtrarClassesOperacionais} from './utils.js'
+import{formatToBRL, converterStringParaDecimal, convertToNegative,restrictNumericInput, restrictIntegerInput, executar_apiZoho, baseFornecedores, classificacoes,customModal, buscarPlanContas, popularSelects,filtrarClassesOperacionais} from './utils.js'
 import{globais, mostrarCamposPagamento} from './main.js'
 let selectedCheckbox = null;
 const qlt = 4; //Total de linhas de totalizadores, considerando linha com botão de adicionar produto
@@ -489,13 +489,13 @@ export async function saveTableData() {
                 suplierIds.push(supplierIdForn);
                 suppliers.push(supplierName);
 
-                const frt = converterParaDecimal((rowFrete.cells[i - 1].innerText) || '0');
+                const frt = converterStringParaDecimal((rowFrete.cells[i - 1].innerText) || '0');
                 deliveryCosts.push(frt);
 
-                const d = converterParaDecimal((rowDescontos.cells[i - 1].innerText) || '0');
+                const d = converterStringParaDecimal((rowDescontos.cells[i - 1].innerText) || '0');
                 descontos.push(d);
 
-                const total = converterParaDecimal((rowTotal.cells[i - 1].innerText) || '0');
+                const total = converterStringParaDecimal((rowTotal.cells[i - 1].innerText) || '0');
                 totalGeral.push(total);
             }
             
@@ -518,8 +518,8 @@ export async function saveTableData() {
                     const valor_descontos = descontos[j];
                     const valor_totalGeral = totalGeral[j];
 
-                    const valor_unitario = converterParaDecimal((row.cells[unitPriceIndex]?.innerText) || '0');
-                    const valor_total = converterParaDecimal((row.cells[totalPriceIndex]?.innerText) || '0');
+                    const valor_unitario = converterStringParaDecimal((row.cells[unitPriceIndex]?.innerText) || '0');
+                    const valor_total = converterStringParaDecimal((row.cells[totalPriceIndex]?.innerText) || '0');
 
                     const condicao_pagamento = otherRows[j].cells[1]?.innerText || '';
                     const observacao = otherRows[j].cells[2]?.innerText || '';
@@ -1154,14 +1154,14 @@ export function calculateTotalPrices(rowIndex) {
     const table = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
     const row = table.rows[rowIndex];
     const quantityCell = row.cells[1]; //Quantidade do item
-    const quantity = converterParaDecimal(quantityCell.innerText); //Converte a quantidade para um número decimal
+    const quantity = converterStringParaDecimal(quantityCell.innerText); //Converte a quantidade para um número decimal
 
     for (let i = 2; i < row.cells.length; i += 2) {
         const unitPriceCell = row.cells[i]; //Valor unitário do item
         const totalPriceCell = row.cells[i + 1]; //Valor total do item
 
         if (unitPriceCell && totalPriceCell) {
-            const unitPrice = converterParaDecimal(unitPriceCell.innerText); //Converte o valor unitário para um número decimal
+            const unitPrice = converterStringParaDecimal(unitPriceCell.innerText); //Converte o valor unitário para um número decimal
             totalPriceCell.innerText = formatToBRL((quantity * unitPrice)); //Calcula o valor total e formata para o padrão brasileiro
         }
     }
@@ -1189,15 +1189,15 @@ function calcularTotais() {
 
     totalCells.forEach((totalCell, index) => {
         let vt = 0; //Valor total
-        const vlrsFrete = (converterParaDecimal(table.rows[table.rows.length - qlt].cells[index + 1].textContent) || 0);
-        const vlrsDesconto = (converterParaDecimal(table.rows[table.rows.length - 3].cells[index + 1].textContent) || 0);
+        const vlrsFrete = (converterStringParaDecimal(table.rows[table.rows.length - qlt].cells[index + 1].textContent) || 0);
+        const vlrsDesconto = (converterStringParaDecimal(table.rows[table.rows.length - 3].cells[index + 1].textContent) || 0);
         for (let i = 0; i < table.rows.length - qlt; i++)
         {
             const ci = 3; //Coluna inicial da busca
             const linha = table.rows[i];
 
             const valorTotalCell = linha.cells[(index * 2) + ci];
-            vt += (converterParaDecimal(valorTotalCell.textContent || '0') || 0);
+            vt += (converterStringParaDecimal(valorTotalCell.textContent || '0') || 0);
         }
         const valorTotal = (vt + vlrsFrete + vlrsDesconto).toFixed(2);
         totalCell.textContent = formatToBRL(valorTotal);
@@ -1251,7 +1251,7 @@ export function handlePasteEventPriceTable(event) {
 
             // Converte para formato apropriado baseado na classe da célula
             if (cell.classList.contains('numeric-cell') || cell.classList.contains('integer-cell')) {
-                value = converterParaDecimal(value);
+                value = converterStringParaDecimal(value);
                 value = formatToBRL(value);
             }
 
@@ -1345,7 +1345,7 @@ export function autalizarOuvintesTabCot() {
     for (let i = 0; i < atpl.cells.length; i++) {
         const celula = atpl.cells[i];
         celula.addEventListener('blur', () => {
-            const valor = converterParaDecimal(celula.innerText);
+            const valor = converterStringParaDecimal(celula.innerText);
             if (!isNaN(valor)) {
                 celula.innerText = convertToNegative(valor);
             }
