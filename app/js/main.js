@@ -54,8 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
         "remove-product-btn": (elemento) => customModal({botao: elemento, tipo: 'remover_produto', mensagem: 'Deseja realmente remover este produto?'}),
         "save-btn": (elemento) => customModal({botao: elemento, tipo: 'salvar_cot', mensagem: 'Deseja realmente salvar esta cotação?'}),
         "formas-pagamento": (elemento) => mostrarCamposPagamento(),
-        "button-up": (elemento) => scrollToSection(currentSection -1),
-        "button-down": (elemento) => scrollToSection(currentSection +1),
         "add-parcela": () => adicionarCampoVenc(),
         "remover-parcela": (elemento) => removerCampoVenc(elemento)
     };
@@ -124,14 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
 let currentSection = 0;
 const sections = document.querySelectorAll('.section');
 const container = document.getElementById('container');
-
-function scrollToSection(index) {
-    if (index >= 0 && index < sections.length) {
-        currentSection = index;
-        const offset = index * -100; // Calcular o deslocamento em % negativo
-        container.style.transform = `translateY(${offset}vh)`; // Mover o container para cima
-    }
-}
 
 export function mostrarCamposPagamento() {
     const formaPagamento = document.querySelector('input[name="Forma_de_pagamento"]:checked').value;

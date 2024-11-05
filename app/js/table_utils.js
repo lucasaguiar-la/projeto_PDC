@@ -1396,6 +1396,16 @@ export function atualizarOuvintesTabDetlhesForn()
     }
 }
 
+
+function atualizarLabels() {
+
+    const parcelas = document.querySelectorAll('#camposData .parcela');
+    parcelas.forEach((parcela, index) => {
+        parcela.querySelector('label').innerText = `Parcela nº ${index + 1}:`;
+    });
+}
+
+
 /**
  * Adiciona um campo de data para parcelas de pagamento
  * 
@@ -1405,44 +1415,89 @@ export function atualizarOuvintesTabDetlhesForn()
  * @description
  * - Cria um novo campo de data para parcelas de pagamento
  */
-export function adicionarCampoVenc(dataInicial = '') {
-    const camposData = document.getElementById('camposData');
-    const qtdParcelas = camposData.getElementsByClassName('parcela').length;
+export function adicionarCampoVenc(){
 
-    const divParcela = document.createElement('div');
-    divParcela.className = 'parcela';
-    
-    const label = document.createElement('label');
-    label.textContent = `Parcela nº ${qtdParcelas + 1}:`;
-    
-    const input = document.createElement('input');
-    input.type = 'date';
-    input.name = 'Datas';
-    if (dataInicial) {
-        input.value = dataInicial;
-    }
-    
-    const btnRemover = document.createElement('button');
-    btnRemover.type = 'button';
-    btnRemover.className = 'remover-parcela';
-    
-    divParcela.appendChild(label);
-    divParcela.appendChild(input);
-    divParcela.appendChild(btnRemover);
-    
-    camposData.appendChild(divParcela);
+    numeroParcela++;
+
+    //====================CRIA UM NOVO CONTAINER PARA O CAMPO DE DATA E O BOTÃO DE REMOVER====================//
+    const novoCampo = document.createElement('div');
+    novoCampo.classList.add('parcela');
+
+    //====================CRIA O RÓTULO PARA O CAMPO DE DATA====================//
+    const novoLabel = document.createElement('label');
+    novoLabel.innerText = `Parcela nº ${numeroParcela}:`;
+
+    //====================CRIA O CAMPO DE DATA====================//
+    const novoInput = document.createElement('input');
+    novoInput.type = 'date';
+    novoInput.name = 'Datas';
+
+    //====================CRIA O BOTÃO DE REMOVER====================//
+    const removerButton = document.createElement('button');
+    removerButton.type = 'button';
+    removerButton.classList.add('remover-parcela');
+
+    //====================ADICIONA A FUNÇÃO DE REMOVER AO BOTÃO DE REMOVER====================//
+    removerButton.addEventListener('click', function () {
+        novoCampo.remove();
+        numeroParcela--;
+        atualizarLabels();
+    });
+
+    //====================ADICIONA O CAMPO DE DATA, O RÓTULO E O BOTÃO DE REMOVER AO CONTAINER====================//
+    novoCampo.appendChild(novoLabel);
+    novoCampo.appendChild(novoInput);
+    novoCampo.appendChild(removerButton);
+
+    //====================ADICIONA O NOVO CAMPO AO CONTAINER DE CAMPOS====================//
+    document.getElementById('camposData').appendChild(novoCampo);
+
+    //====================ATUALIZA OS RÓTULOS DE PARCELA PARA MANTER A SEQUÊNCIA CORRETA====================//
+    atualizarLabels();
 }
 
+/**
+ * Adiciona um campo de data para parcelas de pagamento
+ * 
+ * @function adicionarCampoVenc
+ * @returns {void}
+ * 
+ * @description
+ * - Cria um novo campo de data para parcelas de pagamento
+ */
 export function removerCampoVenc(elemento) {
+    console.log("[RODANDO REMOVER CAMPO VENC]");
     const parentElement = elemento.parentElement;
     const parentClass = parentElement.className;
+
+    console.log(`[PARENT CLASS] => `, parentClass);
+    console.log(`[PARENT ELEMENT] => `, parentElement);
     const elementosSimilares = document.getElementsByClassName(parentClass);
+    console.log(`[ELEMENTOS SIMILARES] => `, elementosSimilares);
     if (elementosSimilares.length > 1) {
+        console.log("[REMOVENDO PARENT ELEMENT]");
         parentElement.remove();
         numeroParcela--;
         atualizarLabels();
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 /**
  * Adiciona uma nova linha de classificação contábil
