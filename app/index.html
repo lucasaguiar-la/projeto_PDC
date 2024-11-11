@@ -6,12 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Levantamento de Preços</title>
     <link rel="stylesheet" href="./styles/main_styles.css">
-    <style>
-    </style>
+    
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script type="text/javascript" src="https://js.zohostatic.com/creator/widgets/version/1.0/widgetsdk-min.js"></script>
+    <script type="module" src="./js/main.js"></script>
 </head>
 
-<body>
-    <div class="container" id="container">
+<body class="hidden">
+    <div class="container " id="container">
 
         <div class="form-compra section" id="section1">
             <h2 class="titulos">DADOS DO PEDIDO</h2>
@@ -155,11 +157,11 @@
                     <div id="campos-pix" class="hidden">
                         <label for="tipo-pix">Tipo de Pix:</label>
                         <select id="tipo-pix" name="Tipo_Pix">
-                            <option value="CPF">CPF</option>
-                            <option value="CNPJ">CNPJ</option>
-                            <option value="Email">Email</option>
-                            <option value="Telefone">Telefone</option>
-                            <option value="Chave Aleatória">Chave Aleatória</option>
+                            <option name="Tipo_Pix" value="CPF">CPF</option>
+                            <option name="Tipo_Pix" value="CNPJ">CNPJ</option>
+                            <option name="Tipo_Pix" value="Email">Email</option>
+                            <option name="Tipo_Pix" value="Telefone">Telefone</option>
+                            <option name="Tipo_Pix" value="Chave Aleatória">Chave Aleatória</option>
                         </select>
                         <label for="pix-chave">Chave Pix:</label>
                         <input type="text" id="pix-chave" name="Chave_Pix">
@@ -180,10 +182,7 @@
         <div class="form-classificacao section" id="section4">
             <h2 class="titulos">CLASSIFICAÇÃO CONTÁBIL</h2>
             <div class="form-container">
-                <div id="loading-classificacao" class="loading-message">
-                    Carregando classificações...
-                </div>
-                <form action="#" method="post" id="form-classificacao" style="display: none;">
+                <form action="#" method="post" id="form-classificacao">
                     <div id="camposClassificacao" class="hidden">
                         <div id="label-classificacao" class="nomes-campos-classificacao">
                             <label for="conta" id="label-conta">Conta a debitar:</label>
@@ -200,12 +199,12 @@
                                 </select>
                             </div>
                             <div class="campo" id="centro">
-                                <select name="Centro">
+                                <select name="Centro_de_custo">
                                     <option value="" disabled selected>Selecione...</option>
                                 </select>
                             </div>
                             <div class="campo" id="classe">
-                                <select name="Classe">
+                                <select name="Classe_operacional">
                                     <option value="" disabled selected>Selecione...</option>
                                 </select>
                             </div>
@@ -232,8 +231,5 @@
         <div class="dot" data-section="2"></div>
     </div>
 </body>
-<script type="text/javascript" src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
-<script type="text/javascript" src="https://js.zohostatic.com/creator/widgets/version/1.0/widgetsdk-min.js"></script>
-<script type="module" src="./js/main.js"></script>
 
 </html>

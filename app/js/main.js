@@ -1,54 +1,42 @@
-import {addProductRow, removeProductRow, addSupplierColumn, atualizarOuvintesTabCot, prenchTabCot} from './table_utils.js'
-import {buscarFornecedores, buscarCentrosCusto, buscarClassesOperacionais} from './dados_p_selects.js';
-import {customModal, executar_apiZoho} from './utils.js'
 import {
-    adicionarCampoVenc, 
-    removerCampoVenc, 
+    addProductRow,
+    removeProductRow,
+    addSupplierColumn,
+    atualizarOuvintesTabCot,
+    prenchTabCot
+} from './table_utils.js'
+import {
+    buscarFornecedores,
+    buscarCentrosCusto,
+    buscarClassesOperacionais
+} from './dados_p_selects.js';
+import {
+    customModal,
+    executar_apiZoho
+} from './utils.js'
+import {
+    adicionarCampoVenc,
+    removerCampoVenc,
     mostrarCamposPagamento,
-    adicionarLinhaClassificacao, 
+    adicionarLinhaClassificacao,
     removerLinhaClassificacao,
-    initClassificacaoForm,
     preencherDadosPDC
 
 } from './forms_utils.js';
-
-const _nomeApp = "app-envio-de-notas-boletos-guillaumon";
-const _nomeRelPDC = "Laranj_PDC_Digital_ADM";
-const _nomeFormCot = "cotacao_Laranjeiras";
-const _nomeRelCot = "Laranj_cotacoes_ADM";
-const _nomeFormPDC = "PDC_Digital";
-
-let _baseFornecedores = new Map();
-let _baseClassesOperacionais = new Map();
-let _baseCentrosCusto = new Map();
-
+import { CONFIG } from './config.js';
 
 class Globais {
     constructor() {
         this.state = {
-            baseClassesOperacionais: _baseClassesOperacionais,
-            baseFornecedores: _baseFornecedores,
-            baseCentrosCusto: _baseCentrosCusto,
-            nomeFormCot: _nomeFormCot,
-            nomeFormPDC: _nomeFormPDC,
-            nomeRelCot: _nomeRelCot,
-            nomeRelPDC: _nomeRelPDC,
-            cotacaoExiste: false,
-            pag: 'criar_cotacao',
-            classificacoes: null,
-            centrosCusto: null,
-            numPDC_temp: null,
-            nomeApp: _nomeApp,
-            numPDC: null,
-            idProduto: 2,
-            idPDC: null,
-            tipo: null
-        }
+            baseClassesOperacionais: new Map(),
+            baseFornecedores: new Map(),
+            baseCentrosCusto: new Map(),
+            ...CONFIG.INITIAL_STATE,
+            ...CONFIG.APPS
+        };
 
         return new Proxy(this.state, {
-            get: (target, prop) => {
-                return prop in target ? target[prop] : undefined;
-            },
+            get: (target, prop) => target[prop],
             set: (target, prop, value) => {
                 target[prop] = value;
                 return true;
@@ -58,40 +46,53 @@ class Globais {
 }
 export const globais = new Globais();
 
-//===============================================================================================//
-//====================ATIVA UM LISTENER QUE AGUARDA A ATUALIZAÇÃO DA PLANILHA====================//
-//===============================================================================================//
+// Inicia o processo
+initGenericItems().catch(error => {
+    console.error('Erro na inicialização:', error);
+});
 
-/**
- * Adiciona event listeners quando o DOM é carregado
- * 
- * @description
- * Esta função:
- * - Define um mapeamento de classes de botões para suas funções correspondentes
- * - Adiciona event listeners para cada botão mapeado
- * - Executa processos iniciais necessários
- * - Adiciona pontos de navegação
- * 
- * Mapeamento de botões:
- * - add-supplier-btn: Adiciona coluna de fornecedor
- * - remove-supplier-btn: Remove fornecedor após confirmação
- * - add-product-btn: Adiciona linha de produto
- * - remove-product-btn: Remove produto após confirmação
- * - save-btn: Salva cotação após confirmação
- * - formas-pagamento: Mostra campos de pagamento relevantes
- * - add-parcela: Adiciona campo de parcela
- * - remover-parcela: Remove campo de parcela
- * - add-classificacao: Adiciona linha de classificação
- * - remover-classificacao: Remove linha de classificação
- */
-document.addEventListener('DOMContentLoaded', () => {
+async function initGenericItems() {
+    try {
+        // 1. Executa searchPageParams e as buscas em paralelo
+        const [paramsResult, fornecedores, centrosCusto, classesOperacionais] = await Promise.allSettled([
+            searchPageParams(),
+            buscarFornecedores(),
+            buscarCentrosCusto(),
+            buscarClassesOperacionais()
+        ]);
 
-   //=====Mapeia as classes dos botões às suas respectivas funções=====//
+        // Atualiza as bases globais (não precisa esperar searchPageParams)
+        if (fornecedores.status === 'fulfilled') globais.baseFornecedores = fornecedores.value;
+        if (centrosCusto.status === 'fulfilled') globais.baseCentrosCusto = centrosCusto.value;
+        if (classesOperacionais.status === 'fulfilled') globais.baseClassesOperacionais = classesOperacionais.value;
+
+        // 2. Configura os ouvintes após searchPageParams
+        if (paramsResult.status === 'fulfilled') {
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', setupListenersAndInit);
+            } else {
+                await setupListenersAndInit();
+            }
+        }
+    } catch (error) {
+        console.error('Erro ao inicializar:', error);
+    }
+}
+
+async function setupListenersAndInit() {
+    // Configura os ouvintes
     const buttonActions = {
         "add-supplier-btn": () => addSupplierColumn(),
         "add-product-btn": () => addProductRow(),
-        "remove-product-btn": (elemento) => customModal({botao: elemento, tipo: 'remover_produto', mensagem: 'Deseja realmente remover este produto?'}).then(()=> {removeProductRow(elemento)}),
-        "save-btn": (elemento) => customModal({botao: elemento, mensagem: 'Deseja realmente salvar esta cotação?'}),
+        "remove-product-btn": (elemento) => customModal({ 
+            botao: elemento, 
+            tipo: 'remover_produto', 
+            mensagem: 'Deseja realmente remover este produto?' 
+        }).then(() => { removeProductRow(elemento) }),
+        "save-btn": (elemento) => customModal({ 
+            botao: elemento, 
+            mensagem: 'Deseja realmente salvar esta cotação?' 
+        }),
         "formas-pagamento": (elemento) => mostrarCamposPagamento(),
         "add-parcela": () => adicionarCampoVenc(),
         "remover-parcela": (elemento) => removerCampoVenc(elemento),
@@ -99,114 +100,34 @@ document.addEventListener('DOMContentLoaded', () => {
         "remover-classificacao": (elemento) => removerLinhaClassificacao(elemento)
     };
 
-    //=====Adiciona os event listeners para cada botão=====//
-    Object.keys(buttonActions).forEach((className) => {
-        const elementos = document.querySelectorAll(`.${className}`);
-        elementos.forEach((elemento) => {
-            elemento.addEventListener("click", () => {
-                buttonActions[className](elemento);
-            });
+    Object.entries(buttonActions).forEach(([className, action]) => {
+        document.querySelectorAll(`.${className}`).forEach(elemento => {
+            elemento.addEventListener("click", () => action(elemento));
         });
     });
 
-    //=====Busca todos os dados iniciais do PDC=====//
-    executarProcessosInicias();
-    addNavDots();
-    
-    console.log(`DOM Content Loaded`);
-});
+    // 3. Inicia os processos em paralelo
+    await executarProcessosParalelos();
+}
 
-/**
- * Executa os processos iniciais necessários ao carregar a página
- * 
- * @function executarProcessosInicias
- * @async
- * @returns {Promise<void>}
- * 
- * @description
- * Esta função realiza as seguintes operações:
- * 1. Inicializa o ZOHO.CREATOR
- * 2. Busca e processa parâmetros da URL (idPdc, num_PDC_temp, pag)
- * 3. Busca dados do PDC se existir, usando os parâmetros obtidos
- * 4. Busca dados da cotação se existir
- * 5. Busca fornecedores
- * 6. Se a página for "aprovar_cotacao", substitui o botão Salvar por:
- *    - Botão Aprovar
- *    - Botão Solicitar Ajuste  
- *    - Botão Arquivar
- * 7. Atualiza os ouvintes da tabela de cotação
- */
-async function executarProcessosInicias() {
-    await ZOHO.CREATOR.init()
-    //=================================================//
-    //==========BUSCA OS PARÂMETROS DA PÁGINA==========//
-    //=================================================//
-    const params = await ZOHO.CREATOR.UTIL.getQueryParams()
-    if (params) {
-        if (params.idPdc) {
-            globais.numPDC = params.idPdc;
-        } else if (params.num_PDC_temp) {
-            globais.numPDC_temp = params.num_PDC_temp;
-        }
-        if (params.pag) {
-            globais.pag = params.pag;
-        }
-    }
-    //===========================================//
-    //==========BUSCA OS DADOS INICIAIS==========//
-    //===========================================//
+async function executarProcessosParalelos() {
+    console.log('[BUSCANDO DADOS DO ZOHO]');
+    await ZOHO.CREATOR.init();
 
-    //=====BUSCA OS DADOS PARA POPULAR OS SELECTS=====//
-    try {
-        let cPDC = "(" + (globais.numPDC ? `numero_de_PDC=="${globais.numPDC}"` : (globais.numPDC_temp ? `id_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
+    // Executa processos em paralelo
+    const tarefas = [
+        processarAprovacaoCotacao(),
+        processarDadosPDC(),
+        processarDadosCotacao()
+    ];
 
-        let respPDC = await executar_apiZoho({ tipo: "busc_reg", criterios: cPDC, nomeR: globais.nomeRelPDC })
-        if (respPDC.code == 3000) {
-            //PREENCHE A TABELA COM OS DADOS DO PDC//
-            console.log("Tem PDC");
-            globais.tipo = 'editar_pdc';
-            console.log('TIPO => ', globais.tipo);
-            preencherDadosPDC(respPDC);
-    
-        } else {
-            //CRIA OS CAMPOS PARA PREENCHER DADOS DO PDC//
-            console.log("Não tem PDC")
-        }
+    await Promise.all(tarefas);
+    // Finaliza o processo
+    document.body.classList.remove('hidden');
+    atualizarOuvintesTabCot();
+}
 
-         //=====BUSCA OS DADOS INICIAIS DO PDC, CASO EXISTAM=====//
-        let cCot = "(" + (globais.numPDC ? `numero_de_PDC=="${globais.numPDC}"` : (globais.numPDC_temp ? `num_PDC_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
-
-        let respCot = await executar_apiZoho({ tipo: "busc_reg", criterios: cCot, nomeR: globais.nomeRelCot });
-        if (respCot.code == 3000) {
-            //PREENCHE A TABELA COM OS DADOS DO PDC//
-            console.log("Tem Cotação");
-            console.log(JSON.stringify(respCot));
-            await prenchTabCot(respCot);
-
-        } else {
-            //CRIA OS CAMPOS PARA PREENCHER DADOS DO PDC
-            console.log("Não tem Cotação")
-        }
-
-
-
-
-        globais.baseFornecedores = await buscarFornecedores();
-        globais.baseCentrosCusto = await buscarCentrosCusto();
-        globais.baseClassesOperacionais = await buscarClassesOperacionais();
-
-        
-
-        // Inicializa o formulário de classificação após carregar todos os dados
-        initClassificacaoForm(globais.baseClassesOperacionais, globais.baseCentrosCusto);
-    } catch (error) {
-        console.error("Erro ao carregar dados:", error);
-        // Opcional: mostrar mensagem de erro no formulário
-        const loadingMessage = document.getElementById('loading-classificacao');
-        loadingMessage.textContent = 'Erro ao carregar classificações. Por favor, recarregue a página.';
-        loadingMessage.style.color = '#ff0000';
-    }
-
+async function processarAprovacaoCotacao() {
     if (globais.pag == "aprovar_cotacao") {
         function replaceSaveButton() {
             // Seleciona o contêiner onde o botão "Salvar" está localizado
@@ -223,7 +144,7 @@ async function executarProcessosInicias() {
             approveButton.className = 'approve-btn';
             approveButton.textContent = 'Aprovar';
             approveButton.onclick = function () {
-                customModal({botao:this, tipo:"aprov_cot", titulo:"Aprovar proposta", mensagem:"Tem certeza que deseja APROVAR a proposta do fornecedor selecionado?"});
+                customModal({ botao: this, tipo: "aprov_cot", titulo: "Aprovar proposta", mensagem: "Tem certeza que deseja APROVAR a proposta do fornecedor selecionado?" });
             };
 
             // Cria o botão "Solicitar Ajuste"
@@ -231,7 +152,7 @@ async function executarProcessosInicias() {
             adjustButton.className = 'adjust-btn';
             adjustButton.textContent = 'Solicitar Ajuste';
             adjustButton.onclick = function () {
-                customModal({botao:this, tipo:"ajustar_cot", titulo:"Solicitação de Ajuste", mensagem:"Por favor, descreva abaixo o ajuste que deseja fazer:"});
+                customModal({ botao: this, tipo: "ajustar_cot", titulo: "Solicitação de Ajuste", mensagem: "Por favor, descreva abaixo o ajuste que deseja fazer:" });
             };
 
             // Cria o botão "Arquivar"
@@ -239,7 +160,7 @@ async function executarProcessosInicias() {
             archiveButton.className = 'archive-btn';
             archiveButton.textContent = 'Arquivar';
             archiveButton.onclick = function () {
-                customModal({botao:this, tipo:"arquivar_cot", titulo:"Arquivar", mensagem:"Você tem certeza de que deseja arquivar este registro?"});
+                customModal({ botao: this, tipo: "arquivar_cot", titulo: "Arquivar", mensagem: "Você tem certeza de que deseja arquivar este registro?" });
             };
 
             // Adiciona os novos botões ao contêiner
@@ -251,7 +172,47 @@ async function executarProcessosInicias() {
         // Chame a função para substituir o botão "Salvar" pelos novos botões
         replaceSaveButton();
     }
-    atualizarOuvintesTabCot();
+}
+
+async function processarDadosPDC() {
+    const cPDC = "(" + (globais.numPDC ? 
+        `numero_de_PDC=="${globais.numPDC}"` : 
+        (globais.numPDC_temp ? `id_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
+
+    const respPDC = await executar_apiZoho({ 
+        tipo: "busc_reg", 
+        criterios: cPDC, 
+        nomeR: globais.nomeRelPDC 
+    });
+
+    if (respPDC.code == 3000) {
+        console.log("Tem PDC");
+        globais.tipo = 'editar_pdc';
+        console.log('[DADOS DO PDC] =>', JSON.stringify(respPDC));
+        console.log('[DADOS CLASSIFICAÇÃO] =>', JSON.stringify(respPDC.data[0].Classificacao_contabil));
+        preencherDadosPDC(respPDC);
+    } else {
+        console.log("Não tem PDC");
+    }
+}
+
+async function processarDadosCotacao() {
+    const cCot = "(" + (globais.numPDC ? 
+        `numero_de_PDC=="${globais.numPDC}"` : 
+        (globais.numPDC_temp ? `num_PDC_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
+
+    const respCot = await executar_apiZoho({ 
+        tipo: "busc_reg", 
+        criterios: cCot, 
+        nomeR: globais.nomeRelCot 
+    });
+
+    if (respCot.code == 3000) {
+        console.log("Tem Cotação");
+        await prenchTabCot(respCot);
+    } else {
+        console.log("Não tem Cotação");
+    }
 }
 
 /**
@@ -313,5 +274,22 @@ function addNavDots() {
                 block: 'start'
             });
         });
-    });   
+    });
+}
+
+async function searchPageParams() {
+    await ZOHO.CREATOR.init()
+        .then(() => ZOHO.CREATOR.UTIL.getQueryParams())
+        .then(params => {
+            if (params) {
+                if (params.idPdc) {
+                    globais.numPDC = params.idPdc;
+                } else if (params.num_PDC_temp) {
+                    globais.numPDC_temp = params.num_PDC_temp;
+                }
+                if (params.pag) {
+                    globais.pag = params.pag;
+                }
+            }
+        });
 }

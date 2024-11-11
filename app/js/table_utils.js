@@ -29,16 +29,9 @@ export async function saveTableData({tipo = null}) {
 
         const dadosIniciaisPdc = await buscarDadosPDC();
         const dadosClassificacao = await buscarDadosClassificacao();
-        const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosTabelaPrecos, ...dadosClassificacao};
+        const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosClassificacao};
 
-
-
-        console.log('dadosTabelaPrecos: ', JSON.stringify(dadosTabelaPrecos, null, 2));
-        console.log('dadosPDC: ', JSON.stringify(dadosPDC, null, 2));
-        console.log('dadosClassificacao: ', JSON.stringify(dadosClassificacao, null, 2));
-
-        //====================CRIAR O REGISTRO DO PDC====================//
-        /*
+        //====================CRIA O REGISTRO DO PDC====================//
         let respPDC;
         console.log('globais.tipo: ', globais.tipo);
         if(globais.tipo === 'editar_pdc'){
@@ -54,11 +47,10 @@ export async function saveTableData({tipo = null}) {
 
         
         console.log('respPDC: ', respPDC);
-        //====================CRIAR O REGISTRO DA COTAÇÃO====================//
+        //====================CRIA O REGISTRO DA COTAÇÃO====================//
         const json = JSON.stringify(dadosTabelaPrecos, null, 2);
         let respCot = await executar_apiZoho({ tipo: "add_reg", corpo: json });
         globais.cotacaoExiste = true;
-        */
     }
 }
 
@@ -282,7 +274,7 @@ async function buscarDadosClassificacao() {
     
     // Adiciona o array de classificações ao objeto final apenas se houver dados
     if (classificacoes.length > 0) {
-        dadosClassificacao["campo_classificacao"] = classificacoes;
+        dadosClassificacao["Classificacao_contabil"] = classificacoes;
     }
     
     return dadosClassificacao;

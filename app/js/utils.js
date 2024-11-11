@@ -148,21 +148,21 @@ export async function executar_apiZoho({ tipo = null, criterios = null, ID = nul
  */
 export function formatToBRL(v) {
     if(!v) return "0,00";
-    console.log('[FORMATANDO]');
-    console.log('type of v: ', typeof v);
-    console.log(v);
+    console.log('[FORMATANDO PARA BRL] =>', v);
+
     let av; //Apoio ao valor
     let int = false; //Flag para inteiro
     let isNeg = false; //Flag para negativo
 
-    if ((typeof v == "string" || typeof v == "number")) {
-        av = converterStringParaDecimal(v);
+    // Ajuste para lidar com evento
+    const elemento = v.target || v;
+
+    if ((typeof elemento == "string" || typeof elemento == "number")) {
+        av = converterStringParaDecimal(elemento);
     } else {
-        av = v.innerText || v.value;
-        int = v.classList.contains("integer-cell");
+        av = elemento.innerText || elemento.value;
+        int = elemento.classList?.contains("integer-cell") || false;
     }
-    console.log('[VALOR RECEBIDO]');
-    console.log(av);
 
     // Verifica se é negativo
     if (av.toString().startsWith('-')) {
@@ -183,10 +183,7 @@ export function formatToBRL(v) {
     if (isNeg) {
         vf = `-${vf}`;
     }
-    console.log(vf);
-    console.log('[FORMATADO]');
     if (v.innerText || v.value) {
-        console.log('[INNERTEXT OU VALUE]');
         const target = 'value' in v ? 'value' : 'innerText';
         v[target] = vf;
         return;

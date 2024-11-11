@@ -132,7 +132,9 @@ export function preencherDadosPDC(resp)
 
         // Adiciona campos para cada data
         data.Datas.forEach((dataObj, index) => {
-            if (!dataObj.display_value) return; // Pula datas vazias
+            if (!dataObj.display_value) {
+                return;
+            }
             
             const [dia, mes, ano] = dataObj.display_value.split('/');
             const dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
@@ -171,7 +173,71 @@ export function preencherDadosPDC(resp)
     if (formaPagamentoSelecionada) {
         mostrarCamposPagamento();
     }
+
+    preencherDadosClassificacao(data.Classificacao_contabil);
 }
+
+//===================================================================================//
+//====================PREENCHE OS DADOS DE CLASSIFICAÇÃO CONTÁBIL====================//
+//===================================================================================//
+function preencherDadosClassificacao(classificacoes) {
+    const formClassificacao = document.querySelector('#form-classificacao');
+
+    // Limpa as linhas existentes
+    formClassificacao.querySelectorAll('.linha-classificacao').forEach(linha => {
+        linha.remove();
+    });
+    
+    // Para cada classificação, cria uma nova linha
+    classificacoes.forEach(classificacao => {
+        // Extrai os valores do display_value
+        const [conta, centro, classe, valor, id] = classificacao.display_value.split('|SPLITKEY|');
+        console.log('[CONTA] =>', conta);
+        console.log('[CENTRO] =>', centro);
+        console.log('[CLASSE] =>', classe);
+        console.log('[VALOR] =>', valor);
+        console.log('[ID] =>', id);
+
+        // Adiciona uma nova linha
+        adicionarLinhaClassificacao();
+        
+        // Pega a última linha adicionada
+        const ultimaLinha = formClassificacao.querySelector('.linha-classificacao:last-child');
+        
+        // Preenche os campos
+        const selectConta = ultimaLinha.querySelector('select[name="Conta"]');
+        const selectCentro = ultimaLinha.querySelector('select[name="Centro_de_custo"]');
+        const selectClasse = ultimaLinha.querySelector('select[name="Classe_operacional"]');
+        const inputValor = ultimaLinha.querySelector('input[name="Valor"]');
+
+        console.log('[SELECT CONTA] =>', selectConta);
+        console.log('[SELECT CENTRO] =>', selectCentro);
+        console.log('[SELECT CLASSE] =>', selectClasse);
+        console.log('[INPUT VALOR] =>', inputValor);
+        
+        // Extrai apenas o código antes do hífen para fazer o match
+        const codigoClasse = classe.split(' - ')[0].trim();
+        const codigoCentro = centro.split(' - ')[0].trim();
+        
+        // Encontra e seleciona a opção correta em cada select
+        Array.from(selectCentro.options).forEach(option => {
+            if (option.text.startsWith(codigoCentro)) {
+                option.selected = true;
+            }
+        });
+
+        Array.from(selectClasse.options).forEach(option => {
+            if (option.text.startsWith(codigoClasse)) {
+                option.selected = true;
+            }
+        });
+        
+        // Formata e define o valor
+        inputValor.value = formatToBRL({ target: { value: valor } });
+    });
+}
+
+
 
 //==============================================================================//
 //====================FUNÇÕES PARA TRATAR CAMPOS DE PARCELAS====================//
@@ -185,8 +251,8 @@ export function preencherDadosPDC(resp)
  * @description
  * - Cria um novo campo de data para parcelas de pagamento
  */
-export function adicionarCampoVenc(){
-
+export function adicionarCampoVenc(data = null){
+    
     numeroParcela++;
 
     //====================CRIA UM NOVO CONTAINER PARA O CAMPO DE DATA E O BOTÃO DE REMOVER====================//
@@ -201,6 +267,7 @@ export function adicionarCampoVenc(){
     const novoInput = document.createElement('input');
     novoInput.type = 'date';
     novoInput.name = 'Datas';
+    if (data) novoInput.value = data;
 
     //====================CRIA O BOTÃO DE REMOVER====================//
     const removerButton = document.createElement('button');
@@ -218,6 +285,7 @@ export function adicionarCampoVenc(){
     novoCampo.appendChild(novoLabel);
     novoCampo.appendChild(novoInput);
     novoCampo.appendChild(removerButton);
+
 
     //====================ADICIONA O NOVO CAMPO AO CONTAINER DE CAMPOS====================//
     document.getElementById('camposData').appendChild(novoCampo);
@@ -346,8 +414,8 @@ export function adicionarLinhaClassificacao() {
 
     // Cria os campos
     const campoConta = criarCampo({inputType:'select', inputName:'Conta', id:'conta'});
-    const campoCentro = criarCampo({inputType:'select', inputName:'Centro', id:'centro', options:opcoesCentro});
-    const campoClasse = criarCampo({inputType:'select', inputName:'Classe', id:'classe', options:opcoesClasse});
+    const campoCentro = criarCampo({inputType:'select', inputName:'Centro_de_custo', id:'centro', options:opcoesCentro});
+    const campoClasse = criarCampo({inputType:'select', inputName:'Classe_operacional', id:'classe', options:opcoesClasse});
     const campoValor = criarCampo({inputType:'number', inputName:'Valor', id:'valor'});
 
     // Adiciona evento de mudança na classe para filtrar centro de custo
@@ -412,12 +480,13 @@ export function popularSelects(classificacoes, centrosCusto) {
     
     todasClassificacoes.forEach(container => {
         // Seleciona os selects dentro de cada container de classificação
-        const selectCentro = container.querySelector('select[name="Centro"]');
-        const selectClassificacao = container.querySelector('select[name="Classe"]');
+        const selectCentro = container.querySelector('select[name="Centro_de_custo"]');
+        const selectClassificacao = container.querySelector('select[name="Classe_operacional"]');
         
         // Popula select de centros de custo
         if (selectCentro) {
             selectCentro.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+            console.log(JSON.stringify('[CENTROS CUSTO] => ', JSON.stringify(centrosCusto)));
             centrosCusto.forEach((dados, id) => {
                 const option = document.createElement('option');
                 option.value = id;
@@ -448,6 +517,7 @@ export function popularSelects(classificacoes, centrosCusto) {
  * @returns {void}
  */
 export function initClassificacaoForm(classificacoes, centrosCusto) {
+
     // Oculta mensagem de carregamento
     const loadingMessage = document.getElementById('loading-classificacao');
     loadingMessage.style.display = 'none';
