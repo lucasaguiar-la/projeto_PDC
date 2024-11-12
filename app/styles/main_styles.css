@@ -110,7 +110,7 @@ select option[disabled] {
 .form-compra textarea,
 .form-compra input[type="text"],
 .form-compra input[type="date"] {
-    width: 100%;
+    width: 100%;    
     padding: 5px;
     margin-bottom: 6px;
     border: 1px solid #ccc;
@@ -136,8 +136,8 @@ select option[disabled] {
     margin-right: 10px;
 }
 
-.form-compra #campos-boleto,
-.form-compra #campos-deposito {
+.form-compra #campos-deposito,
+.form-compra #campos-pix {
     border-top: 1px solid #ddd;
     padding-top: 10px;
     margin-top: 10px;
@@ -206,17 +206,6 @@ th {
     line-height: 12pt;
 }
 
-.linhas-totalizadoras td
-{
-    font-weight: bold;
-    background-color: #D2D6D8;
-}
-
-.linhas-totalizadoras td:first-child
-{
-    text-align: left;
-}
-
 
 [contenteditable="true"] {
     background-color: #f9f9f9;
@@ -274,6 +263,17 @@ button:hover {
 .remove-product-btn {
     margin-right: -1px;
     margin-top: 2px;
+}
+
+.linhas-totalizadoras td
+{
+    font-weight: bold;
+    background-color: #D2D6D8;
+}
+
+.linhas-totalizadoras td:first-child
+{
+    text-align: left;
 }
 
 .borda-oculta
@@ -652,7 +652,8 @@ button:hover {
     margin: 0;
 }
 
-.parcela input[type="date"] {
+.parcela input[type="date"],
+.parcela input[type="text"] {
     flex: 1;
     padding: 6px 8px;
     border: 1px solid #ddd;
@@ -881,4 +882,65 @@ button:hover {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Estilo unificado para campos de depósito e PIX */
+#campos-deposito
+{
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+/* Campos que ocupam linha inteira */
+#campos-deposito .campo:nth-child(1),
+#campos-deposito .campo:nth-child(4)
+{
+    grid-column: 1 / -1;
+}
+
+#campos-pix
+{
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 0.5fr 1.5fr;
+    border-top: 1px solid #ddd;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+#campos-pix .campo:nth-child(1)
+{
+    grid-column: 1 / 2;
+
+}
+#campos-pix .campo:nth-child(2)
+{
+    grid-column: 2 / 3;
+}
+
+
+/* Ajuste apenas da altura dos campos PIX */
+#campos-pix select,
+#campos-pix input {
+    height: 35px;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 90%;
+    background-color: #fff;
+    box-sizing: border-box;
+}
+
+.invalid {
+    border-color: red !important;
+    background-color: #fff0f0;
+}
+
+.error-message {
+    margin-top: 4px;
+    display: block;
 }

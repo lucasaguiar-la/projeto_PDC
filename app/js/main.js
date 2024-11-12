@@ -20,7 +20,8 @@ import {
     mostrarCamposPagamento,
     adicionarLinhaClassificacao,
     removerLinhaClassificacao,
-    preencherDadosPDC
+    preencherDadosPDC,
+    setupPixValidation
 
 } from './forms_utils.js';
 import { CONFIG } from './config.js';
@@ -53,27 +54,33 @@ initGenericItems().catch(error => {
 
 async function initGenericItems() {
     try {
-        // 1. Executa searchPageParams e as buscas em paralelo
-        const [paramsResult, fornecedores, centrosCusto, classesOperacionais] = await Promise.allSettled([
-            searchPageParams(),
-            buscarFornecedores(),
-            buscarCentrosCusto(),
-            buscarClassesOperacionais()
+        // 1. Cria a Promise do allSettled
+        const basesPromise = Promise.allSettled([
+            buscarFornecedores().then(result => { globais.baseFornecedores = result; }),
+            buscarCentrosCusto().then(result => { globais.baseCentrosCusto = result; }),
+            buscarClassesOperacionais().then(result => { globais.baseClassesOperacionais = result; adicionarLinhaClassificacao(); })
         ]);
 
-        // Atualiza as bases globais (não precisa esperar searchPageParams)
-        if (fornecedores.status === 'fulfilled') globais.baseFornecedores = fornecedores.value;
-        if (centrosCusto.status === 'fulfilled') globais.baseCentrosCusto = centrosCusto.value;
-        if (classesOperacionais.status === 'fulfilled') globais.baseClassesOperacionais = classesOperacionais.value;
+        // 2. Executa searchPageParams e espera seu resultado
+        const paramsResult = await searchPageParams();
 
-        // 2. Configura os ouvintes após searchPageParams
-        if (paramsResult.status === 'fulfilled') {
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', setupListenersAndInit);
-            } else {
-                await setupListenersAndInit();
-            }
+        // 3. Se não estiver na página criar_cotacao, aguarda as bases carregarem
+        if (globais.pag !== "criar_cotacao") {
+            await basesPromise;
+        } else {
+            // Se estiver na página criar_cotacao, executa em background
+            void basesPromise.catch(console.error);
+
         }
+
+        // 4. Configura os ouvintes
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', setupListenersAndInit);
+        } else {
+            await setupListenersAndInit();
+        }
+
+        console.log('[BUSCOU AS BASES]');
     } catch (error) {
         console.error('Erro ao inicializar:', error);
     }
@@ -82,28 +89,59 @@ async function initGenericItems() {
 async function setupListenersAndInit() {
     // Configura os ouvintes
     const buttonActions = {
-        "add-supplier-btn": () => addSupplierColumn(),
-        "add-product-btn": () => addProductRow(),
-        "remove-product-btn": (elemento) => customModal({ 
-            botao: elemento, 
-            tipo: 'remover_produto', 
-            mensagem: 'Deseja realmente remover este produto?' 
-        }).then(() => { removeProductRow(elemento) }),
-        "save-btn": (elemento) => customModal({ 
-            botao: elemento, 
-            mensagem: 'Deseja realmente salvar esta cotação?' 
-        }),
-        "formas-pagamento": (elemento) => mostrarCamposPagamento(),
-        "add-parcela": () => adicionarCampoVenc(),
-        "remover-parcela": (elemento) => removerCampoVenc(elemento),
-        "add-classificacao": () => adicionarLinhaClassificacao(),
-        "remover-classificacao": (elemento) => removerLinhaClassificacao(elemento)
+        "add-supplier-btn": { handler: () => addSupplierColumn(), type: 'click' },
+        "add-product-btn": { handler: () => addProductRow(), type: 'click' },
+        "remove-product-btn": { 
+            handler: (elemento) => customModal({ 
+                botao: elemento, 
+                tipo: 'remover_produto', 
+                mensagem: 'Deseja realmente remover este produto?' 
+            }).then(() => { removeProductRow(elemento) }),
+            type: 'click'
+        },
+        "save-btn": { 
+            handler: (elemento) => customModal({ 
+                botao: elemento, 
+                mensagem: 'Deseja realmente salvar esta cotação?' 
+            }),
+            type: 'click'
+        },
+        "formas-pagamento": { handler: (elemento) => mostrarCamposPagamento(), type: 'click' },
+        "add-parcela": { handler: () => adicionarCampoVenc(), type: 'click' },
+        "remover-parcela": { handler: (elemento) => removerCampoVenc(elemento), type: 'click' },
+        "add-classificacao": { handler: () => adicionarLinhaClassificacao(), type: 'click' },
+        "remover-classificacao": { handler: (elemento) => removerLinhaClassificacao(elemento), type: 'click' },
     };
+    /*
+    "": { handler: () => setupPixValidation(), type: 'DOMContentLoaded' }
+    */
 
-    Object.entries(buttonActions).forEach(([className, action]) => {
-        document.querySelectorAll(`.${className}`).forEach(elemento => {
-            elemento.addEventListener("click", () => action(elemento));
-        });
+    Object.entries(buttonActions).forEach(([className, config]) => {
+        if (className === '') {
+            // Para eventos globais como DOMContentLoaded
+            if (config.type === 'DOMContentLoaded') {
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', config.handler);
+                } else {
+                    config.handler();
+                }
+            } else {
+                document.addEventListener(config.type, config.handler);
+            }
+        } else {
+            // Para elementos específicos
+            document.querySelectorAll(`.${className}`).forEach(elemento => {
+                if (config.type === 'DOMContentLoaded') {
+                    if (document.readyState === 'loading') {
+                        document.addEventListener('DOMContentLoaded', () => config.handler(elemento));
+                    } else {
+                        config.handler(elemento);
+                    }
+                } else {
+                    elemento.addEventListener(config.type, () => config.handler(elemento));
+                }
+            });
+        }
     });
 
     // 3. Inicia os processos em paralelo
@@ -111,18 +149,21 @@ async function setupListenersAndInit() {
 }
 
 async function executarProcessosParalelos() {
-    console.log('[BUSCANDO DADOS DO ZOHO]');
-    await ZOHO.CREATOR.init();
+    console.log('[Page] =>', globais.pag);
+    if (globais.pag != "criar_cotacao") {
+        console.log('[BUSCANDO DADOS DO ZOHO]');
+        await ZOHO.CREATOR.init();
 
-    // Executa processos em paralelo
-    const tarefas = [
-        processarAprovacaoCotacao(),
-        processarDadosPDC(),
-        processarDadosCotacao()
-    ];
+        // Executa processos em paralelo
+        const tarefas = [
+            processarAprovacaoCotacao(),
+            processarDadosPDC(),
+            processarDadosCotacao()
+        ];
 
-    await Promise.all(tarefas);
-    // Finaliza o processo
+        await Promise.all(tarefas);
+        // Finaliza o processo
+    }
     document.body.classList.remove('hidden');
     atualizarOuvintesTabCot();
 }
@@ -199,7 +240,7 @@ async function processarDadosPDC() {
 async function processarDadosCotacao() {
     const cCot = "(" + (globais.numPDC ? 
         `numero_de_PDC=="${globais.numPDC}"` : 
-        (globais.numPDC_temp ? `num_PDC_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
+        (globais.numPDC_temp ? `num_PDC_temp=="${globais.numPDC_temp}"` : "ID==0")) + " && Ativo==true)";
 
     const respCot = await executar_apiZoho({ 
         tipo: "busc_reg", 

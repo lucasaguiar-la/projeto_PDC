@@ -25,15 +25,15 @@ export async function saveTableData({tipo = null}) {
     } else {
         console.log('[CRIANDO COTACAO NOVA]');
 
-        const {dadosTabelaPrecos, dadosExtrasPDC} = await buscarDadosTabelaPrecos();
+        const {dadosTabelaPrecos, dadosExtrasPDC} = await pegarDadosTabelaPrecos();
 
-        const dadosIniciaisPdc = await buscarDadosPDC();
-        const dadosClassificacao = await buscarDadosClassificacao();
+        const dadosIniciaisPdc = await pegarDadosPDC();
+        const dadosClassificacao = await pegarDadosClassificacao();
         const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosClassificacao};
+        console.log('dadosPDC: ', JSON.stringify(dadosPDC, null, 2));
 
         //====================CRIA O REGISTRO DO PDC====================//
         let respPDC;
-        console.log('globais.tipo: ', globais.tipo);
         if(globais.tipo === 'editar_pdc'){
             console.log('[ATUALIZANDO O REGISTRO DO PDC]');
             let payload = {
@@ -44,9 +44,7 @@ export async function saveTableData({tipo = null}) {
             console.log('[CRIANDO O REGISTRO DO PDC]');
             respPDC = await executar_apiZoho({ tipo: "add_reg", corpo: JSON.stringify(dadosPDC, null, 2),  nomeF: globais.nomeFormPDC});
         }
-
         
-        console.log('respPDC: ', respPDC);
         //====================CRIA O REGISTRO DA COTAÇÃO====================//
         const json = JSON.stringify(dadosTabelaPrecos, null, 2);
         let respCot = await executar_apiZoho({ tipo: "add_reg", corpo: json });
@@ -54,7 +52,7 @@ export async function saveTableData({tipo = null}) {
     }
 }
 
-async function buscarDadosPDC(){
+async function pegarDadosPDC(){
     //====================BUSCA OS DADOS INICIAIS DO PDC====================//
     const formDdsInicais = document.querySelector('#dados-PDC');
     const dadosIniciaisPdc = {};
@@ -73,32 +71,44 @@ async function buscarDadosPDC(){
     const formDdsDetalhes = document.querySelector('#form-pagamento');
 
     // Obter todos os elementos do formulário
+    const parcelas = document.querySelectorAll('.parcela');
+    const vencimentos = [];
+
+    parcelas.forEach(parcela => {
+        const dataInput = parcela.querySelector('input[type="date"]');
+        const valorInput = parcela.querySelector('input[name="Valor"]');
+
+        if (dataInput?.value && valorInput?.value) {
+            const [ano, mes, dia] = dataInput.value.split('-');
+            vencimentos.push({
+                "Vencimento_previsto": `${dia}/${mes}/${ano}`,
+                "Valor": converterStringParaDecimal(valorInput.value)
+            });
+        }
+    });
+
+    // Adiciona outros campos do formulário
     const elementosDetalhes = formDdsDetalhes.elements;
     for (let elemento of elementosDetalhes) {
-        // Verifica se o campo tem um valor e se está visível (caso de campos ocultos)
-        if (elemento.name && (elemento.type !== 'radio' || elemento.checked)) {
-            if (elemento.type === 'date' && elemento.value) {
-                // Ajusta o fuso horário para evitar problemas com UTC
-                const [ano, mes, dia] = elemento.value.split('-');
-                
-                if (!dadosIniciaisPdc[elemento.name]) {
-                    dadosIniciaisPdc[elemento.name] = [];
-                    // Adiciona o primeiro vencimento em um campo separado
-                    dadosIniciaisPdc["Vencimento_previsto"] = `${dia}/${mes}/${ano}`;
-                }
-                
-                dadosIniciaisPdc[elemento.name].push({
-                    "Vencimento_previsto": `${dia}/${mes}/${ano}`
-                });
-            } else {
-                dadosIniciaisPdc[elemento.name] = elemento.value;
-            }
+        if (elemento.name && 
+            elemento.name !== 'Datas' && 
+            elemento.name !== 'Valor' && 
+            (elemento.type !== 'radio' || elemento.checked)) {
+            dadosIniciaisPdc[elemento.name] = elemento.value;
         }
     }
+
+    // Adiciona as parcelas ao objeto final
+    if (vencimentos.length > 0) {
+        dadosIniciaisPdc["Datas"] = vencimentos;
+        // Adiciona o primeiro vencimento em um campo separado para referência
+        dadosIniciaisPdc["Vencimento_previsto"] = vencimentos[0].Vencimento_previsto;
+    }
+
     return dadosIniciaisPdc;
 }
 
-async function buscarDadosTabelaPrecos(){
+async function pegarDadosTabelaPrecos(){
      //====================BUSCA OS DADOS DA TABELA DE PREÇOS====================//
      console.log('[BUSCANDO DADOS DA TABELA DE PREÇOS]');
         
@@ -228,7 +238,7 @@ async function buscarDadosTabelaPrecos(){
     };
 }
 
-async function buscarDadosClassificacao() {
+async function pegarDadosClassificacao() {
     // Busca o formulário de classificação
     const formClassificacao = document.getElementById('form-classificacao');
     const dadosClassificacao = {};
@@ -1093,7 +1103,7 @@ export async function prenchTabCot(resp) {
         const fornecedores = [...new Set(data.map(item => JSON.stringify({ 
             Fornecedor: item.Fornecedor.trim(), 
             id_fornecedor: item.id_fornecedor 
-        })))].map(item => JSON.parse(item)).sort((a, b) => a.Fornecedor.localeCompare(b.Fornecedor));
+        })))].map(item => JSON.parse(item));
         const valoresFrete = [...new Set(data.map(item => item.Valor_do_frete))];
         const valoresAprovado = data.map(item => item.Aprovado);
         const valoresDescontos = [...new Set(data.map(item => item.Descontos))];
@@ -1204,15 +1214,23 @@ export async function prenchTabCot(resp) {
             const linhaFrete = table.querySelector('#linha-frete');
             const linhaDescontos = table.querySelector('#linha-descontos');
             const linhaTotal = table.querySelector('#linha-valor-total');
-            
+            let foundChecked = false;
             fornecedores.forEach((fornecedorObj, index) => {
                 //Cria a célula com o nome do fornecedor//
                 const celulaCabecalho = document.createElement('th');
                 const checkbox = document.createElement('input');
+    
                 checkbox.type = 'checkbox';
-                checkbox.checked = valoresAprovado[index] == 'true' ? true : false;
                 checkbox.classList.add('supplier-checkbox');
-
+                console.log('[CHEGOU ATÉ AQUI]');
+                if (valoresAprovado[index] == 'true') {
+                    if (!foundChecked) {
+                        checkbox.checked = true;
+                        selectedCheckbox = checkbox;
+                        foundChecked = true;
+                    }
+                }
+                console.log('[PASSOU]');
                 checkbox.addEventListener('change', function () {
                     if (checkbox.checked) {
                         if (selectedCheckbox && selectedCheckbox !== checkbox) {
@@ -1267,7 +1285,7 @@ export async function prenchTabCot(resp) {
                 headerRow2.insertBefore(totalPriceHeader, headerRow2.cells[headerRow2.cells.length -1]);
 
                 //=====ADICIONA A CELULA DE FRETE=====//
-                const cellFrete = document.createElement('th');
+                const cellFrete = document.createElement('td');
                 cellFrete.innerText = formatToBRL(valoresFrete[index] || '0,00');
                 cellFrete.classList.add('numeric-cell');
                 cellFrete.colSpan = 2;
@@ -1276,7 +1294,7 @@ export async function prenchTabCot(resp) {
                 linhaFrete.insertBefore(cellFrete, linhaFrete.cells[linhaFrete.cells.length -1]);
 
                 //=====ADICIONA A CELULA DE DESCONTO=====//
-                const cellDescontos = document.createElement('th');
+                const cellDescontos = document.createElement('td');
                 cellDescontos.innerText = formatToBRL(valoresDescontos[index] || '0,00');
                 cellDescontos.classList.add('numeric-cell');
                 cellDescontos.addEventListener('blur', () => calcularTotais());
@@ -1290,7 +1308,7 @@ export async function prenchTabCot(resp) {
                     .filter(item => item.id_fornecedor === fornecedorObj.id_fornecedor)
                     .reduce((acc, item) => acc + (parseFloat(item.Valor_total) || 0), 0);
                 
-                const cellTotal = document.createElement('th');
+                const cellTotal = document.createElement('td');
                 cellTotal.innerText = formatToBRL(totalFornecedor);
                 cellTotal.classList.add('numeric-cell', "total-fornecedor");
                 cellTotal.colSpan = 2;

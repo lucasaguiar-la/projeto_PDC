@@ -123,14 +123,10 @@
                         <label for="dep_cp">Dep. em CP</label>
                         <input type="radio" id="cheque" name="Forma_de_pagamento" value="Emissão de Cheque" class="formas-pagamento">
                         <label for="cheque">Emissão de Cheque</label>
+                        <!--
                         <input type="radio" id="pix" name="Forma_de_pagamento" value="Pix" class="formas-pagamento">
                         <label for="pix">Pix</label>
-                    </div>
-                    <div id="campos-boleto">
-                        <div class="campo hidden">
-                            <label for="favorecido">Dados do Favorecido:</label>
-                            <input type="text" id="favorecido" name="Favorecido">
-                        </div>
+                        -->
                     </div>
                     <div id="campos-deposito">
                         <div class="campo hidden">
@@ -154,27 +150,41 @@
                             <input type="text" id="favorecido-deposito" name="Favorecido">
                         </div>
                     </div>
-                    <div id="campos-pix" class="hidden">
-                        <label for="tipo-pix">Tipo de Pix:</label>
-                        <select id="tipo-pix" name="Tipo_Pix">
-                            <option name="Tipo_Pix" value="CPF">CPF</option>
-                            <option name="Tipo_Pix" value="CNPJ">CNPJ</option>
-                            <option name="Tipo_Pix" value="Email">Email</option>
-                            <option name="Tipo_Pix" value="Telefone">Telefone</option>
-                            <option name="Tipo_Pix" value="Chave Aleatória">Chave Aleatória</option>
-                        </select>
-                        <label for="pix-chave">Chave Pix:</label>
-                        <input type="text" id="pix-chave" name="Chave_Pix">
+                    <!--
+                    <div id="campos-pix" >
+                        <div class="campo hidden">
+                            <label for="tipo-pix" >Tipo de Pix:</label>
+                            <select id="tipo-pix" name="Tipo_Pix">
+                                <option name="Tipo_Pix" value="CPF">Cpf</option>
+                                <option name="Tipo_Pix" value="CNPJ">Cnpj</option>
+                                <option name="Tipo_Pix" value="Email">Email</option>
+                                <option name="Tipo_Pix" value="Telefone">Telefone</option>
+                                <option name="Tipo_Pix" value="Chave Aleatória">Chave Aleatória</option>
+                            </select>
+                        </div>
+
+                        <div class="campo hidden2">
+                            <label for="pix-chave" >Chave Pix:</label>
+                            <input type="text" id="pix-chave" name="Chave_Pix">
+                        </div>
                     </div>
+                    -->
                     <label for="observacoes">Vencimento previsto:</label>
                     <div id="camposData">
                         <div class="parcela">
                             <label>Parcela nº 1:</label>
-                            <input type="date" name="Datas" />
+                            <input type="date" name="Datas" placeholder="dd/mm/aaaa"/>
+                            <input type="text" name="Valor" class="input-number " placeholder="R$ 0,00"/>
                             <button type="button" class="remover-parcela close-icon"></button>
                         </div>
                     </div>
-                    <button type="button" id="adicionarCampo" class="add-parcela add-icon"></button>
+                    <div id="botoes-e-totalizadores_parcelas">
+                        <button type="button" id="adicionarCampo" class="add-parcela add-icon"></button>
+                        <div id="totalizadores_parcelas">
+                            <label>Valor total:</label>
+                            <label id="valor-total-parcelas"></label>
+                        </div>
+                    </div>
                 </form>
             </div>
         </div>
@@ -183,35 +193,13 @@
             <h2 class="titulos">CLASSIFICAÇÃO CONTÁBIL</h2>
             <div class="form-container">
                 <form action="#" method="post" id="form-classificacao">
-                    <div id="camposClassificacao" class="hidden">
+                    <div id="camposClassificacao">
                         <div id="label-classificacao" class="nomes-campos-classificacao">
                             <label for="conta" id="label-conta">Conta a debitar:</label>
                             <label for="centro" id="label-centro">Centro de custo:</label>
                             <label for="classe" id="label-classe">Classe operacional:</label>
                             <label for="valor" id="label-valor">Valor:</label>
                             <label for="" id="label-toButton" style="width: 20px;"></label>
-                        </div>
-                        <div class="linha-classificacao">
-                            <div class="campo" id="conta">
-                                
-                                <select name="Conta">
-                                    <option value="" disabled selected>Selecione...</option>
-                                </select>
-                            </div>
-                            <div class="campo" id="centro">
-                                <select name="Centro_de_custo">
-                                    <option value="" disabled selected>Selecione...</option>
-                                </select>
-                            </div>
-                            <div class="campo" id="classe">
-                                <select name="Classe_operacional">
-                                    <option value="" disabled selected>Selecione...</option>
-                                </select>
-                            </div>
-                            <div class="campo" id="valor" >
-                                <input type="text" name="Valor" class="input-number">
-                            </div>
-                            <button type="button" class="remover-classificacao close-icon"></button>
                         </div>
                     </div>
                     <button type="button" id="adicionarClassificacao" class="add-classificacao add-icon"></button>

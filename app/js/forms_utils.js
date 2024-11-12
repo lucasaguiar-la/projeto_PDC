@@ -136,35 +136,11 @@ export function preencherDadosPDC(resp)
                 return;
             }
             
-            const [dia, mes, ano] = dataObj.display_value.split('/');
+            const [dataStr, valor] = dataObj.display_value.split('|SPLITKEY|');
+            const [dia, mes, ano] = dataStr.split('/');
             const dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
 
-            if (index === 0) {
-                // Primeira data usa o campo existente
-                const primeiraParcela = document.createElement('div');
-                primeiraParcela.className = 'parcela';
-                
-                const label = document.createElement('label');
-                label.textContent = 'Parcela nº 1:';
-                
-                const input = document.createElement('input');
-                input.type = 'date';
-                input.name = 'Datas';
-                input.value = dataFormatada;
-                
-                const btnRemover = document.createElement('button');
-                btnRemover.type = 'button';
-                btnRemover.classList.add('remover-parcela', 'close-icon');
-                
-                primeiraParcela.appendChild(label);
-                primeiraParcela.appendChild(input);
-                primeiraParcela.appendChild(btnRemover);
-                
-                camposData.appendChild(primeiraParcela);
-            } else {
-                // Para datas adicionais, cria novos campos
-                adicionarCampoVenc(dataFormatada);
-            }
+            adicionarCampoVenc(dataFormatada, valor);
         });
     }
 
@@ -176,68 +152,6 @@ export function preencherDadosPDC(resp)
 
     preencherDadosClassificacao(data.Classificacao_contabil);
 }
-
-//===================================================================================//
-//====================PREENCHE OS DADOS DE CLASSIFICAÇÃO CONTÁBIL====================//
-//===================================================================================//
-function preencherDadosClassificacao(classificacoes) {
-    const formClassificacao = document.querySelector('#form-classificacao');
-
-    // Limpa as linhas existentes
-    formClassificacao.querySelectorAll('.linha-classificacao').forEach(linha => {
-        linha.remove();
-    });
-    
-    // Para cada classificação, cria uma nova linha
-    classificacoes.forEach(classificacao => {
-        // Extrai os valores do display_value
-        const [conta, centro, classe, valor, id] = classificacao.display_value.split('|SPLITKEY|');
-        console.log('[CONTA] =>', conta);
-        console.log('[CENTRO] =>', centro);
-        console.log('[CLASSE] =>', classe);
-        console.log('[VALOR] =>', valor);
-        console.log('[ID] =>', id);
-
-        // Adiciona uma nova linha
-        adicionarLinhaClassificacao();
-        
-        // Pega a última linha adicionada
-        const ultimaLinha = formClassificacao.querySelector('.linha-classificacao:last-child');
-        
-        // Preenche os campos
-        const selectConta = ultimaLinha.querySelector('select[name="Conta"]');
-        const selectCentro = ultimaLinha.querySelector('select[name="Centro_de_custo"]');
-        const selectClasse = ultimaLinha.querySelector('select[name="Classe_operacional"]');
-        const inputValor = ultimaLinha.querySelector('input[name="Valor"]');
-
-        console.log('[SELECT CONTA] =>', selectConta);
-        console.log('[SELECT CENTRO] =>', selectCentro);
-        console.log('[SELECT CLASSE] =>', selectClasse);
-        console.log('[INPUT VALOR] =>', inputValor);
-        
-        // Extrai apenas o código antes do hífen para fazer o match
-        const codigoClasse = classe.split(' - ')[0].trim();
-        const codigoCentro = centro.split(' - ')[0].trim();
-        
-        // Encontra e seleciona a opção correta em cada select
-        Array.from(selectCentro.options).forEach(option => {
-            if (option.text.startsWith(codigoCentro)) {
-                option.selected = true;
-            }
-        });
-
-        Array.from(selectClasse.options).forEach(option => {
-            if (option.text.startsWith(codigoClasse)) {
-                option.selected = true;
-            }
-        });
-        
-        // Formata e define o valor
-        inputValor.value = formatToBRL({ target: { value: valor } });
-    });
-}
-
-
 
 //==============================================================================//
 //====================FUNÇÕES PARA TRATAR CAMPOS DE PARCELAS====================//
@@ -251,7 +165,7 @@ function preencherDadosClassificacao(classificacoes) {
  * @description
  * - Cria um novo campo de data para parcelas de pagamento
  */
-export function adicionarCampoVenc(data = null){
+export function adicionarCampoVenc(data = null, valor = null){
     
     numeroParcela++;
 
@@ -269,6 +183,15 @@ export function adicionarCampoVenc(data = null){
     novoInput.name = 'Datas';
     if (data) novoInput.value = data;
 
+    //====================CRIA O CAMPO DE VALOR====================//
+    const novoInputValor = document.createElement('input');
+    novoInputValor.type = 'text';
+    novoInputValor.name = 'Valor';
+    novoInputValor.classList.add('input-number');
+    novoInputValor.placeholder = 'R$ 0,00';
+    if (valor) novoInputValor.value = formatToBRL(valor);
+    novoInputValor.addEventListener('blur', () => formatToBRL(novoInputValor));
+
     //====================CRIA O BOTÃO DE REMOVER====================//
     const removerButton = document.createElement('button');
     removerButton.type = 'button';
@@ -284,6 +207,7 @@ export function adicionarCampoVenc(data = null){
     //====================ADICIONA O CAMPO DE DATA, O RÓTULO E O BOTÃO DE REMOVER AO CONTAINER====================//
     novoCampo.appendChild(novoLabel);
     novoCampo.appendChild(novoInput);
+    novoCampo.appendChild(novoInputValor);
     novoCampo.appendChild(removerButton);
 
 
@@ -401,6 +325,13 @@ export function adicionarLinhaClassificacao() {
         return campo;
     };
 
+    // Adiciona as opções de conta
+    const opcoesConta = [
+        ['CUSTEIO', 'CUSTEIO'],
+        ['INVESTIMENTO', 'INVESTIMENTO'],
+        ['FUNDO DE RESERVA', 'FUNDO DE RESERVA']
+    ];
+
     // Prepara as opções para os selects
     const opcoesClasse = Array.from(globais.baseClassesOperacionais.entries()).map(([id, dados]) => [
         id,
@@ -413,7 +344,7 @@ export function adicionarLinhaClassificacao() {
     ]);
 
     // Cria os campos
-    const campoConta = criarCampo({inputType:'select', inputName:'Conta', id:'conta'});
+    const campoConta = criarCampo({inputType:'select', inputName:'Conta_a_debitar', id:'conta', options:opcoesConta});
     const campoCentro = criarCampo({inputType:'select', inputName:'Centro_de_custo', id:'centro', options:opcoesCentro});
     const campoClasse = criarCampo({inputType:'select', inputName:'Classe_operacional', id:'classe', options:opcoesClasse});
     const campoValor = criarCampo({inputType:'number', inputName:'Valor', id:'valor'});
@@ -463,6 +394,65 @@ export function removerLinhaClassificacao(botao) {
     // Remove a linha específica
     const linhaAtual = botao.closest('.linha-classificacao');
     linhaAtual.remove();
+}
+
+//===================================================================================//
+//====================PREENCHE OS DADOS DE CLASSIFICAÇÃO CONTÁBIL====================//
+//===================================================================================//
+function preencherDadosClassificacao(classificacoes) {
+    const formClassificacao = document.querySelector('#form-classificacao');
+
+    // Limpa as linhas existentes
+    formClassificacao.querySelectorAll('.linha-classificacao').forEach(linha => {
+        linha.remove();
+    });
+    
+    // Para cada classificação, cria uma nova linha
+    classificacoes.forEach(classificacao => {
+        // Extrai os valores do display_value
+        const [conta, centro, classe, valor, id] = classificacao.display_value.split('|SPLITKEY|');
+
+        // Adiciona uma nova linha
+        adicionarLinhaClassificacao();
+        
+        // Pega a última linha adicionada
+        const ultimaLinha = formClassificacao.querySelector('.linha-classificacao:last-child');
+        
+        // Preenche os campos
+        const selectConta = ultimaLinha.querySelector('select[name="Conta_a_debitar"]');
+        const selectCentro = ultimaLinha.querySelector('select[name="Centro_de_custo"]');
+        const selectClasse = ultimaLinha.querySelector('select[name="Classe_operacional"]');
+        const inputValor = ultimaLinha.querySelector('input[name="Valor"]');
+        
+        // Extrai apenas o código antes do hífen para fazer o match
+        const codigoClasse = classe.split(' - ')[0].trim();
+        const codigoCentro = centro.split(' - ')[0].trim();
+
+        
+        
+        // Encontra e seleciona a opção correta em cada select
+        Array.from(selectCentro.options).forEach(option => {
+            if (option.text.startsWith(codigoCentro)) {
+                option.selected = true;
+            }
+        });
+
+        Array.from(selectClasse.options).forEach(option => {
+            if (option.text.startsWith(codigoClasse)) {
+                option.selected = true;
+            }
+        });
+        
+        // Adiciona seleção da conta a debitar
+        Array.from(selectConta.options).forEach(option => {
+            if (option.text === conta.trim()) {
+                option.selected = true;
+            }
+        });
+        
+        // Formata e define o valor
+        inputValor.value = formatToBRL({ target: { value: valor } });
+    });
 }
 
 /**
@@ -542,4 +532,99 @@ export function initClassificacaoForm(classificacoes, centrosCusto) {
     // Mostra o primeiro conjunto de campos de classificação
     const camposClassificacao = document.getElementById('camposClassificacao');
     camposClassificacao.classList.remove('hidden');
+}
+
+
+export function setupPixValidation() {
+    const tipoPix = document.getElementById('tipo-pix');
+    const chavePix = document.getElementById('pix-chave');
+    
+    // Cria elemento para mensagem de erro
+    const errorMessage = document.createElement('span');
+    errorMessage.classList.add('error-message');
+    errorMessage.style.color = 'red';
+    errorMessage.style.fontSize = '12px';
+    errorMessage.style.display = 'none';
+    chavePix.parentNode.appendChild(errorMessage);
+
+    const formatacoes = {
+        CPF: {
+            mascara: (valor) => {
+                valor = valor.replace(/\D/g, '');
+                return valor.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            },
+            validacao: /^[0-9.-]*$/,
+            validacaoCompleta: /^\d{3}\.\d{3}\.\d{3}-\d{2}$/,
+            maxLength: 14,
+            mensagemErro: 'CPF inválido. Use o formato: 123.456.789-00'
+        },
+        CNPJ: {
+            mascara: (valor) => {
+                valor = valor.replace(/\D/g, '');
+                return valor.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+            },
+            validacao: /^[0-9./-]*$/,
+            validacaoCompleta: /^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/,
+            maxLength: 18,
+            mensagemErro: 'CNPJ inválido. Use o formato: 12.345.678/0001-90'
+        },
+        Email: {
+            mascara: (valor) => valor,
+            validacao: /^[a-zA-Z0-9@._-]*$/,
+            validacaoCompleta: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+            maxLength: 100,
+            mensagemErro: 'E-mail inválido. Use um formato válido: exemplo@dominio.com'
+        },
+        Telefone: {
+            mascara: (valor) => {
+                valor = valor.replace(/\D/g, '');
+                return valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            },
+            validacao: /^[0-9() -]*$/,
+            validacaoCompleta: /^\(\d{2}\) \d{5}-\d{4}$/,
+            maxLength: 15,
+            mensagemErro: 'Telefone inválido. Use o formato: (24) 98765-4321'
+        },
+        'Chave Aleatória': {
+            mascara: (valor) => valor,
+            validacao: /^[a-zA-Z0-9-]*$/,
+            validacaoCompleta: /^[a-zA-Z0-9-]{32,36}$/,
+            maxLength: 36,
+            mensagemErro: 'Chave aleatória inválida. Deve conter entre 32 e 36 caracteres alfanuméricos'
+        }
+    };
+
+    tipoPix.addEventListener('change', () => {
+        const tipo = tipoPix.value;
+        chavePix.value = '';
+        chavePix.maxLength = formatacoes[tipo].maxLength;
+        errorMessage.style.display = 'none';
+        chavePix.classList.remove('invalid');
+    });
+
+    chavePix.addEventListener('input', (e) => {
+        const tipo = tipoPix.value;
+        let valor = e.target.value;
+
+        if (!formatacoes[tipo].validacao.test(valor)) {
+            valor = valor.slice(0, -1);
+        }
+
+        e.target.value = formatacoes[tipo].mascara(valor);
+    });
+
+    // Adiciona validação no blur (quando o campo perde o foco)
+    chavePix.addEventListener('blur', (e) => {
+        const tipo = tipoPix.value;
+        const valor = e.target.value;
+
+        if (valor && !formatacoes[tipo].validacaoCompleta.test(valor)) {
+            errorMessage.textContent = formatacoes[tipo].mensagemErro;
+            errorMessage.style.display = 'block';
+            chavePix.classList.add('invalid');
+        } else {
+            errorMessage.style.display = 'none';
+            chavePix.classList.remove('invalid');
+        }
+    });
 }
