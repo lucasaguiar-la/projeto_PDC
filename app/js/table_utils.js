@@ -2,10 +2,23 @@ import{formatToBRL, converterStringParaDecimal, convertToNegative,restrictNumeri
 import{globais} from './main.js'
 let selectedCheckbox = null;
 const qlt = 4; //Total de linhas de totalizadores, considerando linha com botão de adicionar produto
+const ipcv = 3; //Indice da primeira coluna de valores (Valor unitário do primeiro fornecedor)
+const mpcv = ipcv%2 === 0? false: true; // Verifica se o indice da primeira coluna de valores é par ou impar, para definir o tipo de dados de cada célula criada
 
 let idsCotacao = new Array();
 
 //===========================Salvar a tabela===========================//
+/**
+ * Salva os dados da tabela.
+ * 
+ * @function saveTableData
+ * @param {Object} options - Opções para a função.
+ * @param {String} options.tipo - Tipo de ação a ser realizada (editar ou criar).
+ * @returns {Promise} Uma promessa que resolve após a conclusão da ação.
+ * 
+ * @description
+ * Esta função é responsável por salvar os dados da tabela. Se uma cotação já existe, ela limpa a cotação antiga e salva a nova. Caso contrário, cria uma nova cotação.
+ */
 export async function saveTableData({tipo = null}) {
     console.log('[ENTROU NA SAVE TABLE DATA]');
     console.log('tipo: ', tipo);
@@ -52,6 +65,15 @@ export async function saveTableData({tipo = null}) {
     }
 }
 
+/**
+ * Busca os dados do PDC.
+ * 
+ * @function pegarDadosPDC
+ * @returns {Object} Os dados do PDC.
+ * 
+ * @description
+ * Esta função busca os dados iniciais e detalhes do PDC a partir de formulários e os organiza em um objeto.
+ */
 async function pegarDadosPDC(){
     //====================BUSCA OS DADOS INICIAIS DO PDC====================//
     const formDdsInicais = document.querySelector('#dados-PDC');
@@ -108,6 +130,15 @@ async function pegarDadosPDC(){
     return dadosIniciaisPdc;
 }
 
+/**
+ * Busca os dados da tabela de preços.
+ * 
+ * @function pegarDadosTabelaPrecos
+ * @returns {Object} Os dados da tabela de preços e dados extras do PDC.
+ * 
+ * @description
+ * Esta função busca os dados da tabela de preços, incluindo os fornecedores, valores unitários, totais, frete, descontos e outros detalhes.
+ */
 async function pegarDadosTabelaPrecos(){
      //====================BUSCA OS DADOS DA TABELA DE PREÇOS====================//
      console.log('[BUSCANDO DADOS DA TABELA DE PREÇOS]');
@@ -238,6 +269,15 @@ async function pegarDadosTabelaPrecos(){
     };
 }
 
+/**
+ * Busca os dados de classificação.
+ * 
+ * @function pegarDadosClassificacao
+ * @returns {Object} Os dados de classificação.
+ * 
+ * @description
+ * Esta função busca os dados de classificação a partir de um formulário e os organiza em um objeto.
+ */
 async function pegarDadosClassificacao() {
     // Busca o formulário de classificação
     const formClassificacao = document.getElementById('form-classificacao');
@@ -290,23 +330,6 @@ async function pegarDadosClassificacao() {
     return dadosClassificacao;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-//================================================//
-//==========TUDO AJUSTADO A PARTIR DAQUI==========//
-//================================================//
-
 /**
  * Adiciona uma nova linha de produto na tabela de cotação
  * 
@@ -325,6 +348,8 @@ async function pegarDadosClassificacao() {
  * - Atualiza os listeners da tabela
  */
 export function addProductRow() {
+    // Flag para verificar se a célula deve ser ímpar ou par
+
     // Obtém referência ao corpo da tabela
     const table = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
     
@@ -337,17 +362,13 @@ export function addProductRow() {
     // Configura as células da nova linha
     for (let i = 0; i < rowCount; i++) {
         const newCell = newRow.insertCell(i);
-        if (i === 0) {
+        if (i === 0 || i === 2)  {
             // Coluna de descrição do produto
             newCell.contentEditable = "true";
         } else if (i === 1) {
             // Coluna de quantidade (apenas números inteiros)
             newCell.contentEditable = "true";
             newCell.classList.add('numeric-cell', 'integer-cell');
-        } else if (i % 2 === 0 && i < rowCount - 1) {
-            // Colunas de valores unitários (aceita decimais)
-            newCell.contentEditable = "true";
-            newCell.classList.add('numeric-cell');
         } else if (i === rowCount - 1) {
             // Última coluna - botão de remoção
             const removeButton = document.createElement('button');
@@ -371,6 +392,10 @@ export function addProductRow() {
 
             newCell.classList.add('action-buttons');
             newCell.appendChild(removeButton);
+        }else if ((mpcv && i % 2 !== 0) || (!mpcv && i % 2 === 0) && i > ipcv) {
+            // Colunas de valores unitários (aceita decimais)
+            newCell.contentEditable = "true";
+            newCell.classList.add('numeric-cell');
         } else {
             // Células de totais (não editáveis)
             newCell.innerText = "";
@@ -710,7 +735,7 @@ export function removeSupplierColumn(button) {
         
         if (i < rows.length - qlt) {
             // Remove células de produtos (2 colunas por fornecedor)
-            const baseIndex = colIndex * 2 - 2;
+            const baseIndex = colIndex * 2 - ipcv;
             safeDeleteCell(row, baseIndex); // Valor unitário
             safeDeleteCell(row, baseIndex); // Valor total
         } else {
@@ -800,7 +825,7 @@ export function calculateTotalPrices(rowIndex) {
     const quantityCell = row.cells[1]; //Quantidade do item
     const quantity = converterStringParaDecimal(quantityCell.innerText); //Converte a quantidade para um número decimal
 
-    for (let i = 2; i < row.cells.length; i += 2) {
+    for (let i = ipcv; i < row.cells.length; i += 2) {
         const unitPriceCell = row.cells[i]; //Valor unitário do item
         const totalPriceCell = row.cells[i + 1]; //Valor total do item
 
@@ -809,7 +834,6 @@ export function calculateTotalPrices(rowIndex) {
             totalPriceCell.innerText = formatToBRL((quantity * unitPrice)); //Calcula o valor total e formata para o padrão brasileiro
         }
     }
-
 }
 
 /**
@@ -834,10 +858,10 @@ function calcularTotais() {
     totalCells.forEach((totalCell, index) => {
         let vt = 0; //Valor total
         const vlrsFrete = (converterStringParaDecimal(table.rows[table.rows.length - qlt].cells[index + 1].textContent) || 0);
-        const vlrsDesconto = (converterStringParaDecimal(table.rows[table.rows.length - 3].cells[index + 1].textContent) || 0);
+        const vlrsDesconto = (converterStringParaDecimal(table.rows[table.rows.length - (qlt - 1)].cells[index + 1].textContent) || 0);
         for (let i = 0; i < table.rows.length - qlt; i++)
         {
-            const ci = 3; //Coluna inicial da busca
+            const ci = ipcv + 1; //Coluna inicial da busca | indice da coluna inicial + 1 (Indice começa com zero)
             const linha = table.rows[i];
 
             const valorTotalCell = linha.cells[(index * 2) + ci];
@@ -988,7 +1012,7 @@ export function atualizarOuvintesTabCot() {
     });
 
     // Adiciona listener para converter valores negativos na antepenúltima linha
-    const atpl = tabela.rows[tabela.rows.length - 3];
+    const atpl = tabela.rows[tabela.rows.length - (qlt - 1)];
     for (let i = 0; i < atpl.cells.length; i++) {
         const celula = atpl.cells[i];
         celula.addEventListener('blur', () => {
