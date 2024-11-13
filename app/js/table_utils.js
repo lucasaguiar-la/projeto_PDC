@@ -1,356 +1,36 @@
 import{formatToBRL, converterStringParaDecimal, convertToNegative,restrictNumericInput, restrictIntegerInput, executar_apiZoho, customModal} from './utils.js';
 import{globais} from './main.js'
-let selectedCheckbox = null;
+let idsCotacao = new Array(); //Array para armazenar os ids das cotações
+let selectedCheckbox = null; //Flag para seleção de fornecedor aprovado
+
 const qlt = 4; //Total de linhas de totalizadores, considerando linha com botão de adicionar produto
 const ipcv = 3; //Indice da primeira coluna de valores (Valor unitário do primeiro fornecedor)
 const mpcv = ipcv%2 === 0? false: true; // Verifica se o indice da primeira coluna de valores é par ou impar, para definir o tipo de dados de cada célula criada
 
-let idsCotacao = new Array();
-
-//===========================Salvar a tabela===========================//
+//====================================================================================================//
+//===========================FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DAS LINHAS===========================//
+//====================================================================================================//
 /**
- * Salva os dados da tabela.
- * 
- * @function saveTableData
- * @param {Object} options - Opções para a função.
- * @param {String} options.tipo - Tipo de ação a ser realizada (editar ou criar).
- * @returns {Promise} Uma promessa que resolve após a conclusão da ação.
- * 
- * @description
- * Esta função é responsável por salvar os dados da tabela. Se uma cotação já existe, ela limpa a cotação antiga e salva a nova. Caso contrário, cria uma nova cotação.
- */
-export async function saveTableData({tipo = null}) {
-    console.log('[ENTROU NA SAVE TABLE DATA]');
-    console.log('tipo: ', tipo);
-
-    if (globais.cotacaoExiste) {
-        console.log('[LIMPANDO COTACAO ANTIGA]');
-        for (const id of idsCotacao) {
-            let payload = {
-                data: {
-                    Ativo: false
-                }
-            };
-            await executar_apiZoho({ tipo: "atualizar_reg", ID: id, corpo: payload });
-        }
-        globais.cotacaoExiste = false;
-        await saveTableData(globais.tipo);
-    } else {
-        console.log('[CRIANDO COTACAO NOVA]');
-
-        const {dadosTabelaPrecos, dadosExtrasPDC} = await pegarDadosTabelaPrecos();
-
-        const dadosIniciaisPdc = await pegarDadosPDC();
-        const dadosClassificacao = await pegarDadosClassificacao();
-        const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosClassificacao};
-        console.log('dadosPDC: ', JSON.stringify(dadosPDC, null, 2));
-
-        //====================CRIA O REGISTRO DO PDC====================//
-        let respPDC;
-        if(globais.tipo === 'editar_pdc'){
-            console.log('[ATUALIZANDO O REGISTRO DO PDC]');
-            let payload = {
-                data: dadosPDC
-            };
-            respPDC = await executar_apiZoho({ tipo: "atualizar_reg", ID: globais.idPDC, corpo: payload,  nomeR: globais.nomeRelPDC});
-        }else{
-            console.log('[CRIANDO O REGISTRO DO PDC]');
-            respPDC = await executar_apiZoho({ tipo: "add_reg", corpo: JSON.stringify(dadosPDC, null, 2),  nomeF: globais.nomeFormPDC});
-        }
-        
-        //====================CRIA O REGISTRO DA COTAÇÃO====================//
-        const json = JSON.stringify(dadosTabelaPrecos, null, 2);
-        let respCot = await executar_apiZoho({ tipo: "add_reg", corpo: json });
-        globais.cotacaoExiste = true;
-    }
-}
-
-/**
- * Busca os dados do PDC.
- * 
- * @function pegarDadosPDC
- * @returns {Object} Os dados do PDC.
- * 
- * @description
- * Esta função busca os dados iniciais e detalhes do PDC a partir de formulários e os organiza em um objeto.
- */
-async function pegarDadosPDC(){
-    //====================BUSCA OS DADOS INICIAIS DO PDC====================//
-    const formDdsInicais = document.querySelector('#dados-PDC');
-    const dadosIniciaisPdc = {};
-
-    // Obter todos os elementos do formulário
-    const elementos = formDdsInicais.elements;
-    for (let elemento of elementos) {
-        // Verifica se o campo tem um valor e se está visível (caso de campos ocultos)
-        if (elemento.name && (elemento.type !== 'radio' || elemento.checked)) {
-            dadosIniciaisPdc[elemento.name] = elemento.value;
-        }
-    }
-    dadosIniciaisPdc["id_temp"] = globais.numPDC_temp;
-
-    //====================BUSCA OS DADOS DETALHES DO PDC====================//
-    const formDdsDetalhes = document.querySelector('#form-pagamento');
-
-    // Obter todos os elementos do formulário
-    const parcelas = document.querySelectorAll('.parcela');
-    const vencimentos = [];
-
-    parcelas.forEach(parcela => {
-        const dataInput = parcela.querySelector('input[type="date"]');
-        const valorInput = parcela.querySelector('input[name="Valor"]');
-
-        if (dataInput?.value && valorInput?.value) {
-            const [ano, mes, dia] = dataInput.value.split('-');
-            vencimentos.push({
-                "Vencimento_previsto": `${dia}/${mes}/${ano}`,
-                "Valor": converterStringParaDecimal(valorInput.value)
-            });
-        }
-    });
-
-    // Adiciona outros campos do formulário
-    const elementosDetalhes = formDdsDetalhes.elements;
-    for (let elemento of elementosDetalhes) {
-        if (elemento.name && 
-            elemento.name !== 'Datas' && 
-            elemento.name !== 'Valor' && 
-            (elemento.type !== 'radio' || elemento.checked)) {
-            dadosIniciaisPdc[elemento.name] = elemento.value;
-        }
-    }
-
-    // Adiciona as parcelas ao objeto final
-    if (vencimentos.length > 0) {
-        dadosIniciaisPdc["Datas"] = vencimentos;
-        // Adiciona o primeiro vencimento em um campo separado para referência
-        dadosIniciaisPdc["Vencimento_previsto"] = vencimentos[0].Vencimento_previsto;
-    }
-
-    return dadosIniciaisPdc;
-}
-
-/**
- * Busca os dados da tabela de preços.
- * 
- * @function pegarDadosTabelaPrecos
- * @returns {Object} Os dados da tabela de preços e dados extras do PDC.
- * 
- * @description
- * Esta função busca os dados da tabela de preços, incluindo os fornecedores, valores unitários, totais, frete, descontos e outros detalhes.
- */
-async function pegarDadosTabelaPrecos(){
-     //====================BUSCA OS DADOS DA TABELA DE PREÇOS====================//
-     console.log('[BUSCANDO DADOS DA TABELA DE PREÇOS]');
-        
-     const table = document.getElementById('priceTable');
-     const headerRow1 = table.rows[0];
-     const rowFrete = table.rows[table.rows.length - qlt];
-     const rowDescontos = table.rows[table.rows.length -(qlt-1)];
-     const rowTotal = table.rows[table.rows.length -(qlt-2)];
-
-     const rowsBody = table.getElementsByTagName('tbody')[0].rows;
-     const dadosExtrasPDC = {};
-     const data = [];
-     // Variáveis da segunda tabela (Detalhes das Cotações)
-     const otherTable = document.getElementById('otherDataTable');
-     const otherRows = otherTable.getElementsByTagName('tbody')[0].rows;
-
-     const suppliers = [];
-     const deliveryCosts = [];
-     const descontos = [];
-     const totalGeral = [];
-     const suplierIds = [];
-
-
-     // Captura os fornecedores da tabela
-     for (let i = 0; i < headerRow1.cells.length; i++) {
-
-         if (headerRow1.cells[i].colSpan > 1) {
-             const supplierName = headerRow1.cells[i].innerText.trim().replace(/ \u00d7$/, '');
-             const supplierIdForn = headerRow1.cells[i].dataset.id_forn;
-             suplierIds.push(supplierIdForn);
-             suppliers.push(supplierName);
-
-             const frt = converterStringParaDecimal((rowFrete.cells[i - 1].innerText) || '0');
-             deliveryCosts.push(frt);
-
-             const d = converterStringParaDecimal((rowDescontos.cells[i - 1].innerText) || '0');
-             descontos.push(d);
-
-             const total = converterStringParaDecimal((rowTotal.cells[i - 1].innerText) || '0');
-             totalGeral.push(total);
-         }
-     }
-     console.log('suppliers: ', suppliers);
-     console.log('suplierIds: ', suplierIds);
-     console.log('deliveryCosts: ', deliveryCosts);
-     console.log('descontos: ', descontos);
-     console.log('totalGeral: ', totalGeral);
-     
-     // Captura os produtos e valores da tabela //
-     for (let i = 0; i < rowsBody.length - qlt; i++) {
-        const row = rowsBody[i];
-        const produtoId = row.dataset.id_produto;
-        const produto = row.cells[0]?.innerText || '';
-        const quantidade = parseInt(row.cells[1]?.innerText || '');
-
-        if (suppliers.length > 0) {
-            for (let j = 0; j < suppliers.length; j++) {
-                const fornecedorId = suplierIds[j];
-                const unitPriceIndex = 2 + j * 2;
-                const totalPriceIndex = unitPriceIndex + 1;
-                const fornecedor = suppliers[j];
-                const valor_frete = deliveryCosts[j];
-                const valor_descontos = descontos[j];
-                const valor_totalGeral = totalGeral[j];
-
-                const valor_unitario = converterStringParaDecimal((row.cells[unitPriceIndex]?.innerText) || '0');
-                const valor_total = converterStringParaDecimal((row.cells[totalPriceIndex]?.innerText) || '0');
-
-                const condicao_pagamento = otherRows[j].cells[1]?.innerText || '';
-                const observacao = otherRows[j].cells[2]?.innerText || '';
-
-                const fornecedorAprovado = headerRow1.cells[j + 2].querySelector('input[type="checkbox"]').checked;
-                if(fornecedorAprovado){
-                    dadosExtrasPDC["Beneficiario"] = fornecedor;
-                    dadosExtrasPDC["Valor_orcado"] = valor_totalGeral;
-
-                }
-
-                console.log('fornecedorAprovado: ', fornecedorAprovado);
-                console.log('fornecedor: ', fornecedor);
-                console.log('valor_unitario: ', valor_unitario);
-                console.log('valor_total: ', valor_total);
-                console.log('valor_frete: ', valor_frete);
-                console.log('valor_descontos: ', valor_descontos);
-                console.log('valor_totalGeral: ', valor_totalGeral);
-                console.log('condicao_pagamento: ', condicao_pagamento);
-                console.log('observacao: ', observacao);
-                
-                const rowData = {
-                    id_produto: produtoId,
-                    id_fornecedor: fornecedorId,
-                    Produto: produto,
-                    Quantidade: quantidade,
-                    Fornecedor: fornecedor,
-                    Valor_unitario: valor_unitario,
-                    Valor_total: valor_total,
-                    Valor_do_frete: valor_frete,
-                    Descontos: valor_descontos,
-                    Total_geral: valor_totalGeral,
-                    Condicoes_de_pagamento: condicao_pagamento,
-                    Observacoes: observacao,
-                    numero_de_PDC: globais.numPDC,
-                    num_PDC_temp: globais.numPDC_temp,
-                    Aprovado: fornecedorAprovado, 
-                    Versao: 1,
-                    Ativo: true
-                };
-                data.push(rowData);
-            }
-        } else {
-            const rowData = {
-                id_produto: produtoId,
-                Produto: produto,
-                Quantidade: quantidade,
-                numero_de_PDC: globais.numPDC,
-                num_PDC_temp: globais.numPDC_temp,
-                Versao: 1,
-                Ativo: true,
-            };
-            data.push(rowData);
-        }
-    }
-    console.log('data: ', JSON.stringify(data, null, 2));
-    return {
-        dadosTabelaPrecos: data,
-        dadosExtrasPDC
-    };
-}
-
-/**
- * Busca os dados de classificação.
- * 
- * @function pegarDadosClassificacao
- * @returns {Object} Os dados de classificação.
- * 
- * @description
- * Esta função busca os dados de classificação a partir de um formulário e os organiza em um objeto.
- */
-async function pegarDadosClassificacao() {
-    // Busca o formulário de classificação
-    const formClassificacao = document.getElementById('form-classificacao');
-    const dadosClassificacao = {};
-    
-    // Busca todas as linhas de classificação
-    const linhasClassificacao = formClassificacao.querySelectorAll('.linha-classificacao');
-    
-    // Array que irá armazenar os dados de cada linha
-    const classificacoes = [];
-    
-    // Itera sobre cada linha de classificação
-    linhasClassificacao.forEach(linha => {
-        const classificacao = {};
-        
-        // Busca os selects e inputs da linha atual
-        const selects = linha.querySelectorAll('select');
-        const inputs = linha.querySelectorAll('input');
-        
-        // Adiciona os valores dos selects ao objeto da classificação
-        selects.forEach(select => {
-            if (select.name && select.value) {
-                classificacao[select.name] = select.value;
-            }
-        });
-        
-        // Adiciona os valores dos inputs ao objeto da classificação
-        inputs.forEach(input => {
-            if (input.name && input.value) {
-                // Se for um campo de valor, converte para decimal
-                if (input.classList.contains('input-number')) {
-                    classificacao[input.name] = converterStringParaDecimal(input.value);
-                } else {
-                    classificacao[input.name] = input.value;
-                }
-            }
-        });
-        
-        // Adiciona a classificação ao array apenas se tiver algum valor preenchido
-        if (Object.keys(classificacao).length > 0) {
-            classificacoes.push(classificacao);
-        }
-    });
-    
-    // Adiciona o array de classificações ao objeto final apenas se houver dados
-    if (classificacoes.length > 0) {
-        dadosClassificacao["Classificacao_contabil"] = classificacoes;
-    }
-    
-    return dadosClassificacao;
-}
-
-/**
- * Adiciona uma nova linha de produto na tabela de cotação
+ * Adiciona uma nova linha de produto na tab de cotação
  * 
  * @function addProductRow
  * @returns {void}
  * 
  * @description
  * Esta função:
- * - Insere uma nova linha na tabela antes das linhas de totalizadores
+ * - Insere uma nova linha na tab antes das linhas de totalizadores
  * - Configura um ID único para o novo produto
  * - Cria células editáveis para:
  *   - Descrição do produto (primeira coluna)
  *   - Quantidade (segunda coluna, apenas números inteiros)
  *   - Valores unitários (colunas pares, aceita decimais)
  * - Adiciona botão de remoção na última coluna
- * - Atualiza os listeners da tabela
+ * - Atualiza os listeners da tab
  */
 export function addProductRow() {
     // Flag para verificar se a célula deve ser ímpar ou par
 
-    // Obtém referência ao corpo da tabela
+    // Obtém referência ao corpo da tab
     const table = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
     
     // Insere nova linha antes dos totalizadores
@@ -402,30 +82,30 @@ export function addProductRow() {
         }
     }
 
-    // Atualiza os listeners da tabela
+    // Atualiza os listeners da tab
     atualizarOuvintesTabCot();
 }
 
 /**
- * Remove a linha do produto selecionado da tabela de cotação
+ * Remove a linha do produto selecionado da tab de cotação
  * 
  * @function removeRow
  * @param {HTMLElement} button - Botão de remoção que foi clicado
  * @returns {void}
  * 
  * @description
- * - Verifica se existe mais de uma linha na tabela antes de remover
+ * - Verifica se existe mais de uma linha na tab antes de remover
  * - Remove a linha do produto selecionado se houver mais de uma linha
- * - Exibe alerta se tentar remover a última linha da tabela
+ * - Exibe alerta se tentar remover a última linha da tab
  */
 export function removeProductRow(button) {
-    // Obtém referência ao corpo da tabela de preços
+    // Obtém referência ao corpo da tab de preços
     const table = document.getElementById('priceTable');
     const tbody = table.getElementsByTagName('tbody')[0];
-    const linhasCorpo = Array.from(tbody.rows).slice(0, -qlt);
+    const corpoTab = Array.from(tbody.rows).slice(0, -qlt);
 
     // Verifica se há mais de uma linha antes de remover
-    if (linhasCorpo.length > 1) {
+    if (corpoTab.length > 1) {
         // Navega do botão até a linha (tr) e remove
         const row = button.parentNode.parentNode;
         row.parentNode.removeChild(row);
@@ -436,8 +116,11 @@ export function removeProductRow(button) {
     calcularTotais();
 }
 
+//=====================================================================================================//
+//===========================FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DAS COLUNAS===========================//
+//=====================================================================================================//
 /**
- * Adiciona um novo fornecedor à tabela de cotação
+ * Adiciona um novo fornecedor à tab de cotação
  * 
  * @function addSupplierColumn
  * @returns {Promise<void>}
@@ -464,9 +147,9 @@ export function removeProductRow(button) {
 export async function addSupplierColumn() {
     // Configurações iniciais
     const qtdCaract = 20; // Limite de caracteres para o nome do fornecedor
-    const tabela = document.getElementById('priceTable');
-    const cabecalhoLinha1 = tabela.rows[0];
-    const cabecalhoLinha2 = tabela.rows[1];
+    const tab = document.getElementById('priceTable');
+    const cabecalhoLinha1 = tab.rows[0];
+    const cabecalhoLinha2 = tab.rows[1];
 
     //==========Criação do Container Inicial==========//
     const containerFornecedor = document.createElement('div');
@@ -609,7 +292,7 @@ export async function addSupplierColumn() {
                 cabecalhoLinha2.insertBefore(celulaPrecoTotal, cabecalhoLinha2.cells[cabecalhoLinha2.cells.length -1]);
     
                 //==========Adição das Células nas Linhas==========//
-                const linhas = tabela.getElementsByTagName('tbody')[0].rows;
+                const linhas = tab.getElementsByTagName('tbody')[0].rows;
                 for (let i = 0; i < linhas.length - 1; i++) {
                     if(i < linhas.length - qlt) {
                         // Células para produtos
@@ -634,7 +317,7 @@ export async function addSupplierColumn() {
                     }
                 }
     
-                //==========Atualização da Tabela de Dados Adicionais==========//
+                //==========Atualização da tab de Dados Adicionais==========//
                 const otherTableBody = document.getElementById('otherDataTable').getElementsByTagName('tbody')[0];
                 
                 if (otherTableBody.rows.length === 1 && !otherTableBody.rows[0].cells[0].textContent.trim()) {
@@ -696,18 +379,18 @@ export async function addSupplierColumn() {
 }
 
 /**
- * Remove as colunas de um fornecedor selecionado da tabela de cotação
+ * Remove as colunas de um fornecedor selecionado da tab de cotação
  * 
  * @function removeSupplierColumn
  * @param {HTMLElement} button - Botão de remoção que foi clicado
  * @returns {void}
  * 
  * @description
- * - Remove as colunas relacionadas ao fornecedor selecionado da tabela principal (valor unitário e total)
+ * - Remove as colunas relacionadas ao fornecedor selecionado da tab principal (valor unitário e total)
  * - Remove a célula mesclada do fornecedor no cabeçalho
  * - Remove as células de totalizadores para o fornecedor
- * - Remove a linha correspondente na tabela de dados adicionais
- * - Mantém a estrutura e formatação da tabela
+ * - Remove a linha correspondente na tab de dados adicionais
+ * - Mantém a estrutura e formatação da tab
  * - Usa o ID do fornecedor armazenado no dataset para garantir remoção correta
  */
 export function removeSupplierColumn(button) {
@@ -728,7 +411,7 @@ export function removeSupplierColumn(button) {
         }
     };
 
-    // Remove células do corpo da tabela
+    // Remove células do corpo da tab
     const rows = tbody.rows;
     for (let i = rows.length - 1; i >= 0; i--) {
         const row = rows[i];
@@ -752,7 +435,7 @@ export function removeSupplierColumn(button) {
     }
     safeDeleteCell(headerRow1, colIndex); // Célula mesclada do fornecedor
 
-    // Remove linha correspondente na tabela de dados adicionais
+    // Remove linha correspondente na tab de dados adicionais
     const otherTable = document.getElementById('otherDataTable');
     const otherRows = otherTable.getElementsByTagName('tbody')[0].rows;
     
@@ -807,6 +490,10 @@ function criarPopupBase(conteudo) {
     return popupFornecedor;
 }
 
+//=================================================================================================//
+//===========================FUNÇÕES AUXILIARES PARA CALCULOS DE VALORES===========================//
+//=================================================================================================//
+
 /**
  * Calcula o valor total de cada uma das linhas de produto
  * 
@@ -837,7 +524,7 @@ export function calculateTotalPrices(rowIndex) {
 }
 
 /**
- * Calcula o valor total para cada fornecedor na tabela de cotação
+ * Calcula o valor total para cada fornecedor na tab de cotação
  * 
  * @function calcularTotais
  * @returns {void}
@@ -872,9 +559,13 @@ function calcularTotais() {
     });
 }
 
+//====================================================================================================//
+//===========================FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DE COLAGEM===========================//
+//====================================================================================================//
+
 /**
- * Manipula o evento de colar (paste) na tabela de preços
- * Permite colar dados de planilhas externas na tabela de cotação, mantendo a formataão e cálculos
+ * Manipula o evento de colar (paste) na tab de preços
+ * Permite colar dados de planilhas externas na tab de cotação, mantendo a formataão e cálculos
  * 
  * @function handlePasteEventPriceTable
  * @param {Event} event - Evento de colar (paste)
@@ -887,7 +578,7 @@ function calcularTotais() {
  * - Divide os dados em linhas e colunas
  * - Adiciona novas linhas de produto se necessário
  * - Cola os dados nas células correspondentes
- * - Recalcula os totais das linhas e da tabela
+ * - Recalcula os totais das linhas e da tab
  */
 export function handlePasteEventPriceTable(event) {
     event.preventDefault();
@@ -935,7 +626,7 @@ export function handlePasteEventPriceTable(event) {
 }
 
 /**
- * Manipula o evento de colar (paste) na tabela de detalhes dos fornecedores
+ * Manipula o evento de colar (paste) na tab de detalhes dos fornecedores
  * Permite colar dados de planilhas externas nos campos de frete, condições de pagamento e observações
  * 
  * @function handlePasteEventDetailtable
@@ -975,8 +666,12 @@ export function handlePasteEventDetailtable(event) {
     }
 }
 
+//=====================================================================================================//
+//===========================FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DE OUVINTES===========================//
+//=====================================================================================================//
+
 /**
- * Atualiza os listeners da tabela de cotação
+ * Atualiza os listeners da tab de cotação
  * Remove todos os listeners existentes e adiciona novamente para garantir funcionamento correto
  * 
  * @function atualizarOuvintesTabCot
@@ -987,10 +682,10 @@ export function handlePasteEventDetailtable(event) {
  * - Adiciona novamente os listeners necessários para garantir o funcionamento correto
  */
 export function atualizarOuvintesTabCot() {
-    const tabela = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
-    const lv = tabela.rows;
+    const tab = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
+    const lv = tab.rows;
 
-    if (!tabela) return;
+    if (!tab) return;
 
     // Remove listeners existentes
     function removeAllListeners(element) {
@@ -1007,12 +702,12 @@ export function atualizarOuvintesTabCot() {
     }
 
     // Adiciona listeners para células numéricas
-    tabela.querySelectorAll('.numeric-cell').forEach(celula => {
+    tab.querySelectorAll('.numeric-cell').forEach(celula => {
         celula.addEventListener('input', () => restrictNumericInput(celula));
     });
 
     // Adiciona listener para converter valores negativos na antepenúltima linha
-    const atpl = tabela.rows[tabela.rows.length - (qlt - 1)];
+    const atpl = tab.rows[tab.rows.length - (qlt - 1)];
     for (let i = 0; i < atpl.cells.length; i++) {
         const celula = atpl.cells[i];
         celula.addEventListener('blur', () => {
@@ -1023,7 +718,7 @@ export function atualizarOuvintesTabCot() {
         }, {capture: true});
     }
 
-    // Adiciona listeners para células da tabela principal
+    // Adiciona listeners para células da tab principal
     for (let i = 0; i < lv.length - 1; i++) { // Alterado para incluir as linhas de totalizadores
         const linha = lv[i];
         const isTotalizador = i >= (lv.length - qlt);
@@ -1070,16 +765,16 @@ export function atualizarOuvintesTabCot() {
 }
 
 /**
- * Atualiza os ouvintes de eventos da tabela de detalhes dos fornecedores.
- * Adiciona um ouvinte de evento 'paste' para cada linha da tabela, exceto o cabeçalho.
- * Isso permite que os dados sejam colados corretamente na tabela de detalhes.
+ * Atualiza os ouvintes de eventos da tab de detalhes dos fornecedores.
+ * Adiciona um ouvinte de evento 'paste' para cada linha da tab, exceto o cabeçalho.
+ * Isso permite que os dados sejam colados corretamente na tab de detalhes.
  * 
  * @function atualizarOuvintesTabDetlhesForn
  * @returns {void}
  * 
  * @description
- * - Adiciona um ouvinte de evento 'paste' para cada linha da tabela, exceto o cabeçalho
- * - Isso permite que os dados sejam colados corretamente na tabela de detalhes
+ * - Adiciona um ouvinte de evento 'paste' para cada linha da tab, exceto o cabeçalho
+ * - Isso permite que os dados sejam colados corretamente na tab de detalhes
  */
 export function atualizarOuvintesTabDetlhesForn()
 {
@@ -1092,15 +787,15 @@ export function atualizarOuvintesTabDetlhesForn()
     }
 }
 
-//=======================================================================//
-//====================PREENCHE A TABELA DAS COTAÇÃOES====================//
-//=======================================================================//
+//====================================================================================//
+//===========================PREENCHE A tab DE COTAÇÃOES===========================//
+//====================================================================================//
 /**
- * Preenche a tabela de cotações com os dados recebidos da API
+ * Preenche a tab de cotações com os dados recebidos da API
  * 
  * @async
  * @function prenchTabCot
- * @param {Object} resp - Resposta da API contendo os dados das cotaç��es
+ * @param {Object} resp - Resposta da API contendo os dados das cotaçes
  * @param {number} resp.code - Código de resposta da API
  * @param {Array} resp.data - Array com os dados das cotações
  * @returns {void}
@@ -1108,7 +803,7 @@ export function atualizarOuvintesTabDetlhesForn()
  * @description
  * Esta função:
  * - Verifica se existem dados válidos na resposta
- * - Remove a linha inicial da tabela se existir
+ * - Remove a linha inicial da tab se existir
  * - Processa os dados para extrair:
  *   - IDs dos produtos
  *   - Lista de fornecedores
@@ -1116,7 +811,7 @@ export function atualizarOuvintesTabDetlhesForn()
  *   - Status de aprovação
  *   - Valores de desconto
  * - Para cada produto:
- *   - Cria uma nova linha na tabela
+ *   - Cria uma nova linha na tab
  *   - Preenche nome e quantidade
  *   - Para cada fornecedor:
  *     - Adiciona colunas de valor unitário e total
@@ -1129,7 +824,7 @@ export function atualizarOuvintesTabDetlhesForn()
  *   - Frete
  *   - Descontos  
  *   - Total por fornecedor
- * - Preenche tabela de detalhes com:
+ * - Preenche tab de detalhes com:
  *   - Condições de pagamento
  *   - Observações
  */
@@ -1181,15 +876,20 @@ export async function prenchTabCot(resp) {
             quantidadeCell.contentEditable = 'true';
             quantidadeCell.addEventListener('input', restrictIntegerInput);
 
+            //UNIDADE//
+            const unidadeCell = newRow.insertCell(2);
+            unidadeCell.innerText = objProduto[0].Unidade || '';
+            unidadeCell.contentEditable = 'true';
+
             //Insere as colunas dos fornecedores na ordem correta
             fornecedores.forEach((fornecedorObj, fornecedorIndex) => {
                 //VALOR UNITÁRIO//
-                const valorUnitarioCell = newRow.insertCell(fornecedorIndex * 2 + 2);
+                const valorUnitarioCell = newRow.insertCell(fornecedorIndex * 2 + ipcv);
                 valorUnitarioCell.classList.add('numeric-cell');
                 valorUnitarioCell.contentEditable = "true";
 
                 //VALOR TOTAL//
-                const valorTotalCell = newRow.insertCell(fornecedorIndex * 2 + 3);
+                const valorTotalCell = newRow.insertCell(fornecedorIndex * 2 + (ipcv + 1));
                 valorTotalCell.classList.add('numeric-cell');
                 
                 //Busca dados do fornecedor atual//
@@ -1204,7 +904,7 @@ export async function prenchTabCot(resp) {
             //Cria os botões de excluir as linhas de produto//
             if(fornecedores.length > 0) {
                 // Cria a nova célula na linha//
-                const cell = newRow.insertCell(fornecedores.length * 2 + 2);
+                const cell = newRow.insertCell(fornecedores.length * 2 + ipcv);
                 
                 // Cria o botão//
                 const removeButton = document.createElement('button');
@@ -1256,7 +956,7 @@ export async function prenchTabCot(resp) {
         
         //Função para adicionar os cabeçalhos de fornecedores na ordem correta//
         function addHeaderForn(fornecedores) {
-            //Busca as 2 primeiras linhas da tabela (1 - Nome do fornecedor e 2 - Valor unitário e Valor total)//
+            //Busca as 2 primeiras linhas da tab (1 - Nome do fornecedor e 2 - Valor unitário e Valor total)//
             const headerRow1 = table.parentElement.querySelector('thead tr:nth-child(1)');
             const headerRow2 = table.parentElement.querySelector('thead tr:nth-child(2)');
             
@@ -1271,7 +971,7 @@ export async function prenchTabCot(resp) {
     
                 checkbox.type = 'checkbox';
                 checkbox.classList.add('supplier-checkbox');
-                console.log('[CHEGOU ATÉ AQUI]');
+
                 if (valoresAprovado[index] == 'true') {
                     if (!foundChecked) {
                         checkbox.checked = true;
@@ -1279,7 +979,7 @@ export async function prenchTabCot(resp) {
                         foundChecked = true;
                     }
                 }
-                console.log('[PASSOU]');
+
                 checkbox.addEventListener('change', function () {
                     if (checkbox.checked) {
                         if (selectedCheckbox && selectedCheckbox !== checkbox) {
@@ -1365,7 +1065,7 @@ export async function prenchTabCot(resp) {
                 cellTotal.style.margin = '0 auto';
                 linhaTotal.insertBefore(cellTotal, linhaTotal.cells[linhaTotal.cells.length -1]);
 
-                // Adiciona linha na tabela de detalhes das propostas
+                // Adiciona linha na tab de detalhes das propostas
                 const otherTable = document.getElementById('otherDataTable');
                 const tbodyOther = otherTable.getElementsByTagName('tbody')[0];
 
@@ -1393,5 +1093,316 @@ export async function prenchTabCot(resp) {
         addHeaderForn(fornecedores);
         // Calcula os totais
         calcularTotais();
+    }
+}
+
+//=========================================================================================//
+//===========================FUNÇÕES AUXILIARES PARA SALVAR TUDO===========================//
+//=========================================================================================//
+/**
+ * Busca os dados do PDC.
+ * 
+ * @function pegarDadosPDC
+ * @returns {Object} Os dados do PDC.
+ * 
+ * @description
+ * Esta função busca os dados iniciais e detalhes do PDC a partir de formulários e os organiza em um objeto.
+ */
+async function pegarDadosPDC(){
+    //====================BUSCA OS DADOS INICIAIS DO PDC====================//
+    const formDdsInicais = document.querySelector('#dados-PDC');
+    const dadosIniciaisPdc = {};
+
+    // Obter todos os elementos do formulário
+    const elementos = formDdsInicais.elements;
+    for (let elemento of elementos) {
+        // Verifica se o campo tem um valor e se está visível (caso de campos ocultos)
+        if (elemento.name && (elemento.type !== 'radio' || elemento.checked)) {
+            dadosIniciaisPdc[elemento.name] = elemento.value;
+        }
+    }
+    dadosIniciaisPdc["id_temp"] = globais.numPDC_temp;
+
+    //====================BUSCA OS DADOS DETALHES DO PDC====================//
+    const formDdsDetalhes = document.querySelector('#form-pagamento');
+
+    // Obter todos os elementos do formulário
+    const parcelas = document.querySelectorAll('.parcela');
+    const vencimentos = [];
+
+    parcelas.forEach(parcela => {
+        const dataInput = parcela.querySelector('input[type="date"]');
+        const valorInput = parcela.querySelector('input[name="Valor"]');
+
+        if (dataInput?.value && valorInput?.value) {
+            const [ano, mes, dia] = dataInput.value.split('-');
+            vencimentos.push({
+                "Vencimento_previsto": `${dia}/${mes}/${ano}`,
+                "Valor": converterStringParaDecimal(valorInput.value)
+            });
+        }
+    });
+
+    // Adiciona outros campos do formulário
+    const elementosDetalhes = formDdsDetalhes.elements;
+    for (let elemento of elementosDetalhes) {
+        if (elemento.name && 
+            elemento.name !== 'Datas' && 
+            elemento.name !== 'Valor' && 
+            (elemento.type !== 'radio' || elemento.checked)) {
+            dadosIniciaisPdc[elemento.name] = elemento.value;
+        }
+    }
+
+    // Adiciona as parcelas ao objeto final
+    if (vencimentos.length > 0) {
+        dadosIniciaisPdc["Datas"] = vencimentos;
+        // Adiciona o primeiro vencimento em um campo separado para referência
+        dadosIniciaisPdc["Vencimento_previsto"] = vencimentos[0].Vencimento_previsto;
+    }
+
+    return dadosIniciaisPdc;
+}
+
+/**
+ * Busca os dados da tab de preços.
+ * 
+ * @function pegarDadostabPrecos
+ * @returns {Object} Os dados da tab de preços e dados extras do PDC.
+ * 
+ * @description
+ * Esta função busca os dados da tab de preços, incluindo os fornecedores, valores unitários, totais, frete, descontos e outros detalhes.
+ */
+async function pegarDadostabPrecos(){
+     //====================BUSCA OS DADOS DA TAB DE PREÇOS====================//
+     const tab = document.getElementById('priceTable');
+     const cabecalho1 = tab.rows[0];
+     const linhaFrete = tab.rows[tab.rows.length - qlt];
+     const linhaDescontos = tab.rows[tab.rows.length -(qlt-1)];
+     const linhaTotal = tab.rows[tab.rows.length -(qlt-2)];
+
+     const corpoTab = tab.getElementsByTagName('tbody')[0].rows;
+     const dadosExtrasPDC = {};
+     const dados = [];
+
+     // Variáveis da segunda tab (Detalhes das Cotações)
+     const tabDetalhes = document.getElementById('otherDataTable');
+     const linhasDetalhes = tabDetalhes.getElementsByTagName('tbody')[0].rows;
+
+     const fornecedores = [];
+     const custosFrete = [];
+     const descontos = [];
+     const totalGeral = [];
+     const idsFornecedores = [];
+
+
+     // Captura os fornecedores da tab
+     for (let i = 0; i < cabecalho1.cells.length; i++) {
+
+         if (cabecalho1.cells[i].colSpan > 1) {
+             const nomeFornecedor = cabecalho1.cells[i].innerText.trim().replace(/ \u00d7$/, '');
+             const idFornecedor = cabecalho1.cells[i].dataset.id_forn;
+             idsFornecedores.push(idFornecedor);
+             fornecedores.push(nomeFornecedor);
+
+             const frete = converterStringParaDecimal((linhaFrete.cells[i - (ipcv - 1)].innerText) || '0');//É -1 PORQUE BUSCA O INDICE DA ULTIMA LINHA DE APOIO E NÃO DA PRIMEIRA LINHA DE VALORES
+             custosFrete.push(frete);
+
+             const desconto = converterStringParaDecimal((linhaDescontos.cells[i - (ipcv - 1)].innerText) || '0');//É -1 PORQUE BUSCA O INDICE DA ULTIMA LINHA DE APOIO E NÃO DA PRIMEIRA LINHA DE VALORES
+             descontos.push(desconto);
+
+             const total = converterStringParaDecimal((linhaTotal.cells[i - (ipcv - 1)].innerText) || '0');//É -1 PORQUE BUSCA O INDICE DA ULTIMA LINHA DE APOIO E NÃO DA PRIMEIRA LINHA DE VALORES
+             totalGeral.push(total);
+         }
+     }
+     
+     // Captura os produtos e valores da tab //
+     for (let i = 0; i < corpoTab.length - qlt; i++) {
+        const linha = corpoTab[i];
+        const idProduto = linha.dataset.id_produto;
+        const produto = linha.cells[0]?.innerText || '';
+        const quantidade = parseInt(linha.cells[1]?.innerText || '');
+        const unidade = linha.cells[2]?.innerText || '';
+
+        if (fornecedores.length > 0) {
+            for (let j = 0; j < fornecedores.length; j++) {
+                const idFornecedor = idsFornecedores[j];
+                const indicePrecoUnitario = ipcv + j * 2;
+                const indicePrecoTotal = indicePrecoUnitario + 1;
+                const fornecedor = fornecedores[j];
+                const valorFrete = custosFrete[j];
+                const valorDesconto = descontos[j];
+                const valorTotalGeral = totalGeral[j];
+
+                const valorUnitario = converterStringParaDecimal((linha.cells[indicePrecoUnitario]?.innerText) || '0');
+                const valorTotal = converterStringParaDecimal((linha.cells[indicePrecoTotal]?.innerText) || '0');
+
+                const condicaoPagamento = linhasDetalhes[j].cells[1]?.innerText || '';
+                const observacao = linhasDetalhes[j].cells[2]?.innerText || '';
+
+                const fornecedorAprovado = cabecalho1.cells[j + ipcv].querySelector('input[type="checkbox"]').checked;
+                if(fornecedorAprovado){
+                    dadosExtrasPDC["Beneficiario"] = fornecedor;
+                    dadosExtrasPDC["Valor_orcado"] = valorTotalGeral;
+                }
+                
+                const dadosLinha = {
+                    id_produto: idProduto,
+                    id_fornecedor: idFornecedor,
+                    Produto: produto,
+                    Quantidade: quantidade,
+                    Unidade: unidade,
+                    Fornecedor: fornecedor,
+                    Valor_unitario: valorUnitario,
+                    Valor_total: valorTotal,
+                    Valor_do_frete: valorFrete,
+                    Descontos: valorDesconto,
+                    Total_geral: valorTotalGeral,
+                    Condicoes_de_pagamento: condicaoPagamento,
+                    Observacoes: observacao,
+                    numero_de_PDC: globais.numPDC,
+                    num_PDC_temp: globais.numPDC_temp,
+                    Aprovado: fornecedorAprovado, 
+                    Versao: 1,
+                    Ativo: true
+                };
+                dados.push(dadosLinha);
+            }
+        } else {
+            const dadosLinha = {
+                id_produto: idProduto,
+                Produto: produto,
+                Quantidade: quantidade,
+                Unidade: unidade,
+                numero_de_PDC: globais.numPDC,
+                num_PDC_temp: globais.numPDC_temp,
+                Versao: 1,
+                Ativo: true,
+            };
+            dados.push(dadosLinha);
+        }
+    }
+    console.log('dados: ', JSON.stringify(dados, null, 2));
+    return {
+        dadostabPrecos: dados,
+        dadosExtrasPDC
+    };
+}
+
+/**
+ * Busca os dados de classificação.
+ * 
+ * @function pegarDadosClassificacao
+ * @returns {Object} Os dados de classificação.
+ * 
+ * @description
+ * Esta função busca os dados de classificação a partir de um formulário e os organiza em um objeto.
+ */
+async function pegarDadosClassificacao() {
+    // Busca o formulário de classificação
+    const formClassificacao = document.getElementById('form-classificacao');
+    const dadosClassificacao = {};
+    
+    // Busca todas as linhas de classificação
+    const linhasClassificacao = formClassificacao.querySelectorAll('.linha-classificacao');
+    
+    // Array que irá armazenar os dados de cada linha
+    const classificacoes = [];
+    
+    // Itera sobre cada linha de classificação
+    linhasClassificacao.forEach(linha => {
+        const classificacao = {};
+        
+        // Busca os selects e inputs da linha atual
+        const selects = linha.querySelectorAll('select');
+        const inputs = linha.querySelectorAll('input');
+        
+        // Adiciona os valores dos selects ao objeto da classificação
+        selects.forEach(select => {
+            if (select.name && select.value) {
+                classificacao[select.name] = select.value;
+            }
+        });
+        
+        // Adiciona os valores dos inputs ao objeto da classificação
+        inputs.forEach(input => {
+            if (input.name && input.value) {
+                // Se for um campo de valor, converte para decimal
+                if (input.classList.contains('input-number')) {
+                    classificacao[input.name] = converterStringParaDecimal(input.value);
+                } else {
+                    classificacao[input.name] = input.value;
+                }
+            }
+        });
+        
+        // Adiciona a classificação ao array apenas se tiver algum valor preenchido
+        if (Object.keys(classificacao).length > 0) {
+            classificacoes.push(classificacao);
+        }
+    });
+    
+    // Adiciona o array de classificações ao objeto final apenas se houver dados
+    if (classificacoes.length > 0) {
+        dadosClassificacao["Classificacao_contabil"] = classificacoes;
+    }
+    
+    return dadosClassificacao;
+}
+
+//================================================================//
+//===========================SALVA TUDO===========================//
+//================================================================//
+/**
+ * Salva os dados da tab.
+ * 
+ * @function saveTableData
+ * @param {Object} options - Opções para a função.
+ * @param {String} options.tipo - Tipo de ação a ser realizada (editar ou criar).
+ * @returns {Promise} Uma promessa que resolve após a conclusão da ação.
+ * 
+ * @description
+ * Esta função é responsável por salvar os dados da tab. Se uma cotação já existe, ela limpa a cotação antiga e salva a nova. Caso contrário, cria uma nova cotação.
+ */
+export async function saveTableData({tipo = null}) {
+
+    if (globais.cotacaoExiste) {
+
+        for (const id of idsCotacao) {
+            let payload = {
+                data: {
+                    Ativo: false
+                }
+            };
+            await executar_apiZoho({ tipo: "atualizar_reg", ID: id, corpo: payload });
+        }
+        globais.cotacaoExiste = false;
+        await saveTableData(globais.tipo);
+    } else {
+
+        const {dadostabPrecos, dadosExtrasPDC} = await pegarDadostabPrecos();
+
+        const dadosIniciaisPdc = await pegarDadosPDC();
+        const dadosClassificacao = await pegarDadosClassificacao();
+        const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosClassificacao};
+
+        //====================CRIA O REGISTRO DO PDC====================//
+        let respPDC;
+        if(globais.tipo === 'editar_pdc'){
+
+            let payload = {
+                data: dadosPDC
+            };
+
+            respPDC = await executar_apiZoho({ tipo: "atualizar_reg", ID: globais.idPDC, corpo: payload,  nomeR: globais.nomeRelPDC});
+        }else{
+
+            respPDC = await executar_apiZoho({ tipo: "add_reg", corpo: JSON.stringify(dadosPDC, null, 2),  nomeF: globais.nomeFormPDC});
+        }
+        
+        //====================CRIA O REGISTRO DA COTAÇÃO====================//
+        const json = JSON.stringify(dadostabPrecos, null, 2);
+        let respCot = await executar_apiZoho({ tipo: "add_reg", corpo: json });
+        globais.cotacaoExiste = true;
     }
 }

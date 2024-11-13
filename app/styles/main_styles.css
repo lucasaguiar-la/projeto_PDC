@@ -11,7 +11,8 @@ html{
     overflow: hidden;
 }
 body{
-    overflow: auto;
+    overflow-y: scroll;
+    overflow-x: auto;
     margin-left: auto;
     margin-right: auto;
 }
@@ -29,12 +30,12 @@ body{
 }
 
 .section:not(:first-child) {
-    padding-top: 50px;
+    padding-bottom: 40px;
 }
 
 .section5
 {
-    padding-bottom: 30px;
+    padding-bottom: 20px;
 }
 
 .tab-cot-container {
@@ -204,6 +205,10 @@ select option[disabled] {
 th {
     position: relative;
     line-height: 12pt;
+}
+
+.supplier-name-container {
+    display: flex;
 }
 
 
@@ -943,4 +948,104 @@ button:hover {
 .error-message {
     margin-top: 4px;
     display: block;
+}
+
+.section-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: start;
+    cursor: pointer;
+    width: 100%;
+    padding-top: 10px;
+    padding-right: 3px;
+    padding-bottom: 3px;
+    padding-left: 3px;
+    user-select: none;
+    border-top: 1px solid #eaeaea;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.section-header:hover {
+    background-color: transparent;
+}
+
+.section-header .titulos {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    text-align: center;
+    margin: 0;
+    z-index: 1;
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #2c3e50;
+    letter-spacing: 0.5px;
+}
+
+.section-header .toggle-section {
+    grid-column: 2;
+    grid-row: 1;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    position: relative;
+    cursor: pointer;
+    margin-right: 5px;
+    z-index: 2;
+    border-radius: 50%;
+    transition: background-color 0.3s ease;
+}
+
+.toggle-section:hover {
+    background-color: rgba(44, 62, 80, 0.08);
+}
+
+.toggle-section::before,
+.toggle-section::after {
+    content: '';
+    position: absolute;
+    background: #2c3e50;
+    width: 2px;
+    height: 10px;
+    top: 50%;
+    left: 50%;
+    transition: all 0.5s ease-in-out;
+}
+
+/* Seta apontando para cima (padrão) */
+.toggle-section::before {
+    transform: translate(-3px, -50%) rotate(45deg);
+}
+
+.toggle-section::after {
+    transform: translate(3px, -50%) rotate(-45deg);
+}
+
+/* Estado colapsado - seta apontando para baixo */
+.section-header.collapsed .toggle-section::before {
+    transform: translate(3px, -50%) rotate(45deg);
+}
+
+.section-header.collapsed .toggle-section::after {
+    transform: translate(-3px, -50%) rotate(-45deg);
+}
+
+/* Animação do collapse */
+.section {
+    transition: all 0.25s ease-in-out;
+    opacity: 1;
+    transform-origin: top center;
+    transform: rotateX(0deg);
+    max-height: 2000px;
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.section.collapsed {
+    opacity: 0;
+    transform: rotateX(-90deg);
+    max-height: 0;
+    margin: 0;
+    padding: 0;
 }

@@ -15,8 +15,11 @@
 <body class="hidden">
     <div class="container " id="container">
 
-        <div class="form-compra section" id="section1">
+        <div class="section-header">
             <h2 class="titulos">DADOS DO PEDIDO</h2>
+            <button class="toggle-section"></button>
+        </div>
+        <div class="form-compra section" id="section1">
             <div class="form-container">
                 <form action="#" method="post" id="dados-PDC">
                     <label for="entidade">Entidade:</label>
@@ -39,8 +42,12 @@
                 </form>
             </div>
         </div>
-        <div class="tabela-cotacoes section" id="section2">
+
+        <div class="section-header">
             <h2 class="titulos">LEVANTAMENTO DE PREÇOS</h2>
+            <button class="toggle-section"></button>
+        </div>
+        <div class="tabela-cotacoes section" id="section2">
             <table id="priceTable" class="tabela">
                 <thead>
                     <tr>
@@ -93,6 +100,7 @@
                     </tr>
                 </tbody>
             </table>
+
             <h4 class="titulos">DETALHES DAS PROPOSTAS</h4>
             <table id="otherDataTable" class="tabela">
                 <thead>
@@ -112,8 +120,11 @@
             </table>
 
         </div>
+        <div class="section-header">
+            <h2 class="titulos">DADOS DE PAGAMENTO</h2>
+            <button class="toggle-section"></button>
+        </div>
         <div class="section form-compra" id="section3">
-            <h4 class="titulos">DADOS DE PAGAMENTO</h4>
             <div class="form-container">
                 <form action="#" id="form-pagamento">
                     <label>Forma de Pagamento:</label>
@@ -192,8 +203,11 @@
             </div>
         </div>
         <!--FORM DE CLASSIFICAÇÃO CONTÁBIL-->
-        <div class="form-classificacao section" id="section4">
+        <div class="section-header">
             <h2 class="titulos">CLASSIFICAÇÃO CONTÁBIL</h2>
+            <button class="toggle-section"></button>
+        </div>
+        <div class="form-classificacao section" id="section4">
             <div class="form-container">
                 <form action="#" method="post" id="form-classificacao">
                     <div id="camposClassificacao">

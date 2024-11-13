@@ -144,6 +144,9 @@ async function setupListenersAndInit() {
         }
     });
 
+    // Adicione esta linha
+    setupSectionToggle();
+
     // 3. Inicia os processos em paralelo
     await executarProcessosParalelos();
 }
@@ -333,4 +336,17 @@ async function searchPageParams() {
                 }
             }
         });
+}
+
+// Adicione esta função ao setupListenersAndInit
+function setupSectionToggle() {
+    document.querySelectorAll('.section-header').forEach(header => {
+        header.addEventListener('click', () => {
+            const section = header.nextElementSibling;
+            if (section && section.classList.contains('section')) {
+                section.classList.toggle('collapsed');
+                header.classList.toggle('collapsed');
+            }
+        });
+    });
 }
