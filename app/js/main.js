@@ -215,6 +215,45 @@ async function processarAprovacaoCotacao() {
 
         // Chame a função para substituir o botão "Salvar" pelos novos botões
         replaceSaveButton();
+    } else if (globais.pag == "autorizar_pagamento") {
+        function adicionarBotaoAutorizar() {
+            // Seleciona o contêiner onde o botão "Salvar" está localizado
+            const saveBtnContainer = document.querySelector('.save-btn-container');
+
+            // Remove o botão "Salvar" existente, se houver
+            const saveButton = saveBtnContainer.querySelector('.save-btn');
+            if (saveButton) {
+                saveBtnContainer.removeChild(saveButton);
+            }
+
+            // Cria o botão "Autorizar"
+            const approveButton = document.createElement('button');
+            approveButton.className = 'approve-btn';
+            approveButton.textContent = 'Autorizar';
+            approveButton.onclick = function () {
+                customModal({ botao: this, tipo: "autorizar_pag", titulo: "Autorizar Pagamento", mensagem: "Tem certeza que deseja AUTORIZAR o pagamento deste PDC?" });
+            };
+
+            const rejectButton = document.createElement('button');
+            rejectButton.className = 'adjust-btn';
+            rejectButton.textContent = 'Suspender';
+            rejectButton.onclick = function () {
+                customModal({ botao: this, tipo: "suspender_pag", titulo: "Suspender Pagamento", mensagem: "Tem certeza que deseja SUSPENDER o pagamento deste PDC?" });
+            };
+
+            const closeButton = document.createElement('button');
+            closeButton.className = 'archive-btn';
+            closeButton.textContent = 'Fechar';
+            closeButton.onclick = function () {
+                window.close();
+            };
+
+            // Adiciona o botão "Autorizar" ao contêiner
+            saveBtnContainer.appendChild(approveButton);
+            saveBtnContainer.appendChild(rejectButton);
+            saveBtnContainer.appendChild(closeButton);
+        }
+        adicionarBotaoAutorizar();
     }
 }
 
