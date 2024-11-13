@@ -1024,22 +1024,47 @@ export function atualizarOuvintesTabCot() {
     }
 
     // Adiciona listeners para células da tabela principal
-    for (let i = 0; i < lv.length - 2; i++) {
+    for (let i = 0; i < lv.length - 1; i++) { // Alterado para incluir as linhas de totalizadores
         const linha = lv[i];
-        
-        // Adiciona apenas o listener de paste para a primeira coluna
-        linha.cells[0].addEventListener('paste', (event) => handlePasteEventPriceTable(event));
-        
-        // Adiciona todos os listeners para as demais colunas
-        for (let j = 1; j < linha.cells.length - 1; j++) {
+        const isTotalizador = i >= (lv.length - qlt);
+        console.log('linha: ', linha);
+        console.log('isTotalizador: ', isTotalizador);
+        // Adiciona listeners específicos para cada coluna
+        for (let j = 0; j < linha.cells.length - 1; j++) {
             const celula = linha.cells[j];
+            
+            // Adiciona paste event para todas as células
             celula.addEventListener('paste', (event) => handlePasteEventPriceTable(event));
-            celula.addEventListener('input', () => restrictNumericInput(celula));
-            celula.addEventListener('blur', () => formatToBRL(celula));
-            if (i < lv.length - qlt) {
-                celula.addEventListener('blur', () => calculateTotalPrices(i));
+            
+            if (isTotalizador) {
+                // Tratamento específico para linhas de totalizadores
+                if (j > 0) { // Células após a célula com título da linha
+                    celula.addEventListener('blur', () => {
+                        formatToBRL(celula);
+                        calcularTotais();
+                    });
+                }
+            } else {
+                // Tratamento para linhas normais de produtos
+                if (j === 1) { // Coluna de quantidade
+                    celula.addEventListener('blur', () => {
+                        formatToBRL(celula);
+                        calculateTotalPrices(i);
+                    });
+                } else if (j === 2) { // Coluna de unidade - apenas texto
+                    continue;
+                } else if (j > 2) { // Colunas de valores após a unidade
+                    celula.addEventListener('blur', () => {
+                        formatToBRL(celula);
+                        calculateTotalPrices(i);
+                    });
+                }
+                
+                // Adiciona cálculo de totais para todas as células exceto a unidade
+                if (j !== 2) {
+                    celula.addEventListener('blur', () => calcularTotais());
+                }
             }
-            celula.addEventListener('blur', () => calcularTotais());
         }
     }
 }
@@ -1075,7 +1100,7 @@ export function atualizarOuvintesTabDetlhesForn()
  * 
  * @async
  * @function prenchTabCot
- * @param {Object} resp - Resposta da API contendo os dados das cotações
+ * @param {Object} resp - Resposta da API contendo os dados das cotaç��es
  * @param {number} resp.code - Código de resposta da API
  * @param {Array} resp.data - Array com os dados das cotações
  * @returns {void}
