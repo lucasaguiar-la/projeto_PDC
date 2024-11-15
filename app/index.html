@@ -188,7 +188,7 @@
                         <div class="parcela">
                             <label>Parcela nº 1:</label>
                             <input type="date" name="Datas" placeholder="dd/mm/aaaa"/>
-                            <input type="text" name="Valor" class="input-number " placeholder="R$ 0,00"/>
+                            <input type="text" name="Valor" class="input-number valor-parcela" placeholder="R$ 0,00"/>
                             <button type="button" class="remover-parcela close-icon"></button>
                         </div>
                     </div>
@@ -196,7 +196,7 @@
                         <button type="button" id="adicionarCampo" class="add-parcela add-icon"></button>
                         <div id="totalizadores_parcelas">
                             <label>Valor total:</label>
-                            <label id="valor-total-parcelas"></label>
+                            <label id="valor-total-parcelas">0,00</label>
                         </div>
                     </div>
                 </form>
@@ -219,7 +219,13 @@
                             <label for="" id="label-toButton" style="width: 20px;"></label>
                         </div>
                     </div>
-                    <button type="button" id="adicionarClassificacao" class="add-classificacao add-icon"></button>
+                    <div id="botoes-e-totalizadores-classificacoes">
+                        <button type="button" id="adicionarClassificacao" class="add-classificacao add-icon"></button>
+                        <div id="totalizadores-classificacoes">
+                            <label>Valor total:</label>
+                            <label id="valor-total-classificacoes">0,00</label>
+                        </div>
+                    </div> 
                 </form>
             </div>
         </div>
