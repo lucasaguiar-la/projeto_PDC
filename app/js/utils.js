@@ -643,3 +643,56 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
         });
     });
 }
+
+/**
+ * Desabilita todos os elementos editáveis da página
+ * 
+ * @function desabilitarTodosElementosEditaveis
+ * @description
+ * Desabilita:
+ * - Inputs, textareas e selects
+ * - Elementos com contenteditable
+ * - Botões
+ * - Radio buttons e checkboxes
+ * - Células de tabela editáveis
+ */
+export function desabilitarTodosElementosEditaveis() {
+    // Desabilita inputs, textareas e selects
+    const elementosFormulario = document.querySelectorAll('input, textarea, select');
+    elementosFormulario.forEach(elemento => {
+        elemento.disabled = true;
+        elemento.style.cursor = 'not-allowed';
+    });
+
+    // Desabilita elementos com contenteditable
+    const elementosEditaveis = document.querySelectorAll('[contenteditable="true"]');
+    elementosEditaveis.forEach(elemento => {
+        elemento.contentEditable = false;
+        elemento.style.cursor = 'not-allowed';
+    });
+
+    // Desabilita botões, exceto os dentro de save-button-container
+    const botoes = document.querySelectorAll('button');
+    botoes.forEach(botao => {
+        if (!botao.closest('.save-btn-container')) {
+            botao.disabled = true;
+            botao.style.cursor = 'not-allowed';
+        }
+    });
+
+    // Remove event listeners de células de tabela
+    const celulasDaTabela = document.querySelectorAll('td, th');
+    celulasDaTabela.forEach(celula => {
+        celula.style.pointerEvents = 'none';
+        celula.style.cursor = 'not-allowed';
+    });
+
+    // Desabilita links
+    const links = document.querySelectorAll('a');
+    links.forEach(link => {
+        link.style.pointerEvents = 'none';
+        link.style.cursor = 'not-allowed';
+    });
+}
+
+

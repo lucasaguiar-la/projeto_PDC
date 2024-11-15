@@ -13,7 +13,8 @@ import {
 import {
     customModal,
     executar_apiZoho,
-    formatToBRL
+    formatToBRL,
+    desabilitarTodosElementosEditaveis
 } from './utils.js'
 import {
     adicionarCampoVenc,
@@ -172,6 +173,10 @@ async function executarProcessosParalelos() {
         ];
 
         await Promise.all(tarefas);
+        if(globais.pag != "editar_cotacao") {
+            desabilitarTodosElementosEditaveis();
+        }
+
         // Finaliza o processo
     }
     document.body.classList.remove('hidden');
@@ -287,9 +292,18 @@ async function processarDadosPDC() {
 }
 
 async function processarDadosCotacao() {
-    const cCot = "(" + (globais.numPDC ? 
+    const idCriterio = globais.numPDC ? 
         `numero_de_PDC=="${globais.numPDC}"` : 
-        (globais.numPDC_temp ? `num_PDC_temp=="${globais.numPDC_temp}"` : "ID==0")) + " && Ativo==true)";
+        (
+            globais.numPDC_temp ? 
+                `num_PDC_temp=="${globais.numPDC_temp}"` : 
+                "ID==0"
+        );
+
+    const aprovadoCriterio = !["editar_cotacao", "aprovar_cotacao"].includes(globais.pag) ? 
+        " && Aprovado==true" : "";
+
+    let cCot = `(${idCriterio} && Ativo==true${aprovadoCriterio})`;
 
     const respCot = await executar_apiZoho({ 
         tipo: "busc_reg", 
@@ -432,6 +446,7 @@ function handleEnterKeyNavigation(event) {
                 }
             }
         }
+
         // Verifica se é um input ou textarea em um formulário
         else if (activeElement.matches('input, textarea, select')) {
             const form = activeElement.closest('form');

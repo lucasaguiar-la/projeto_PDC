@@ -977,7 +977,7 @@ export async function prenchTabCot(resp) {
                     if (!foundChecked) {
                         checkbox.checked = true;
                         selectedCheckbox = checkbox;
-                        idFornAprovado = fornecedorObj.id_fornecedor;
+                        globais.idFornAprovado = fornecedorObj.id_fornecedor;
                         foundChecked = true;
                     }
                 }
@@ -989,10 +989,10 @@ export async function prenchTabCot(resp) {
                             selectedCheckbox.checked = false;
                         }
                         selectedCheckbox = checkbox;
-                        idFornAprovado = fornecedorObj.id_fornecedor;
+                        globais.idFornAprovado = fornecedorObj.id_fornecedor;
                     } else {
                         selectedCheckbox = null;
-                        idFornAprovado = null;
+                        globais.idFornAprovado = null;
                     }
                 });
 

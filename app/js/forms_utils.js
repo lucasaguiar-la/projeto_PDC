@@ -151,6 +151,8 @@ export function preencherDadosPDC(resp)
     }
 
     preencherDadosClassificacao(data.Classificacao_contabil);
+    atualizarValorTotalParcelas();
+    atualizarValorTotalClassificacoes();
 }
 
 //==============================================================================//
