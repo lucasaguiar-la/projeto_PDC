@@ -275,7 +275,7 @@ function atualizarLabels() {
  * @returns {void}
  * 
  * @description
- * - Verifica se o container está oculto e o torna visível se necessário
+ * - Verifica se o container está oculto e o torna visível se necess��rio
  * - Cria uma nova linha com todos os campos necessários
  * - Mantém a mesma estrutura e estilo das linhas existentes
  */
@@ -322,7 +322,7 @@ export function adicionarLinhaClassificacao() {
             if (inputType === 'number') {
                 input.classList.add('input-number');
                 input.type = 'text';
-                input.addEventListener('blur', () => formatToBRL(input));
+                input.addEventListener('blur', () => {formatToBRL(input); atualizarValorTotalClassificacoes();});
             }
         }
         input.name = inputName;
@@ -678,6 +678,49 @@ export function atualizarValorTotalParcelas() {
             const total = labelTotal.innerText; // Obtém o texto atual da label
             
             // Compara os valores
+            if (total === valorTotalFornecedor) {
+                labelTotal.classList.add('valor-igual');
+                labelTotal.classList.remove('valor-diferente');
+            } else {
+                labelTotal.classList.add('valor-diferente');
+                labelTotal.classList.remove('valor-igual');
+            }
+        } else {
+            console.error('Fornecedor não encontrado na tabela.');
+        }
+    }
+}
+
+/**
+ * Atualiza o valor total das classificações contábeis sempre que um campo de valor é alterado
+ * 
+ * @function atualizarValorTotalClassificacoes
+ * @returns {void}
+ */
+export function atualizarValorTotalClassificacoes() {
+    const valoresClassificacoes = document.querySelectorAll('#form-classificacao input[name="Valor"]');
+    let total = 0;
+
+    valoresClassificacoes.forEach(input => {
+        const valor = parseFloat(input.value.replace(/[^0-9,-]+/g, '').replace(',', '.')) || 0;
+        total += valor;
+    });
+
+    const labelTotal = document.getElementById('valor-total-classificacoes');
+    labelTotal.innerText = formatToBRL(total);
+
+    if(globais.idFornAprovado) {
+        const table = document.getElementById('priceTable');
+        const headerRow = table.rows[0];
+        const totalRow = table.rows[table.rows.length - 2];
+        
+        const colIndex = Array.from(headerRow.cells).findIndex(cell => cell.dataset.id_forn === globais.idFornAprovado);
+
+        if (colIndex !== -1) {
+            const valorTotalFornecedor = totalRow.cells[colIndex - 2].innerText;
+            
+            const total = labelTotal.innerText;
+            
             if (total === valorTotalFornecedor) {
                 labelTotal.classList.add('valor-igual');
                 labelTotal.classList.remove('valor-diferente');

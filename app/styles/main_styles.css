@@ -101,7 +101,7 @@ select option[disabled] {
     width: 49.5%;
 }
 
-.form-compra label {
+.form-compra label, .form-classificacao label {
     font-weight: bold;
     margin-bottom: 5px;
     display: block;

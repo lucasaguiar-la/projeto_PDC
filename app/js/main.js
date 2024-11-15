@@ -23,8 +23,8 @@ import {
     removerLinhaClassificacao,
     preencherDadosPDC,
     setupPixValidation,
-    atualizarValorTotalParcelas
-
+    atualizarValorTotalParcelas,
+    atualizarValorTotalClassificacoes
 } from './forms_utils.js';
 import { CONFIG } from './config.js';
 
@@ -115,6 +115,8 @@ async function setupListenersAndInit() {
         "add-classificacao": { handler: () => adicionarLinhaClassificacao(), type: 'click' },
         "remover-classificacao": { handler: (elemento) => removerLinhaClassificacao(elemento), type: 'click' },
         "valor-parcela": { handler: (elemento) => { formatToBRL(elemento); atualizarValorTotalParcelas();}, type: 'blur' },
+        "valor-classificacao": { handler: (elemento) => { formatToBRL(elemento); atualizarValorTotalClassificacoes();}, type: 'blur' },
+        "": { handler: (elemento) => handleEnterKeyNavigation(elemento), type: 'keydown' }
     };
 
     /*
@@ -352,7 +354,7 @@ function addNavDots() {
     // Observa todas as seções
     sections.forEach(section => observer.observe(section));
 
-    // Adiciona click event nos dots para navegação suave
+    // Adiciona click event nos dots para navegaço suave
     dots.forEach(dot => {
         dot.addEventListener('click', () => {
             const sectionId = dot.dataset.section;
@@ -382,15 +384,72 @@ async function searchPageParams() {
         });
 }
 
-// Adicione esta função ao setupListenersAndInit
+/**
+ * Configura o comportamento de alternância (toggle) para as seções da página
+ * 
+ * Esta função adiciona event listeners aos cabeçalhos das seções para permitir
+ * que o usuário expanda/recolha o conteúdo clicando neles.
+ * 
+ * Para cada cabeçalho de seção (.section-header):
+ * - Adiciona um listener de clique
+ * - Quando clicado, alterna a classe 'collapsed' tanto no cabeçalho quanto na seção
+ * - A classe 'collapsed' controla a visibilidade/animação através do CSS
+ */
 function setupSectionToggle() {
     document.querySelectorAll('.section-header').forEach(header => {
         header.addEventListener('click', () => {
             const section = header.nextElementSibling;
             if (section && section.classList.contains('section')) {
                 section.classList.toggle('collapsed');
-                header.classList.toggle('collapsed');
+                header.classList.toggle('collapsed'); 
             }
         });
     });
+}
+
+// Adicionar esta nova função
+function handleEnterKeyNavigation(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault(); // Previne a quebra de linha em textareas
+        
+        const activeElement = document.activeElement;
+        const isShiftPressed = event.shiftKey;
+        
+        // Verifica se é uma célula da tabela
+        if (activeElement.closest('td')) {
+            const currentCell = activeElement;
+            const currentRow = currentCell.parentElement;
+            const currentIndex = Array.from(currentRow.cells).indexOf(currentCell);
+            const targetRow = isShiftPressed ? currentRow.previousElementSibling : currentRow.nextElementSibling;
+            
+            // Verifica se a linha alvo existe e não é uma linha especial
+            if (targetRow && !targetRow.classList.contains('linhas-totalizadoras') && !targetRow.classList.contains('borda-oculta')) {
+                const targetCell = targetRow.cells[currentIndex];
+                if (targetCell && targetCell.hasAttribute('contenteditable')) {
+                    targetCell.focus();
+                    // Seleciona todo o conteúdo da célula
+                    window.getSelection().selectAllChildren(targetCell);
+                }
+            }
+        }
+        // Verifica se é um input ou textarea em um formulário
+        else if (activeElement.matches('input, textarea, select')) {
+            const form = activeElement.closest('form');
+            if (form) {
+                const inputs = Array.from(form.querySelectorAll('input:not([type="radio"]), textarea, select'));
+                const currentIndex = inputs.indexOf(activeElement);
+                
+                // Define o índice do próximo input baseado na direção
+                const targetIndex = isShiftPressed ? currentIndex - 1 : currentIndex + 1;
+                
+                // Verifica se o índice alvo é válido
+                if (targetIndex >= 0 && targetIndex < inputs.length) {
+                    const targetInput = inputs[targetIndex];
+                    targetInput.focus();
+                    // Seleciona todo o conteúdo do input/textarea
+                    targetInput.select();
+                }
+            }
+        }
+    }
 }
