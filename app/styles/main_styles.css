@@ -1049,3 +1049,30 @@ button:hover {
     margin: 0;
     padding: 0;
 }
+
+#botoes-e-totalizadores_parcelas, #botoes-e-totalizadores-classificacoes {
+    display: flex;
+    justify-content: space-between; /* Alinha os itens nas extremidades */
+    align-items: center; /* Centraliza verticalmente */
+    margin-top: 8px;
+}
+
+#totalizadores_parcelas, #totalizadores-classificacoes {
+    display: flex;
+    align-items: center; /* Centraliza verticalmente */
+}
+
+#valor-total-parcelas, #valor-total-classificacoes {
+    min-width: 120px; /* Define uma largura mínima para acomodar o valor */
+    text-align: right; /* Alinha o texto à direita */
+}
+
+.valor-igual {
+    color: green; /* Cor verde para indicar que os valores são iguais */
+    font-weight: bold; /* Deixa o texto em negrito */
+}
+
+.valor-diferente {
+    color: red; /* Cor vermelha para indicar que os valores são diferentes */
+    font-weight: bold; /* Deixa o texto em negrito */
+}

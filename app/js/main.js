@@ -12,7 +12,8 @@ import {
 } from './dados_p_selects.js';
 import {
     customModal,
-    executar_apiZoho
+    executar_apiZoho,
+    formatToBRL
 } from './utils.js'
 import {
     adicionarCampoVenc,
@@ -21,7 +22,8 @@ import {
     adicionarLinhaClassificacao,
     removerLinhaClassificacao,
     preencherDadosPDC,
-    setupPixValidation
+    setupPixValidation,
+    atualizarValorTotalParcelas
 
 } from './forms_utils.js';
 import { CONFIG } from './config.js';
@@ -32,6 +34,7 @@ class Globais {
             baseClassesOperacionais: new Map(),
             baseFornecedores: new Map(),
             baseCentrosCusto: new Map(),
+            idFornAprovado: null,
             ...CONFIG.INITIAL_STATE,
             ...CONFIG.APPS
         };
@@ -111,7 +114,9 @@ async function setupListenersAndInit() {
         "remover-parcela": { handler: (elemento) => removerCampoVenc(elemento), type: 'click' },
         "add-classificacao": { handler: () => adicionarLinhaClassificacao(), type: 'click' },
         "remover-classificacao": { handler: (elemento) => removerLinhaClassificacao(elemento), type: 'click' },
+        "valor-parcela": { handler: (elemento) => { formatToBRL(elemento); atualizarValorTotalParcelas();}, type: 'blur' },
     };
+
     /*
     "": { handler: () => setupPixValidation(), type: 'DOMContentLoaded' }
     */

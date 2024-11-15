@@ -187,11 +187,14 @@ export function adicionarCampoVenc(data = null, valor = null){
     const novoInputValor = document.createElement('input');
     novoInputValor.type = 'text';
     novoInputValor.name = 'Valor';
-    novoInputValor.classList.add('input-number');
+    novoInputValor.classList.add('input-number', 'valor-parcela');
     novoInputValor.placeholder = 'R$ 0,00';
     if (valor) novoInputValor.value = formatToBRL(valor);
-    novoInputValor.addEventListener('blur', () => formatToBRL(novoInputValor));
-
+    novoInputValor.addEventListener('blur', () => {
+        formatToBRL(novoInputValor);
+        atualizarValorTotalParcelas();
+    });
+    
     //====================CRIA O BOTÃO DE REMOVER====================//
     const removerButton = document.createElement('button');
     removerButton.type = 'button';
@@ -201,6 +204,7 @@ export function adicionarCampoVenc(data = null, valor = null){
     removerButton.addEventListener('click', function () {
         novoCampo.remove();
         numeroParcela--;
+        atualizarValorTotalParcelas();
         atualizarLabels();
     });
 
@@ -236,7 +240,9 @@ export function removerCampoVenc(elemento) {
 
         parentElement.remove();
         numeroParcela--;
+        
         atualizarLabels();
+        atualizarValorTotalParcelas();
     }
 }
 
@@ -627,4 +633,60 @@ export function setupPixValidation() {
             chavePix.classList.remove('invalid');
         }
     });
+}
+
+/**
+ * Atualiza o valor total das parcelas sempre que um campo de valor é alterado
+ * 
+ * @function atualizarValorTotalParcelas
+ * @returns {void}
+ */
+export function atualizarValorTotalParcelas() {
+    const valoresParcelas = document.querySelectorAll('#camposData input[name="Valor"]');
+    let total = 0;
+    console.log("Valores parcela => ", valoresParcelas);
+
+    valoresParcelas.forEach(input => {
+        console.log("input => ", input);
+        const valor = parseFloat(input.value.replace(/[^0-9,-]+/g, '').replace(',', '.')) || 0;
+        total += valor;
+    });
+
+    const labelTotal = document.getElementById('valor-total-parcelas');
+    labelTotal.innerText = formatToBRL(total);
+    console.log(globais.idFornAprovado);
+    if(globais.idFornAprovado)
+    {
+        const table = document.getElementById('priceTable');
+        const headerRow = table.rows[0]; // Primeira linha do cabeçalho
+        const totalRow = table.rows[table.rows.length - 2]; // Última linha (linha de total)
+        
+        // Encontra o índice da coluna do fornecedor aprovado
+        const colIndex = Array.from(headerRow.cells).findIndex(cell => cell.dataset.id_forn === globais.idFornAprovado);
+        
+        console.log("headerRow => ", headerRow);
+        console.log("totalRow => ", totalRow);
+        console.log("colIndex => ", colIndex);
+
+        if (colIndex !== -1) {
+            // Obtém o valor total do fornecedor na linha de total
+            const valorTotalFornecedor = totalRow.cells[colIndex - 2].innerText; // +1 para pegar a célula correta
+            console.log(`Valor total do fornecedor ${globais.idFornAprovado}: ${valorTotalFornecedor}`);
+            
+            // Obtém o total da label
+            const labelTotal = document.getElementById('valor-total-parcelas'); // Supondo que a label tenha esse ID
+            const total = labelTotal.innerText; // Obtém o texto atual da label
+            
+            // Compara os valores
+            if (total === valorTotalFornecedor) {
+                labelTotal.classList.add('valor-igual');
+                labelTotal.classList.remove('valor-diferente');
+            } else {
+                labelTotal.classList.add('valor-diferente');
+                labelTotal.classList.remove('valor-igual');
+            }
+        } else {
+            console.error('Fornecedor não encontrado na tabela.');
+        }
+    }
 }

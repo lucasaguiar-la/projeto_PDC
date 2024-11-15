@@ -116,9 +116,9 @@ export function removeProductRow(button) {
     calcularTotais();
 }
 
-//=====================================================================================================//
-//===========================FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DAS COLUNAS===========================//
-//=====================================================================================================//
+//====================================================================================================================//
+//===========================FUNÇÕES AUXILIARES PARA MANIPULAÇÃO DAS COLUNAS (FORNECEDORES)===========================//
+//====================================================================================================================//
 /**
  * Adiciona um novo fornecedor à tab de cotação
  * 
@@ -261,8 +261,10 @@ export async function addSupplierColumn() {
                             selectedCheckbox.checked = false;
                         }
                         selectedCheckbox = checkbox;
+                        globais.idFornAprovado = dadosFornecedor[0];
                     } else {
                         selectedCheckbox = null;
+                        globais.idFornAprovado = null;
                     }
                 });
     
@@ -447,7 +449,6 @@ export function removeSupplierColumn(button) {
         }
     }
 }
-
 
 /**
  * Cria a estrutura base de um popup para seleção de fornecedor
@@ -719,11 +720,10 @@ export function atualizarOuvintesTabCot() {
     }
 
     // Adiciona listeners para células da tab principal
-    for (let i = 0; i < lv.length - 1; i++) { // Alterado para incluir as linhas de totalizadores
+    for (let i = 0; i < lv.length - 1; i++) {
         const linha = lv[i];
         const isTotalizador = i >= (lv.length - qlt);
-        console.log('linha: ', linha);
-        console.log('isTotalizador: ', isTotalizador);
+        
         // Adiciona listeners específicos para cada coluna
         for (let j = 0; j < linha.cells.length - 1; j++) {
             const celula = linha.cells[j];
@@ -732,6 +732,7 @@ export function atualizarOuvintesTabCot() {
             celula.addEventListener('paste', (event) => handlePasteEventPriceTable(event));
             
             if (isTotalizador) {
+
                 // Tratamento específico para linhas de totalizadores
                 if (j > 0) { // Células após a célula com título da linha
                     celula.addEventListener('blur', () => {
@@ -976,18 +977,22 @@ export async function prenchTabCot(resp) {
                     if (!foundChecked) {
                         checkbox.checked = true;
                         selectedCheckbox = checkbox;
+                        idFornAprovado = fornecedorObj.id_fornecedor;
                         foundChecked = true;
                     }
                 }
 
                 checkbox.addEventListener('change', function () {
                     if (checkbox.checked) {
+
                         if (selectedCheckbox && selectedCheckbox !== checkbox) {
                             selectedCheckbox.checked = false;
                         }
                         selectedCheckbox = checkbox;
+                        idFornAprovado = fornecedorObj.id_fornecedor;
                     } else {
                         selectedCheckbox = null;
+                        idFornAprovado = null;
                     }
                 });
 
