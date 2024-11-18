@@ -76,6 +76,12 @@ export function preencherDadosPDC(resp)
         selectEntidade.value = data.Entidade.ID;
     }
 
+    // Select da Entidade
+    const selectTipo = formDadosPDC.querySelector('#tipo');
+    if (data.Tipo_de_solicitacao?.ID) {
+        selectTipo.value = data.Tipo_de_solicitacao.ID;
+    }
+
     // Descrição da Compra
     const textareaDescricao = formDadosPDC.querySelector('#descricao');
     if (data.Descricao_da_compra) {
@@ -97,14 +103,6 @@ export function preencherDadosPDC(resp)
         if (radioFormaPagamento) {
             radioFormaPagamento.checked = true;
             mostrarCamposPagamento();
-        }
-    }
-
-    // Campos específicos para Boleto
-    if (data.Forma_de_pagamento === 'Boleto') {
-        const inputFavorecido = formPagamento.querySelector('#favorecido');
-        if (data.Favorecido) {
-            inputFavorecido.value = data.Favorecido;
         }
     }
 

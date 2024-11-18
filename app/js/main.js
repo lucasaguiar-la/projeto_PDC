@@ -175,6 +175,101 @@ async function executarProcessosParalelos() {
         await Promise.all(tarefas);
         if(globais.pag != "editar_cotacao") {
             desabilitarTodosElementosEditaveis();
+            
+            if(globais.pag === "confirmar_compra")
+            {
+                // Adiciona o botão "Sol. Aprov. Síndico"
+                const approveButton = document.createElement('button');
+                approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
+                approveButton.textContent = 'Confirmar compra';
+                approveButton.onclick = function () {
+                    customModal({botao: this, tipo: "confirmar_compra", mensagem: "Deseja marcar essa solicitação como COMPRADA?" });
+            };
+
+            // Seleciona o contêiner onde o botão "Salvar" está localizado
+            const saveBtnContainer = document.querySelector('.save-btn-container');
+
+            // Remove o botão "Salvar" existente, se houver
+            const saveButton = saveBtnContainer.querySelector('.save-btn');
+            if (saveButton) {
+                saveBtnContainer.removeChild(saveButton);
+            }
+            saveBtnContainer.appendChild(approveButton);
+            }
+            // Adiciona o botão "Criar PDC" se a página for "criar_numero_de_PDC"
+            if (globais.pag === "criar_numero_de_PDC") {
+                const criarPDCButton = document.createElement('button');
+                criarPDCButton.classList.add('criar-pdc-btn', 'adjust-btn');
+                criarPDCButton.textContent = 'Criar PDC';
+                criarPDCButton.onclick = function () {
+                    // Abre modal em popup
+                    const overlay = document.createElement('div');
+                    overlay.className = 'customConfirm-overlay-div'; // Classe para o overlay
+                    const popup = document.createElement('div');
+                    popup.className = 'customConfirm-div'; // Classe para o popup
+                    popup.innerHTML = `
+                        <h3 class="customConfirm-title">Inserir Número do PDC</h3>
+                        <label for="numeroPDC">Número do PDC:</label>
+                        <input type="number" id="numeroPDC" />
+                        <div class="customConfirm-button-container">
+                            <button id="salvarPDC" class="customConfirm-confirmButton">Salvar</button>
+                            <button id="fecharModal" class="customConfirm-cancelButton">Fechar</button>
+                        </div>
+                    `;
+                    overlay.appendChild(popup);
+                    document.body.appendChild(overlay);
+
+                    // Função para salvar o número do PDC
+                    document.getElementById('salvarPDC').onclick = function () {
+                        const numeroPDC = document.getElementById('numeroPDC').value;
+                        const parcelas = document.querySelectorAll('#camposData .parcela');
+                        parcelas.forEach((parcela, index) => {
+                            const pdcValue = parcelas.length > 1 ? `${numeroPDC}/${String(index + 1).padStart(2, '0')}` : numeroPDC;
+                            const inputPDC = document.createElement('input');
+                            inputPDC.type = 'text';
+                            inputPDC.value = pdcValue;
+                            inputPDC.readOnly = true; // Campo somente leitura
+                            parcela.appendChild(inputPDC); // Adiciona o campo na parcela
+                        });
+                        overlay.remove(); // Fecha o modal
+                        
+                        // Troca o nome e a função do botão para "Finalizar Provisionamento"
+                        criarPDCButton.textContent = 'Finalizar Provisionamento';
+                        criarPDCButton.onclick = function () {
+                            customModal({botao: this, tipo: "finalizar_provisionamento", mensagem: "Deseja relmente finalizar o provisionamento?\nPDC será enviado para realização da compra." });
+                        };
+                    };
+
+                    // Função para fechar o modal
+                    document.getElementById('fecharModal').onclick = function () {
+                        overlay.remove();
+                    };
+                };
+                console.log("CHEOGU AQUI");
+                const saveBtnContainer = document.querySelector('.save-btn-container');
+                saveBtnContainer.appendChild(criarPDCButton);
+            }
+        }
+        else {
+            // Adiciona o botão "Sol. Aprov. Síndico"
+            const approveButton = document.createElement('button');
+            approveButton.classList.add('approve-sindico-btn', 'adjust-btn');
+            approveButton.textContent = 'Sol. Aprov. Síndico';
+            approveButton.onclick = function () {
+                customModal({botao: this, tipo: "solicitar_aprovacao_sindico", mensagem: "Deseja solicitar a aprovação do síndico?" });
+            };
+            // Cria o botão "Arquivar"
+            const archiveButton = document.createElement('button');
+            archiveButton.className = 'archive-btn';
+            archiveButton.textContent = 'Arquivar';
+            archiveButton.onclick = function () {
+                customModal({ botao: this, tipo: "arquivar_cot", titulo: "Arquivar", mensagem: "Você tem certeza de que deseja arquivar este registro?" });
+            };
+
+            // Seleciona o contêiner onde o botão "Salvar" está localizado
+            const saveBtnContainer = document.querySelector('.save-btn-container');
+            saveBtnContainer.appendChild(approveButton);
+            saveBtnContainer.appendChild(archiveButton);
         }
 
         // Finaliza o processo
@@ -227,7 +322,7 @@ async function processarAprovacaoCotacao() {
 
         // Chame a função para substituir o botão "Salvar" pelos novos botões
         replaceSaveButton();
-    } else if (globais.pag == "autorizar_pagamento") {
+    } else if (globais.pag == "autorizar_pagamento_subsindico" || globais.pag == "autorizar_pagamento_sindico" || globais.pag == "confirmar_todas_as_assinaturas") {
         function adicionarBotaoAutorizar() {
             // Seleciona o contêiner onde o botão "Salvar" está localizado
             const saveBtnContainer = document.querySelector('.save-btn-container');
@@ -243,27 +338,31 @@ async function processarAprovacaoCotacao() {
             approveButton.className = 'approve-btn';
             approveButton.textContent = 'Autorizar';
             approveButton.onclick = function () {
-                customModal({ botao: this, tipo: "autorizar_pag", titulo: "Autorizar Pagamento", mensagem: "Tem certeza que deseja AUTORIZAR o pagamento deste PDC?" });
+                customModal({ botao: this, tipo: globais.pag, titulo: "Autorizar Pagamento", mensagem: "Tem certeza que deseja AUTORIZAR o pagamento deste PDC?" });
             };
 
             const rejectButton = document.createElement('button');
             rejectButton.className = 'adjust-btn';
             rejectButton.textContent = 'Suspender';
             rejectButton.onclick = function () {
-                customModal({ botao: this, tipo: "suspender_pag", titulo: "Suspender Pagamento", mensagem: "Tem certeza que deseja SUSPENDER o pagamento deste PDC?" });
+                customModal({ botao: this, tipo: "suspender_pagamento", titulo: "Suspender Pagamento", mensagem: "Tem certeza que deseja SUSPENDER o pagamento deste PDC?" });
             };
 
+            /*VAI MUDAR PARA SOLICITAR AJUSTE
             const closeButton = document.createElement('button');
             closeButton.className = 'archive-btn';
             closeButton.textContent = 'Fechar';
             closeButton.onclick = function () {
                 window.close();
             };
+            */
 
             // Adiciona o botão "Autorizar" ao contêiner
             saveBtnContainer.appendChild(approveButton);
             saveBtnContainer.appendChild(rejectButton);
+            /*VAI MUDAR PARA SOLICITAR AJUSTE
             saveBtnContainer.appendChild(closeButton);
+            */
         }
         adicionarBotaoAutorizar();
     }
@@ -300,7 +399,7 @@ async function processarDadosCotacao() {
                 "ID==0"
         );
 
-    const aprovadoCriterio = !["editar_cotacao", "aprovar_cotacao"].includes(globais.pag) ? 
+    const aprovadoCriterio = !["editar_cotacao", "aprovar_cotacao", "ver_cotacao"].includes(globais.pag) ? 
         " && Aprovado==true" : "";
 
     let cCot = `(${idCriterio} && Ativo==true${aprovadoCriterio})`;

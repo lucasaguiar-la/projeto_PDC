@@ -79,7 +79,7 @@ select option[disabled] {
     border-radius: 5px;
 }
 
-.entidade {
+.entidade, .tipo {
     width: 100%;
     padding: 5px;
     margin-bottom: 10px;
@@ -191,6 +191,7 @@ select option[disabled] {
 .tabela th,
 .tabela td
 {
+    max-width: 200px;
     border: 1px solid #0000003d;
     padding: 8px;
     text-align: center;
@@ -1075,4 +1076,31 @@ button:hover {
 .valor-diferente {
     color: red; /* Cor vermelha para indicar que os valores são diferentes */
     font-weight: bold; /* Deixa o texto em negrito */
+}
+
+/* Estilo para o campo de texto do modal */
+#numeroPDC {
+    width: 100%; /* Largura total */
+    padding: 8px; /* Espaçamento interno */
+    border: 1px solid #ccc; /* Borda */
+    border-radius: 4px; /* Bordas arredondadas */
+    font-size: 90%; /* Tamanho da fonte */
+    box-sizing: border-box; /* Inclui padding e border na largura total */
+    height: 35px; /* Altura do campo */
+    margin-bottom: 15px; /* Espaçamento inferior */
+}
+
+/* Estilo para os botões do modal */
+.customConfirm-confirmButton,
+.customConfirm-cancelButton {
+    padding: 8px 16px; /* Espaçamento interno */
+    border: 1px solid #ddd; /* Borda */
+    border-radius: 4px; /* Bordas arredondadas */
+    cursor: pointer; /* Cursor de ponteiro */
+    transition: background-color 0.3s; /* Transição suave para a cor de fundo */
+}
+
+.customConfirm-confirmButton:hover,
+.customConfirm-cancelButton:hover {
+    background-color: #f1f1f1; /* Cor de fundo ao passar o mouse */
 }

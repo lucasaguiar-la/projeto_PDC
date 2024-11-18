@@ -1,5 +1,6 @@
 import{formatToBRL, converterStringParaDecimal, convertToNegative,restrictNumericInput, restrictIntegerInput, executar_apiZoho, customModal} from './utils.js';
 import{globais} from './main.js'
+import { atualizarValorTotalClassificacoes, atualizarValorTotalParcelas } from './forms_utils.js';
 let idsCotacao = new Array(); //Array para armazenar os ids das cotações
 let selectedCheckbox = null; //Flag para seleção de fornecedor aprovado
 
@@ -266,6 +267,8 @@ export async function addSupplierColumn() {
                         selectedCheckbox = null;
                         globais.idFornAprovado = null;
                     }
+                    atualizarValorTotalParcelas();
+                    atualizarValorTotalClassificacoes();
                 });
     
                 // Montagem do container do fornecedor
@@ -994,6 +997,9 @@ export async function prenchTabCot(resp) {
                         selectedCheckbox = null;
                         globais.idFornAprovado = null;
                     }
+                    atualizarValorTotalParcelas();
+                    atualizarValorTotalClassificacoes();
+                    
                 });
 
                 celulaCabecalho.dataset.id_forn = fornecedorObj.id_fornecedor;

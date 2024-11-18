@@ -525,73 +525,75 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
         }
 
         const url = 'https://guillaumon.zohocreatorportal.com/';
-
         toggleElements(false);
         
         // Determina o payload baseado no tipo de ação
         let payload;
         console.log('tipo - handleConfirm: ', tipo);
-        if (tipo === 'ajustar_cot') {
-            console.log('[AJUSTAR COT]');
-            payload = {
-                data: [{
-                    Status_geral: 'Ajuste solicitado',
-                    Solicitacao_de_ajuste: inputElement.value
-                }]
-            };
-        }  else if (tipo === 'aprov_cot') {
-            console.log('[ARQUIVAR COT]');
-            payload = {
-                data: [{
-                    Status_geral: 'Proposta aprovada'
-                }]
-            };
-        }else if (tipo === 'arquivar_cot') {
-            console.log('[ARQUIVAR COT]');
-            payload = {
-                data: [{
-                    Status_geral: 'Proposta arquivada',
-                    motivo_arquivamento: inputElement.value
-                }]
-            };
-        } else if (tipo === 'salvar_cot') {
-            console.log('[SALVAR COT]');
+
+        // Mapeia os tipos de ação para os payloads correspondentes
+        const payloadMap = {
+            'solicitar_aprovacao_sindico': {
+                Status_geral: 'Aguardando aprovação de uma proposta'
+            },
+            'ajustar_cot': {
+                Status_geral: 'Ajuste solicitado',
+                Solicitacao_de_ajuste: inputElement ? inputElement.value : null
+            },
+            'aprov_cot': {
+                Status_geral: 'Proposta aprovada'
+            },
+            'arquivar_cot': {
+                Status_geral: 'Proposta arquivada',
+                motivo_arquivamento: inputElement ? inputElement.value : null
+            },
+            'finalizar_provisionamento':
+            {
+                Status_geral: 'Lançado no orçamento'
+            },
+            'confirmar_compra': {
+                Status_geral: 'Compra realizada'
+            },
+            'autorizar_pagamento_sindico': {
+                Status_geral: 'Assinatura Confirmada Sindico'
+            },
+            'autorizar_pagamento_subsindico': {
+                Status_geral: 'Assinatura Confirmada Sub Sindico'
+            },
+            'confirmar_todas_as_assinaturas': {
+                Status_geral: 'Autorizado para pagamento'
+            }
+        };
+
+        // Verifica se o tipo está no mapa e cria o payload
+        if (payloadMap[tipo]) {
+            if(tipo === "solicitar_aprovacao_sindico")
+            {
+                await saveTableData({ tipo });
+            }
+            console.log("[CHEGOU AQUI]")
+            payload = { data: [payloadMap[tipo]] };
+        } else if (tipo === 'salvar_cot' || tipo === 'editar_pdc') {
+            console.log(`[${tipo.toUpperCase()}]`);
             toggleElements(false);
             try {
                 console.log('Salvando dados da tabela...');
-                await saveTableData();
+                await saveTableData({ tipo });
 
                 window.open(`${url}#Script:page.refresh`, '_top');
+                return;
             } catch (erro) {
                 console.error('Erro ao salvar cotação:', erro);
                 toggleElements(true);
                 messageElement.innerHTML = 'Ocorreu um erro ao salvar a cotação. Tente novamente.';
+                return;
             }
-            return;
-        }else if(tipo === 'editar_pdc'){
-            console.log('[EDITAR PDC]');
-            toggleElements(false);
-            try {
-                console.log('Salvando dados da tabela...');
-                await saveTableData({tipo:"editar_pdc"});
-
-                window.open(`${url}#Script:page.refresh`, '_top');
-            } catch (erro) {
-                console.error('Erro ao salvar cotação:', erro);
-                toggleElements(true);
-                messageElement.innerHTML = 'Ocorreu um erro ao salvar a cotação. Tente novamente.';
-            }
-            return;
-        }else if(tipo === 'remover_fornecedor'){
-            console.log('[REMOVER FORNECEDOR]');
-            overlay.remove();
-            return Promise.resolve(true);
-        }else if(tipo === 'remover_produto'){
-            console.log('[REMOVER PRODUTO]');
+        } else if (tipo === 'remover_fornecedor' || tipo === 'remover_produto') {
+            console.log(`[${tipo.toUpperCase()}]`);
             overlay.remove();
             return Promise.resolve(true);
         }
-        console.log('[NÃO PODE CHEGAR AQUI!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!]');
+
         try {
             const resposta = await executar_apiZoho({ 
                 tipo: "atualizar_reg", 
@@ -674,9 +676,17 @@ export function desabilitarTodosElementosEditaveis() {
     // Desabilita botões, exceto os dentro de save-button-container
     const botoes = document.querySelectorAll('button');
     botoes.forEach(botao => {
-        if (!botao.closest('.save-btn-container')) {
-            botao.disabled = true;
-            botao.style.cursor = 'not-allowed';
+        if(globais.pag === "ver_cotacao" || globais.pag === "ver_proposta_ganha") {
+            if (!botao.classList.contains('toggle-section')) { // Verifica se o botão não tem a classe 'toggle-section'
+                botao.disabled = true;
+                botao.style.display = 'none';
+            }
+        } else
+        {
+            if (!botao.closest('.save-btn-container') && !botao.classList.contains('toggle-section')) {
+                botao.disabled = true;
+                botao.style.display = 'none';
+            }
         }
     });
 
