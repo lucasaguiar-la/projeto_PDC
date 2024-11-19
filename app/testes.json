@@ -1,0 +1,40 @@
+[
+    {
+        "id_produto": "1",
+        "id_fornecedor": "1646",
+        "Produto": "TESTE",
+        "Quantidade": 5,
+        "Unidade": "unid",
+        "Fornecedor": "M C MONTEIRO NETO LT...",
+        "Valor_unitario": 10,
+        "Valor_total": 50,
+        "Valor_do_frete": 0,
+        "Descontos": 0,
+        "Total_geral": 250,
+        "Condicoes_de_pagamento": "",
+        "Observacoes": "",
+        "num_PDC_temp": "2024_11_19_10_44_29",
+        "Aprovado": true,
+        "Versao": 1,
+        "Ativo": true
+    },
+    {
+        "id_produto": "2",
+        "id_fornecedor": "1646",
+        "Produto": "TESTE",
+        "Quantidade": 10,
+        "Unidade": "unid",
+        "Fornecedor": "M C MONTEIRO NETO LT...",
+        "Valor_unitario": 20,
+        "Valor_total": 200,
+        "Valor_do_frete": 0,
+        "Descontos": 0,
+        "Total_geral": 250,
+        "Condicoes_de_pagamento": "",
+        "Observacoes": "",
+        "num_PDC_temp": "2024_11_19_10_44_29",
+        "Aprovado": true,
+        "Versao": 1,
+        "Ativo": true
+    }
+]

@@ -273,6 +273,18 @@ async function executarProcessosParalelos() {
         }
 
         // Finaliza o processo
+    }else
+    {
+        // Adiciona o botão "Sol. Aprov. Síndico"
+        const approveButton = document.createElement('button');
+        approveButton.classList.add('approve-sindico-btn', 'adjust-btn');
+        approveButton.textContent = 'Sol. Aprov. Síndico';
+        approveButton.onclick = function () {
+            customModal({botao: this, tipo: "solicitar_aprovacao_sindico", mensagem: "Deseja solicitar a aprovação do síndico?" });
+        };
+
+        const saveBtnContainer = document.querySelector('.save-btn-container');
+        saveBtnContainer.appendChild(approveButton);
     }
     document.body.classList.remove('hidden');
     atualizarOuvintesTabCot();

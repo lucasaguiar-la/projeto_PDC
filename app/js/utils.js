@@ -570,6 +570,7 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
             if(tipo === "solicitar_aprovacao_sindico")
             {
                 await saveTableData({ tipo });
+                
             }
             console.log("[CHEGOU AQUI]")
             payload = { data: [payloadMap[tipo]] };
@@ -601,6 +602,8 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
                 corpo: payload,
                 nomeR: globais.nomeRelPDC
             });
+
+            
 
             console.log(`[ID] ${globais.idPDC}\n[NOME REL] ${globais.nomeRelPDC}\n[PAYLOAD] ${JSON.stringify(payload)}`);
             console.log('resposta: ', JSON.stringify(resposta, null, 2));

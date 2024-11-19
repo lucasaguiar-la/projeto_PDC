@@ -93,12 +93,14 @@ select option[disabled] {
 }
 
 .form-compra #container-campos-texto {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
-.form-compra .campos-texto {
-    width: 49.5%;
+.form-compra .campos-texto-mais-largos {
+    grid-column-start: 1;
+    grid-column-end: 3;
 }
 
 .form-compra label, .form-classificacao label {
@@ -109,16 +111,16 @@ select option[disabled] {
 }
 
 .form-compra textarea,
-.form-compra input[type="text"],
-.form-compra input[type="date"] {
-    width: 100%;    
-    padding: 5px;
-    margin-bottom: 6px;
+.form-compra input[type="text"] {
+    font-family: Arial, sans-serif;
     border: 1px solid #ccc;
-    border-radius: 4px;
     box-sizing: border-box;
-    font-size: 90%;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    font-size: 11pt;
+    padding: 5px;
     color: #333;
+    width: 100%;    
 }
 
 .form-compra textarea {
@@ -660,14 +662,15 @@ button:hover {
 
 .parcela input[type="date"],
 .parcela input[type="text"] {
-    flex: 1;
-    padding: 6px 8px;
+    font-family: Arial, sans-serif;
+    background-color: #fff;
     border: 1px solid #ddd;
     border-radius: 4px;
+    padding: 6px 8px;
     font-size: 90%;
     color: #333;
-    background-color: #fff;
     margin: 0;
+    flex: 1;
 }
 
 .add-parcela {

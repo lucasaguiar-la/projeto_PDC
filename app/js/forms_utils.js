@@ -1,5 +1,5 @@
 import {globais} from './main.js';
-import {formatToBRL} from './utils.js';
+import {formatToBRL, converterStringParaDecimal} from './utils.js';
 
 let numeroParcela = 1;
 
@@ -92,6 +92,12 @@ export function preencherDadosPDC(resp)
     const textareaUtilizacao = formDadosPDC.querySelector('#utilizacao');
     if (data.Utilizacao) {
         textareaUtilizacao.value = data.Utilizacao;
+    }
+
+    // Justificativa
+    const textareaJustificativa = formDadosPDC.querySelector('#justificativa');
+    if (data.Justificativa) {
+        textareaJustificativa.value = data.Justificativa;
     }
 
     // =====[SESSÃO 3]=====//
@@ -275,7 +281,7 @@ function atualizarLabels() {
  * @returns {void}
  * 
  * @description
- * - Verifica se o container está oculto e o torna visível se necess��rio
+ * - Verifica se o container está oculto e o torna visível se necessário
  * - Cria uma nova linha com todos os campos necessários
  * - Mantém a mesma estrutura e estilo das linhas existentes
  */
@@ -640,45 +646,45 @@ export function setupPixValidation() {
  * 
  * @function atualizarValorTotalParcelas
  * @returns {void}
+ * 
+ * @description
+ * Esta função:
+ * - Obtém a tabela de preços e a linha de total
+ * - Verifica se um fornecedor aprovado está definido
+ * - Se sim, encontra o índice da coluna correspondente ao fornecedor
+ * - Calcula o total subtraindo os valores das parcelas do valor total do fornecedor
+ * - Atualiza o rótulo do total com o valor formatado
+ * - Adiciona classes CSS para indicar se o total é igual ou diferente do esperado
  */
 export function atualizarValorTotalParcelas() {
-    const valoresParcelas = document.querySelectorAll('#camposData input[name="Valor"]');
-    let total = 0;
-    console.log("Valores parcela => ", valoresParcelas);
 
-    valoresParcelas.forEach(input => {
-        console.log("input => ", input);
-        const valor = parseFloat(input.value.replace(/[^0-9,-]+/g, '').replace(',', '.')) || 0;
-        total += valor;
-    });
+    const table = document.getElementById('priceTable');
+    const headerRow = table.rows[0]; // Primeira linha do cabeçalho
+    const totalRow = table.rows[table.rows.length - 2]; // Última linha (linha de total)
 
     const labelTotal = document.getElementById('valor-total-parcelas');
-    labelTotal.innerText = formatToBRL(total);
-    console.log(globais.idFornAprovado);
+
     if(globais.idFornAprovado)
     {
-        const table = document.getElementById('priceTable');
-        const headerRow = table.rows[0]; // Primeira linha do cabeçalho
-        const totalRow = table.rows[table.rows.length - 2]; // Última linha (linha de total)
+        const colIndex = Array.from(headerRow.cells).findIndex(cell => cell.dataset.id_forn === globais.idFornAprovado); // Encontra o índice da coluna do fornecedor aprovado
         
-        // Encontra o índice da coluna do fornecedor aprovado
-        const colIndex = Array.from(headerRow.cells).findIndex(cell => cell.dataset.id_forn === globais.idFornAprovado);
-        
-        console.log("headerRow => ", headerRow);
-        console.log("totalRow => ", totalRow);
-        console.log("colIndex => ", colIndex);
-
         if (colIndex !== -1) {
             // Obtém o valor total do fornecedor na linha de total
             const valorTotalFornecedor = totalRow.cells[colIndex - 2].innerText; // +1 para pegar a célula correta
-            console.log(`Valor total do fornecedor ${globais.idFornAprovado}: ${valorTotalFornecedor}`);
-            
-            // Obtém o total da label
-            const labelTotal = document.getElementById('valor-total-parcelas'); // Supondo que a label tenha esse ID
-            const total = labelTotal.innerText; // Obtém o texto atual da label
-            
+
+            const valoresParcelas = document.querySelectorAll('#camposData input[name="Valor"]');
+    
+            let total = converterStringParaDecimal(valorTotalFornecedor).toFixed(2) || 0; // Inicializa o total com o valor do fornecedor aprovado
+
+            valoresParcelas.forEach(input => {
+                const valor = converterStringParaDecimal(input.value).toFixed(2) || 0;
+                total -= valor; // Reduz o valor da parcela do total
+                total = total.toFixed(2);
+            });
+            labelTotal.innerText = formatToBRL(total);
+
             // Compara os valores
-            if (total === valorTotalFornecedor) {
+            if (total == 0) {
                 labelTotal.classList.add('valor-igual');
                 labelTotal.classList.remove('valor-diferente');
             } else {
@@ -686,8 +692,17 @@ export function atualizarValorTotalParcelas() {
                 labelTotal.classList.remove('valor-igual');
             }
         } else {
-            console.error('Fornecedor não encontrado na tabela.');
+            //DEIXA ZERADO
+            labelTotal.innerText = "-";
+            labelTotal.classList.add('valor-diferente');
+            labelTotal.classList.remove('valor-igual');
+
         }
+    }else
+    {
+        labelTotal.innerText = "-";
+        labelTotal.classList.add('valor-diferente');
+        labelTotal.classList.remove('valor-igual');
     }
 }
 
@@ -698,17 +713,8 @@ export function atualizarValorTotalParcelas() {
  * @returns {void}
  */
 export function atualizarValorTotalClassificacoes() {
-    const valoresClassificacoes = document.querySelectorAll('#form-classificacao input[name="Valor"]');
-    let total = 0;
-
-    valoresClassificacoes.forEach(input => {
-        const valor = parseFloat(input.value.replace(/[^0-9,-]+/g, '').replace(',', '.')) || 0;
-        total += valor;
-    });
 
     const labelTotal = document.getElementById('valor-total-classificacoes');
-    labelTotal.innerText = formatToBRL(total);
-
     if(globais.idFornAprovado) {
         const table = document.getElementById('priceTable');
         const headerRow = table.rows[0];
@@ -719,9 +725,24 @@ export function atualizarValorTotalClassificacoes() {
         if (colIndex !== -1) {
             const valorTotalFornecedor = totalRow.cells[colIndex - 2].innerText;
             
-            const total = labelTotal.innerText;
+            let total = converterStringParaDecimal(valorTotalFornecedor).toFixed(2);
+
+
+            const valoresClassificacoes = document.querySelectorAll('#form-classificacao input[name="Valor"]');
+            console.log("[valorTotalFornecedor] => ", valorTotalFornecedor);
+            valoresClassificacoes.forEach(input => {
+                console.log("[total inicial] => ", total);
+                const valor = converterStringParaDecimal(input.value).toFixed(2) || 0;
+                console.log("[valor da linha] => ", valor);
+                total -= valor; // Reduz o valor da classificação do total
+                total = parseFloat(total).toFixed(2); // Converte total para número antes de usar toFixed
+                console.log("[total final] => ", total);
+            });
+        
             
-            if (total === valorTotalFornecedor) {
+            labelTotal.innerText = formatToBRL(total);
+            
+            if (total == 0) {
                 labelTotal.classList.add('valor-igual');
                 labelTotal.classList.remove('valor-diferente');
             } else {
@@ -729,7 +750,21 @@ export function atualizarValorTotalClassificacoes() {
                 labelTotal.classList.remove('valor-igual');
             }
         } else {
-            console.error('Fornecedor não encontrado na tabela.');
+            labelTotal.innerText = "-";
+            labelTotal.classList.add('valor-diferente');
+            labelTotal.classList.remove('valor-igual');
         }
+    }else
+    {
+        labelTotal.innerText = "-";
+        labelTotal.classList.add('valor-diferente');
+        labelTotal.classList.remove('valor-igual');
     }
+
+
+
+
+
+
+
 }

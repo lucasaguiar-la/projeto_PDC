@@ -1409,11 +1409,18 @@ export async function saveTableData({tipo = null}) {
         }else{
 
             respPDC = await executar_apiZoho({ tipo: "add_reg", corpo: JSON.stringify(dadosPDC, null, 2),  nomeF: globais.nomeFormPDC});
+            console.log("[respPDC] => ", JSON.stringify(respPDC));
+
+            // Verifica se a resposta foi bem-sucedida e se globais.idPDC é null
+            if (respPDC.code === 3000 && globais.idPDC === null) {
+                globais.idPDC = respPDC.data.ID; // Preenche globais.idPDC com o ID retornado
+            }
         }
         
         //====================CRIA O REGISTRO DA COTAÇÃO====================//
         const json = JSON.stringify(dadostabPrecos, null, 2);
         let respCot = await executar_apiZoho({ tipo: "add_reg", corpo: json });
+        
         globais.cotacaoExiste = true;
     }
 }
