@@ -207,20 +207,44 @@ async function executarProcessosParalelos() {
                     overlay.className = 'customConfirm-overlay-div'; // Classe para o overlay
                     const popup = document.createElement('div');
                     popup.className = 'customConfirm-div'; // Classe para o popup
-                    popup.innerHTML = `
-                        <h3 class="customConfirm-title">Inserir Número do PDC</h3>
-                        <label for="numeroPDC">Número do PDC:</label>
-                        <input type="number" id="numeroPDC" />
-                        <div class="customConfirm-button-container">
-                            <button id="salvarPDC" class="customConfirm-confirmButton">Salvar</button>
-                            <button id="fecharModal" class="customConfirm-cancelButton">Fechar</button>
-                        </div>
-                    `;
+                    //CRIA O LAYOUT DO POPUP COM O CAMPO DE PREENCHER O PDC//
+                    const title = document.createElement('h3');
+                    title.className = 'customConfirm-title';
+                    title.textContent = 'Inserir Número do PDC';
+
+                    const label = document.createElement('label');
+                    label.setAttribute('for', 'numeroPDC');
+                    label.textContent = 'Número do PDC:';
+
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.id = 'numeroPDC';
+
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'customConfirm-button-container';
+
+                    const salvarButton = document.createElement('button');
+                    salvarButton.id = 'salvarPDC';
+                    salvarButton.className = 'customConfirm-confirmButton';
+                    salvarButton.textContent = 'Salvar';
+
+                    const fecharButton = document.createElement('button');
+                    fecharButton.id = 'fecharModal';
+                    fecharButton.className = 'customConfirm-cancelButton';
+                    fecharButton.textContent = 'Fechar';
+
+                    buttonContainer.appendChild(salvarButton);
+                    buttonContainer.appendChild(fecharButton);
+                    popup.appendChild(title);
+                    popup.appendChild(label);
+                    popup.appendChild(input);
+                    popup.appendChild(buttonContainer);
+
                     overlay.appendChild(popup);
                     document.body.appendChild(overlay);
 
                     // Função para salvar o número do PDC
-                    document.getElementById('salvarPDC').onclick = function () {
+                    salvarButton.onclick = function () {
                         const numeroPDC = document.getElementById('numeroPDC').value;
                         const parcelas = document.querySelectorAll('#camposData .parcela');
                         parcelas.forEach((parcela, index) => {
@@ -228,16 +252,40 @@ async function executarProcessosParalelos() {
                             const inputPDC = document.createElement('input');
                             inputPDC.type = 'text';
                             inputPDC.value = pdcValue;
-                            inputPDC.readOnly = true; // Campo somente leitura
+                            inputPDC.contentEditable = true; // Campo somente leitura
                             parcela.appendChild(inputPDC); // Adiciona o campo na parcela
                         });
                         overlay.remove(); // Fecha o modal
                         
-                        // Troca o nome e a função do botão para "Finalizar Provisionamento"
-                        criarPDCButton.textContent = 'Finalizar Provisionamento';
-                        criarPDCButton.onclick = function () {
-                            customModal({botao: this, tipo: "finalizar_provisionamento", mensagem: "Deseja relmente finalizar o provisionamento?\nPDC será enviado para realização da compra." });
+                        // Desabilita o botão de criar PDC
+                        criarPDCButton.disabled = true;
+                        criarPDCButton.classList.add('disabled'); // Adiciona a classe para estilo visual
+
+                        // Cria um novo botão "Finalizar Provisionamento"
+                        const finalizarProvisionamentoButton = document.createElement('button');
+                        finalizarProvisionamentoButton.classList.add('finalizar-provisionamento-btn', 'adjust-btn');
+                        finalizarProvisionamentoButton.textContent = 'Finalizar Provisionamento';
+                        finalizarProvisionamentoButton.onclick = function () {
+                            customModal({botao: this, tipo: "finalizar_provisionamento", mensagem: "Deseja realmente finalizar o provisionamento?\nPDC será enviado para realização da compra." });
                         };
+
+                        // Seleciona o contêiner onde o botão "Criar PDC" está localizado
+                        const saveBtnContainer = document.querySelector('.save-btn-container');
+
+                        // Adiciona o novo botão após o botão "Criar PDC"
+                        saveBtnContainer.appendChild(finalizarProvisionamentoButton);
+
+                        // Oculta todas as seções, exceto a seção de parcelas
+                        const allSections = document.querySelectorAll('.section');
+                        allSections.forEach(section => {
+                            const header = section.previousElementSibling; // Seleciona o header correspondente
+                            if (!section.classList.contains('form-pagamento')) { // Verifica se não é a seção de parcelas
+                                section.classList.add('collapsed'); // Adiciona a classe para colapsar
+                                if (header && header.classList.contains('section-header')) {
+                                    header.classList.add('collapsed'); // Adiciona a classe para a setinha
+                                }
+                            }
+                        });
                     };
 
                     // Função para fechar o modal
@@ -245,7 +293,6 @@ async function executarProcessosParalelos() {
                         overlay.remove();
                     };
                 };
-                console.log("CHEOGU AQUI");
                 const saveBtnContainer = document.querySelector('.save-btn-container');
                 saveBtnContainer.appendChild(criarPDCButton);
             }

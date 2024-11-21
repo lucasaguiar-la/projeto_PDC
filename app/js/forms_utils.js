@@ -546,7 +546,6 @@ export function initClassificacaoForm(classificacoes, centrosCusto) {
     camposClassificacao.classList.remove('hidden');
 }
 
-
 export function setupPixValidation() {
     const tipoPix = document.getElementById('tipo-pix');
     const chavePix = document.getElementById('pix-chave');

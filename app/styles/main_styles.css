@@ -60,7 +60,7 @@ select option[disabled] {
 }
 
 /*==========SECAO 01==========*/
-.form-compra {
+.form-compra, .form-pagamento {
     font-family: Arial, sans-serif;
     color: #333;
     display: flex;
@@ -69,7 +69,7 @@ select option[disabled] {
     flex-direction: column;
 }
 
-.form-compra .form-container {
+.form-container {
     border: 1px solid #ddd;
     padding: 3.5%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -92,18 +92,18 @@ select option[disabled] {
     padding: 5px;
 }
 
-.form-compra #container-campos-texto {
+#container-campos-texto {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
 
-.form-compra .campos-texto-mais-largos {
+.campos-texto-mais-largos {
     grid-column-start: 1;
     grid-column-end: 3;
 }
 
-.form-compra label, .form-classificacao label {
+.form-compra label, .form-pagamento label, .form-classificacao label {
     font-weight: bold;
     margin-bottom: 5px;
     display: block;
@@ -111,7 +111,10 @@ select option[disabled] {
 }
 
 .form-compra textarea,
-.form-compra input[type="text"] {
+.form-compra input[type="text"],
+.form-pagamento textarea,
+.form-pagamento input[type="text"] 
+{
     font-family: Arial, sans-serif;
     border: 1px solid #ccc;
     box-sizing: border-box;
@@ -123,7 +126,8 @@ select option[disabled] {
     width: 100%;    
 }
 
-.form-compra textarea {
+.form-compra textarea, 
+.form-pagamento textarea{
     min-width: 250px;
     max-width: 250px;
     min-height: 100px;
@@ -139,8 +143,8 @@ select option[disabled] {
     margin-right: 10px;
 }
 
-.form-compra #campos-deposito,
-.form-compra #campos-pix {
+#campos-deposito,
+#campos-pix {
     border-top: 1px solid #ddd;
     padding-top: 10px;
     margin-top: 10px;
@@ -1106,4 +1110,10 @@ button:hover {
 .customConfirm-confirmButton:hover,
 .customConfirm-cancelButton:hover {
     background-color: #f1f1f1; /* Cor de fundo ao passar o mouse */
+}
+
+.disabled {
+    opacity: 0.5; /* Torna o botão semi-transparente */
+    pointer-events: none; /* Desabilita interações com o botão */
+    cursor: not-allowed; /* Muda o cursor para indicar que o botão está desabilitado */
 }
