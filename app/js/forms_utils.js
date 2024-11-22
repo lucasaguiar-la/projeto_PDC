@@ -140,11 +140,11 @@ export function preencherDadosPDC(resp)
                 return;
             }
             
-            const [dataStr, valor] = dataObj.display_value.split('|SPLITKEY|');
+            const [dataStr, valor, numPDC] = dataObj.display_value.split('|SPLITKEY|');
             const [dia, mes, ano] = dataStr.split('/');
             const dataFormatada = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
 
-            adicionarCampoVenc(dataFormatada, valor);
+            adicionarCampoVenc(dataFormatada, valor, numPDC);
         });
     }
 
@@ -171,7 +171,7 @@ export function preencherDadosPDC(resp)
  * @description
  * - Cria um novo campo de data para parcelas de pagamento
  */
-export function adicionarCampoVenc(data = null, valor = null){
+export function adicionarCampoVenc(data = null, valor = null, numPDC = null){
     
     numeroParcela++;
 
@@ -201,6 +201,17 @@ export function adicionarCampoVenc(data = null, valor = null){
         atualizarValorTotalParcelas();
     });
     
+    //====================CRIA UM CAMPO DE NÚMERO DO PDC====================//
+    let novoInputNumPDC;
+    if(numPDC)
+    {
+        novoInputNumPDC = document.createElement('input');
+        novoInputNumPDC.type = 'text';
+        novoInputNumPDC.name = 'Num_PDC_parcela';
+        novoInputNumPDC.classList.add('campo-datas');
+        if(numPDC) novoInputNumPDC.value = numPDC;
+    }
+    
     //====================CRIA O BOTÃO DE REMOVER====================//
     const removerButton = document.createElement('button');
     removerButton.type = 'button';
@@ -219,7 +230,7 @@ export function adicionarCampoVenc(data = null, valor = null){
     novoCampo.appendChild(novoInput);
     novoCampo.appendChild(novoInputValor);
     novoCampo.appendChild(removerButton);
-
+    if(novoInputNumPDC) novoCampo.appendChild(novoInputNumPDC);
 
     //====================ADICIONA O NOVO CAMPO AO CONTAINER DE CAMPOS====================//
     document.getElementById('camposData').appendChild(novoCampo);

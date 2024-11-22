@@ -1,40 +1,37 @@
-[
-    {
-        "id_produto": "1",
-        "id_fornecedor": "1646",
-        "Produto": "TESTE",
-        "Quantidade": 5,
-        "Unidade": "unid",
-        "Fornecedor": "M C MONTEIRO NETO LT...",
-        "Valor_unitario": 10,
-        "Valor_total": 50,
-        "Valor_do_frete": 0,
-        "Descontos": 0,
-        "Total_geral": 250,
-        "Condicoes_de_pagamento": "",
-        "Observacoes": "",
-        "num_PDC_temp": "2024_11_19_10_44_29",
-        "Aprovado": true,
-        "Versao": 1,
-        "Ativo": true
-    },
-    {
-        "id_produto": "2",
-        "id_fornecedor": "1646",
-        "Produto": "TESTE",
-        "Quantidade": 10,
-        "Unidade": "unid",
-        "Fornecedor": "M C MONTEIRO NETO LT...",
-        "Valor_unitario": 20,
-        "Valor_total": 200,
-        "Valor_do_frete": 0,
-        "Descontos": 0,
-        "Total_geral": 250,
-        "Condicoes_de_pagamento": "",
-        "Observacoes": "",
-        "num_PDC_temp": "2024_11_19_10_44_29",
-        "Aprovado": true,
-        "Versao": 1,
-        "Ativo": true
-    }
-]
+{
+    "Entidade": "3938561000066182591",
+    "Tipo_de_solicitacao": "3938561000077308645",
+    "Descricao_da_compra": "Compra de material de limpeza",
+    "Utilizacao": "Limpar",
+    "Justificativa": "Sem ocorrências",
+    "id_temp": "2024_11_21_08_53_27",
+    "Forma_de_pagamento": "Dep. em CC",
+    "Banco": "Itaú",
+    "AG": "1590",
+    "N_Conta": "1234567",
+    "Favorecido": "José Carlos",
+    "Num_PDC_parcela": "7894/02",
+    "Datas": [
+        {
+            "Vencimento_previsto": "22/11/2024",
+            "Valor": 180,
+            "Num_PDC_parcela": "7894/01"
+        },
+        {
+            "Vencimento_previsto": "22/12/2024",
+            "Valor": 180,
+            "Num_PDC_parcela": "7894/02"
+        }
+    ],
+    "Vencimento_previsto": "22/11/2024",
+    "Beneficiario": "M C MONTEIRO NETO LT...",
+    "Valor_orcado": 360,
+    "Classificacao_contabil": [
+        {
+            "Conta_a_debitar": "CUSTEIO",
+            "Centro_de_custo": "3938561000085072254",
+            "Classe_operacional": "3938561000085059200",
+            "Valor": 360
+        }
+    ]
+}

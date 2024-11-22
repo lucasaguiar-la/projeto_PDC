@@ -1120,6 +1120,7 @@ export async function prenchTabCot(resp) {
  * Esta função busca os dados iniciais e detalhes do PDC a partir de formulários e os organiza em um objeto.
  */
 async function pegarDadosPDC(){
+
     //====================BUSCA OS DADOS INICIAIS DO PDC====================//
     const formDdsInicais = document.querySelector('#dados-PDC');
     const dadosIniciaisPdc = {};
@@ -1140,16 +1141,18 @@ async function pegarDadosPDC(){
     // Obter todos os elementos do formulário
     const parcelas = document.querySelectorAll('.parcela');
     const vencimentos = [];
-
+    console.log("<============PEGANDO PARCELAS============>");
     parcelas.forEach(parcela => {
         const dataInput = parcela.querySelector('input[type="date"]');
         const valorInput = parcela.querySelector('input[name="Valor"]');
+        const numPDC = parcela.querySelector('input[name="Num_PDC_parcela"]');
 
         if (dataInput?.value && valorInput?.value) {
             const [ano, mes, dia] = dataInput.value.split('-');
             vencimentos.push({
                 "Vencimento_previsto": `${dia}/${mes}/${ano}`,
-                "Valor": converterStringParaDecimal(valorInput.value)
+                "Valor": converterStringParaDecimal(valorInput.value),
+                "Num_PDC_parcela": numPDC.value
             });
         }
     });
@@ -1157,10 +1160,10 @@ async function pegarDadosPDC(){
     // Adiciona outros campos do formulário
     const elementosDetalhes = formDdsDetalhes.elements;
     for (let elemento of elementosDetalhes) {
-        if (elemento.name && 
-            elemento.name !== 'Datas' && 
-            elemento.name !== 'Valor' && 
+
+        if (elemento.classList.contains("campo-datas") &&
             (elemento.type !== 'radio' || elemento.checked)) {
+            console.log("[ELEMENTO] => ", elemento);
             dadosIniciaisPdc[elemento.name] = elemento.value;
         }
     }
@@ -1170,6 +1173,7 @@ async function pegarDadosPDC(){
         dadosIniciaisPdc["Datas"] = vencimentos;
         // Adiciona o primeiro vencimento em um campo separado para referência
         dadosIniciaisPdc["Vencimento_previsto"] = vencimentos[0].Vencimento_previsto;
+        dadosIniciaisPdc["Numero_do_PDC"] = vencimentos[0].Num_PDC_parcela.split('/')[0];
     }
 
     return dadosIniciaisPdc;
@@ -1396,6 +1400,7 @@ export async function saveTableData({tipo = null}) {
         const dadosIniciaisPdc = await pegarDadosPDC();
         const dadosClassificacao = await pegarDadosClassificacao();
         const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosClassificacao};
+        console.log("[DADOS PDC] => ", JSON.stringify(dadosPDC));
 
         //====================CRIA O REGISTRO DO PDC====================//
         let respPDC;
