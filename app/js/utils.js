@@ -567,7 +567,7 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
 
         // Verifica se o tipo está no mapa e cria o payload
         if (payloadMap[tipo]) {
-            if(tipo === "solicitar_aprovacao_sindico")
+            if(tipo === "solicitar_aprovacao_sindico" || tipo ==="finalizar_provisionamento")
             {
                 await saveTableData({ tipo });
                 
@@ -665,13 +665,19 @@ export function desabilitarTodosElementosEditaveis() {
     // Desabilita inputs, textareas e selects
     const elementosFormulario = document.querySelectorAll('input, textarea, select');
     elementosFormulario.forEach(elemento => {
-        elemento.disabled = true;
-        elemento.style.cursor = 'not-allowed';
+        console.log('[globais.pag] => ', globais.pag);
+
+        console.log('[classe] => ', Array.from(elemento.classList));
+        if (!(elemento.classList.contains('num-pdc') && globais.pag === 'criar_numero_de_PDC')) {
+            elemento.disabled = true;
+            elemento.style.cursor = 'not-allowed';
+        };
     });
 
     // Desabilita elementos com contenteditable
     const elementosEditaveis = document.querySelectorAll('[contenteditable="true"]');
     elementosEditaveis.forEach(elemento => {
+        // Verifica se o elemento possui a classe 'campo-datas' e se globais.pag é 'criar_numero_de_PDC'
         elemento.contentEditable = false;
         elemento.style.cursor = 'not-allowed';
     });

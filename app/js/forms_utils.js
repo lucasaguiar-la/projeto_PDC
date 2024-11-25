@@ -208,7 +208,7 @@ export function adicionarCampoVenc(data = null, valor = null, numPDC = null){
         novoInputNumPDC = document.createElement('input');
         novoInputNumPDC.type = 'text';
         novoInputNumPDC.name = 'Num_PDC_parcela';
-        novoInputNumPDC.classList.add('campo-datas');
+        novoInputNumPDC.classList.add('campo-datas', "num-pdc");
         if(numPDC) novoInputNumPDC.value = numPDC;
     }
     

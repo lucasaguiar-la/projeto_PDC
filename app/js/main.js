@@ -173,156 +173,142 @@ async function executarProcessosParalelos() {
         ];
 
         await Promise.all(tarefas);
+        const saveBtnContainer = document.querySelector('.save-btn-container');
         if(globais.pag != "editar_cotacao") {
             desabilitarTodosElementosEditaveis();
             
             if(globais.pag === "confirmar_compra")
             {
+
                 // Adiciona o botão "Sol. Aprov. Síndico"
                 const approveButton = document.createElement('button');
                 approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
                 approveButton.textContent = 'Confirmar compra';
                 approveButton.onclick = function () {
                     customModal({botao: this, tipo: "confirmar_compra", mensagem: "Deseja marcar essa solicitação como COMPRADA?" });
-            };
+                };
 
-            // Seleciona o contêiner onde o botão "Salvar" está localizado
-            const saveBtnContainer = document.querySelector('.save-btn-container');
+                //==========REMOVE O BOTÃO DE SALVAR==========//
+                const saveButton = saveBtnContainer.querySelector('.save-btn');
+                if (saveButton) {
+                    saveBtnContainer.removeChild(saveButton);
+                }
 
-            // Remove o botão "Salvar" existente, se houver
-            const saveButton = saveBtnContainer.querySelector('.save-btn');
-            if (saveButton) {
-                saveBtnContainer.removeChild(saveButton);
-            }
-            saveBtnContainer.appendChild(approveButton);
-            }
-            // Adiciona o botão "Criar PDC" se a página for "criar_numero_de_PDC"
-            if (globais.pag === "criar_numero_de_PDC") {
+                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
+                saveBtnContainer.appendChild(approveButton);
+
+            } else if (globais.pag === "criar_numero_de_PDC") 
+            {
+
+                //==========CRIA O BOTÃO DE CRIAR NÚMERO DE PDC==========//
                 const criarPDCButton = document.createElement('button');
                 criarPDCButton.classList.add('criar-pdc-btn', 'adjust-btn');
                 criarPDCButton.textContent = 'Criar PDC';
                 console.log("[NUM PDC] =>", globais.numPDC);
                 console.log("[NUM PDC TEMP] =>", globais.numPDC_temp);
-                if(!globais.numPDC)
-                {
 
-                    criarPDCButton.onclick = function () {
-                        //Abre modal em popup
-                        const overlay = document.createElement('div');
-                        overlay.className = 'customConfirm-overlay-div'; //Classe para o overlay
-                        const popup = document.createElement('div');
-                        popup.className = 'customConfirm-div'; //Classe para o popup
+                //==========ADICIONA O ONCLICK NO CRIAR BOTÃO==========//
+                criarPDCButton.onclick = function () {
+                    //Abre modal em popup
+                    const overlay = document.createElement('div');
+                    overlay.className = 'customConfirm-overlay-div'; //Classe para o overlay
+                    const popup = document.createElement('div');
+                    popup.className = 'customConfirm-div'; //Classe para o popup
 
-                        //CRIA O LAYOUT DO POPUP COM O CAMPO DE PREENCHER O PDC//
-                        const title = document.createElement('h3');
-                        title.className = 'customConfirm-title';
-                        title.textContent = 'Inserir Número do PDC';
-    
-                        const label = document.createElement('label');
-                        label.setAttribute('for', 'numeroPDC');
-                        label.textContent = 'Número do PDC:';
-    
-                        const input = document.createElement('input');
-                        input.type = 'number';
-                        input.id = 'numeroPDC';
-                        input.name = 'numeroPDC';
+                    //CRIA O LAYOUT DO POPUP COM O CAMPO DE PREENCHER O PDC//
+                    const title = document.createElement('h3');
+                    title.className = 'customConfirm-title';
+                    title.textContent = 'Inserir Número do PDC';
 
-                        const buttonContainer = document.createElement('div');
-                        buttonContainer.className = 'customConfirm-button-container';
-    
-                        const salvarButton = document.createElement('button');
-                        salvarButton.id = 'salvarPDC';
-                        salvarButton.className = 'customConfirm-confirmButton';
-                        salvarButton.textContent = 'Salvar';
-    
-                        const fecharButton = document.createElement('button');
-                        fecharButton.id = 'fecharModal';
-                        fecharButton.className = 'customConfirm-cancelButton';
-                        fecharButton.textContent = 'Fechar';
-    
-                        buttonContainer.appendChild(salvarButton);
-                        buttonContainer.appendChild(fecharButton);
-                        popup.appendChild(title);
-                        popup.appendChild(label);
-                        popup.appendChild(input);
-                        popup.appendChild(buttonContainer);
-    
-                        overlay.appendChild(popup);
-                        document.body.appendChild(overlay);
-    
-                        // Função para salvar o número do PDC
-                        salvarButton.onclick = function () {
-                            const numeroPDC = document.getElementById('numeroPDC').value;
-                            const parcelas = document.querySelectorAll('#camposData .parcela');
-                            parcelas.forEach((parcela, index) => {
-                                const pdcValue = parcelas.length > 1 ? `${numeroPDC}/${String(index + 1).padStart(2, '0')}` : numeroPDC;
-                                const inputPDC = document.createElement('input');
-                                inputPDC.classList.add("campo-datas");
-                                inputPDC.type = 'text';
-                                inputPDC.value = pdcValue;
-                                inputPDC.contentEditable = true; // Campo somente leitura
-                                inputPDC.name = 'Num_PDC_parcela';
-                                parcela.appendChild(inputPDC); // Adiciona o campo na parcela
-                            });
-                            overlay.remove(); // Fecha o modal
-                            
-                            // Desabilita o botão de criar PDC
-                            criarPDCButton.disabled = true;
-                            criarPDCButton.classList.add('disabled'); // Adiciona a classe para estilo visual
-    
-                            // Cria um novo botão "Finalizar Provisionamento"
-                            const finalizarProvisionamentoButton = document.createElement('button');
-                            finalizarProvisionamentoButton.classList.add('finalizar-provisionamento-btn', 'adjust-btn');
-                            finalizarProvisionamentoButton.textContent = 'Finalizar Provisionamento';
-                            finalizarProvisionamentoButton.onclick = function () {
-                                customModal({botao: this, tipo: "finalizar_provisionamento", mensagem: "Deseja realmente finalizar o provisionamento?\nPDC será enviado para realização da compra." });
-                            };
-    
-                            // Seleciona o contêiner onde o botão "Criar PDC" está localizado
-                            const saveBtnContainer = document.querySelector('.save-btn-container');
-    
-                            // Adiciona o novo botão após o botão "Criar PDC"
-                            saveBtnContainer.appendChild(finalizarProvisionamentoButton);
-    
-                            // Oculta todas as seções, exceto a seção de parcelas
-                            const allSections = document.querySelectorAll('.section');
-                            allSections.forEach(section => {
-                                const header = section.previousElementSibling; // Seleciona o header correspondente
-                                if (!section.classList.contains('form-pagamento') && !section.classList.contains('section-buttons')) { // Verifica se não é a seção de parcelas e não é a seção de botões
-                                    section.classList.add('collapsed'); // Adiciona a classe para colapsar
-                                    if (header && header.classList.contains('section-header')) {
-                                        header.classList.add('collapsed'); // Adiciona a classe para a setinha
-                                    }
+                    const label = document.createElement('label');
+                    label.setAttribute('for', 'numeroPDC');
+                    label.textContent = 'Número do PDC:';
+
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.id = 'numeroPDC';
+                    input.name = 'numeroPDC';
+
+                    const buttonContainer = document.createElement('div');
+                    buttonContainer.className = 'customConfirm-button-container';
+
+                    const salvarButton = document.createElement('button');
+                    salvarButton.id = 'salvarPDC';
+                    salvarButton.className = 'customConfirm-confirmButton';
+                    salvarButton.textContent = 'Salvar';
+
+                    const fecharButton = document.createElement('button');
+                    fecharButton.id = 'fecharModal';
+                    fecharButton.className = 'customConfirm-cancelButton';
+                    fecharButton.textContent = 'Fechar';
+
+                    buttonContainer.appendChild(salvarButton);
+                    buttonContainer.appendChild(fecharButton);
+                    popup.appendChild(title);
+                    popup.appendChild(label);
+                    popup.appendChild(input);
+                    popup.appendChild(buttonContainer);
+
+                    overlay.appendChild(popup);
+                    document.body.appendChild(overlay);
+
+                    // Função para salvar o número do PDC
+                    salvarButton.onclick = function () {
+                        const numeroPDC = document.getElementById('numeroPDC').value;
+                        const parcelas = document.querySelectorAll('#camposData .parcela');
+                        parcelas.forEach((parcela, index) => {
+                            const pdcValue = parcelas.length > 1 ? `${numeroPDC}/${String(index + 1).padStart(2, '0')}` : numeroPDC;
+                            const inputPDC = document.createElement('input');
+                            inputPDC.classList.add("campo-datas");
+                            inputPDC.type = 'text';
+                            inputPDC.value = pdcValue;
+                            inputPDC.contentEditable = true; // Campo somente leitura
+                            inputPDC.name = 'Num_PDC_parcela';
+                            parcela.appendChild(inputPDC); // Adiciona o campo na parcela
+                        });
+                        overlay.remove(); // Fecha o modal
+                        
+                        // Desabilita o botão de criar PDC
+                        criarPDCButton.disabled = true;
+                        criarPDCButton.classList.add('disabled'); // Adiciona a classe para estilo visual
+
+                        // Adiciona o novo botão após o botão "Criar PDC"
+                        saveBtnContainer.appendChild(finalizarProvisionamentoButton);
+
+                        // Oculta todas as seções, exceto a seção de parcelas
+                        const allSections = document.querySelectorAll('.section');
+                        allSections.forEach(section => {
+                            const header = section.previousElementSibling; // Seleciona o header correspondente
+                            if (!section.classList.contains('form-pagamento') && !section.classList.contains('section-buttons')) { // Verifica se não é a seção de parcelas e não é a seção de botões
+                                section.classList.add('collapsed'); // Adiciona a classe para colapsar
+                                if (header && header.classList.contains('section-header')) {
+                                    header.classList.add('collapsed'); // Adiciona a classe para a setinha
                                 }
-                            });
-                        };
-    
-                        // Função para fechar o modal
-                        document.getElementById('fecharModal').onclick = function () {
-                            overlay.remove();
-                        };
+                            }
+                        });
                     };
+                    // Função para fechar o modal
+                    document.getElementById('fecharModal').onclick = function () {
+                        overlay.remove();
+                    };
+                };
+                //
+                saveBtnContainer.appendChild(criarPDCButton);
 
-                }else
+                //==========CRIA O BOTÃO DE CONCLUIR PROVISIONAMENTO==========//
+                const finalizarProvisionamentoButton = document.createElement('button');
+                finalizarProvisionamentoButton.classList.add('finalizar-provisionamento-btn', 'adjust-btn');
+                finalizarProvisionamentoButton.textContent = 'Finalizar Provisionamento';
+                finalizarProvisionamentoButton.onclick = function () {
+                    customModal({botao: this, tipo: "finalizar_provisionamento", mensagem: "Deseja realmente finalizar o provisionamento?\nPDC será enviado para realização da compra." });
+                };
+
+                if(globais.numPDC)
                 {
+                    //==========DESABILITA O BOTÃO DE CRIAR PDC==========//
                     criarPDCButton.disabled = true; // Desabilita o botão de criar PDC
                     criarPDCButton.classList.add('disabled'); // Adiciona a classe para estilo visual
 
-                    // Cria um novo botão "Finalizar Provisionamento"
-                    const finalizarProvisionamentoButton = document.createElement('button');
-                    finalizarProvisionamentoButton.classList.add('finalizar-provisionamento-btn', 'adjust-btn');
-                    finalizarProvisionamentoButton.textContent = 'Finalizar Provisionamento';
-                    finalizarProvisionamentoButton.onclick = function () {
-                        customModal({botao: this, tipo: "finalizar_provisionamento", mensagem: "Deseja realmente finalizar o provisionamento?\nPDC será enviado para realização da compra." });
-                    };
-
-                    // Seleciona o contêiner onde o botão "Criar PDC" está localizado
-                    const saveBtnContainer = document.querySelector('.save-btn-container');
-
-                    // Adiciona o novo botão após o botão "Criar PDC"
-                    saveBtnContainer.appendChild(finalizarProvisionamentoButton);
-
-                    // Oculta todas as seções, exceto a seção de parcelas
                     const allSections = document.querySelectorAll('.section');
                     allSections.forEach(section => {
                         const header = section.previousElementSibling; // Seleciona o header correspondente
@@ -333,14 +319,14 @@ async function executarProcessosParalelos() {
                             }
                         }
                     });
-                }
-                const saveBtnContainer = document.querySelector('.save-btn-container');
-                saveBtnContainer.appendChild(criarPDCButton);
-            }
+
+                    //==========ADICIONA O BOTÃO DE FINALIZAR PROVISIONAMENTO==========//
+                    saveBtnContainer.appendChild(finalizarProvisionamentoButton);
+                };
+            };
         }
         else 
         {
-
             // Adiciona o botão "Sol. Aprov. Síndico"
             const approveButton = document.createElement('button');
             approveButton.classList.add('approve-sindico-btn', 'adjust-btn');
@@ -357,12 +343,9 @@ async function executarProcessosParalelos() {
             };
 
             // Seleciona o contêiner onde o botão "Salvar" está localizado
-            const saveBtnContainer = document.querySelector('.save-btn-container');
             saveBtnContainer.appendChild(approveButton);
             saveBtnContainer.appendChild(archiveButton);
         }
-
-        // Finaliza o processo
     }else
     {
         // Adiciona o botão "Sol. Aprov. Síndico"
