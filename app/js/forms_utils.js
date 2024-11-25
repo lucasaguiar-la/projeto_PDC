@@ -499,7 +499,6 @@ export function popularSelects(classificacoes, centrosCusto) {
         // Popula select de centros de custo
         if (selectCentro) {
             selectCentro.innerHTML = '<option value="" disabled selected>Selecione...</option>';
-            console.log(JSON.stringify('[CENTROS CUSTO] => ', JSON.stringify(centrosCusto)));
             centrosCusto.forEach((dados, id) => {
                 const option = document.createElement('option');
                 option.value = id;
@@ -739,14 +738,10 @@ export function atualizarValorTotalClassificacoes() {
 
 
             const valoresClassificacoes = document.querySelectorAll('#form-classificacao input[name="Valor"]');
-            console.log("[valorTotalFornecedor] => ", valorTotalFornecedor);
             valoresClassificacoes.forEach(input => {
-                console.log("[total inicial] => ", total);
                 const valor = converterStringParaDecimal(input.value).toFixed(2) || 0;
-                console.log("[valor da linha] => ", valor);
                 total -= valor; // Reduz o valor da classificação do total
                 total = parseFloat(total).toFixed(2); // Converte total para número antes de usar toFixed
-                console.log("[total final] => ", total);
             });
         
             

@@ -148,7 +148,6 @@ export async function executar_apiZoho({ tipo = null, criterios = null, ID = nul
  */
 export function formatToBRL(v) {
     if(!v) return "0,00";
-    console.log('[FORMATANDO PARA BRL] =>', v);
 
     let av; //Apoio ao valor
     let int = false; //Flag para inteiro
@@ -403,12 +402,11 @@ function createEl(tag, className = '', innerHTML = '') {
  * });
  */
 export async function customModal({botao = null, tipo = null, titulo = null, mensagem,confirmText = 'Confirmar',cancelText = 'Cancelar',loadingText = 'Carregando, aguarde...'}) {
-    console.log('[ENTROU NA CUSTOM MODAL]');
     
     if(tipo === null){
         tipo = 'editar_pdc';
     }
-    console.log('tipo - customModal: ', tipo);
+
     // Criação da estrutura base
     const overlay = createEl('div', 'customConfirm-overlay-div');
     const popup = createEl('div', 'customConfirm-div');
@@ -534,7 +532,6 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
         
         // Determina o payload baseado no tipo de ação
         let payload;
-        console.log('tipo - handleConfirm: ', tipo);
 
         // Mapeia os tipos de ação para os payloads correspondentes
         const payloadMap = {
@@ -597,14 +594,12 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
                 await saveTableData({ tipo });
             }
 
-            console.log("[CHEGOU AQUI]")
             payload = { data: [payloadMap[tipo]] };
-            
+
         } else if (tipo === 'salvar_cot' || tipo === 'editar_pdc') {
-            console.log(`[${tipo.toUpperCase()}]`);
+
             toggleElements(false);
             try {
-                console.log('Salvando dados da tabela...');
                 await saveTableData({ tipo });
 
                 window.open(`${url}#Script:page.refresh`, '_top');
@@ -616,7 +611,6 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
                 return;
             }
         } else if (tipo === 'remover_fornecedor' || tipo === 'remover_produto') {
-            console.log(`[${tipo.toUpperCase()}]`);
             overlay.remove();
             return Promise.resolve(true);
         }
@@ -629,10 +623,6 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
                 nomeR: globais.nomeRelPDC
             });
 
-            
-
-            console.log(`[ID] ${globais.idPDC}\n[NOME REL] ${globais.nomeRelPDC}\n[PAYLOAD] ${JSON.stringify(payload)}`);
-            console.log('resposta: ', JSON.stringify(resposta, null, 2));
             // Fecha o modal após sucesso
             if (resposta && resposta.code === 3000) {
                 overlay.remove();
@@ -691,9 +681,7 @@ export function desabilitarTodosElementosEditaveis() {
     // Desabilita inputs, textareas e selects
     const elementosFormulario = document.querySelectorAll('input, textarea, select');
     elementosFormulario.forEach(elemento => {
-        console.log('[globais.pag] => ', globais.pag);
 
-        console.log('[classe] => ', Array.from(elemento.classList));
         if (!(elemento.classList.contains('num-pdc') && globais.pag === 'criar_numero_de_PDC')) {
             elemento.disabled = true;
             elemento.style.cursor = 'not-allowed';

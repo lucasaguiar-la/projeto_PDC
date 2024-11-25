@@ -135,14 +135,18 @@ select option[disabled] {
 }
 
 .form-compra input[type="radio"] {
-    display: flex;
-    align-items: flex-start;
+    
     margin-right: 5px;
 }
 
 .form-compra .radio-group label {
     display: inline-block;
     margin-right: 10px;
+}
+
+.radio-group {
+    display: flex;
+    align-items: flex-start;
 }
 
 #campos-deposito,
@@ -209,6 +213,11 @@ select option[disabled] {
 #priceTable th,
 #otherDataTable th {
     background-color: #8294b4;
+}
+
+#priceTable .forn-aprovado
+{
+    background-color: #586f99;
 }
 
 th {

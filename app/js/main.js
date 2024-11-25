@@ -84,7 +84,6 @@ async function initGenericItems() {
             await setupListenersAndInit();
         }
 
-        console.log('[BUSCOU AS BASES]');
     } catch (error) {
         console.error('Erro ao inicializar:', error);
     }
@@ -160,9 +159,9 @@ async function setupListenersAndInit() {
 }
 
 async function executarProcessosParalelos() {
-    console.log('[Page] =>', globais.pag);
+
     if (globais.pag != "criar_cotacao") {
-        console.log('[BUSCANDO DADOS DO ZOHO]');
+
         await ZOHO.CREATOR.init();
 
         // Executa processos em paralelo
@@ -204,8 +203,6 @@ async function executarProcessosParalelos() {
                 const criarPDCButton = document.createElement('button');
                 criarPDCButton.classList.add('criar-pdc-btn', 'adjust-btn');
                 criarPDCButton.textContent = 'Criar PDC';
-                console.log("[NUM PDC] =>", globais.numPDC);
-                console.log("[NUM PDC TEMP] =>", globais.numPDC_temp);
 
                 //==========ADICIONA O ONCLICK NO CRIAR BOTÃO==========//
                 criarPDCButton.onclick = function () {
@@ -374,6 +371,18 @@ async function executarProcessosParalelos() {
                 saveBtnContainer.appendChild(archiveButton);
             }else if(globais.pag === "checagem_final")
             {
+                // Oculta apenas as duas primeiras seções
+                const allSections = document.querySelectorAll('.section');
+                allSections.forEach((section, index) => {
+                    const header = section.previousElementSibling; // Seleciona o header correspondente
+                    if (index < 2) { // Verifica se é uma das duas primeiras seções
+                        section.classList.add('collapsed'); // Adiciona a classe para colapsar
+                        if (header && header.classList.contains('section-header')) {
+                            header.classList.add('collapsed'); // Adiciona a classe para a setinha
+                        }
+                    }
+                });
+
                 // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
                 const approveButton = document.createElement('button');
                 approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
@@ -384,6 +393,60 @@ async function executarProcessosParalelos() {
 
                 //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
                 saveBtnContainer.appendChild(approveButton);
+                // Verifica se o tipo de solicitação é "SERVIÇO"
+                const tipoSolicitacao = document.querySelector('select[name="Tipo_de_solicitacao"]').options[document.querySelector('select[name="Tipo_de_solicitacao"]').selectedIndex].text;
+                console.log("[tipoSolicitacao] => ", tipoSolicitacao);
+                
+                if (tipoSolicitacao === "SERVIÇO") {
+                    // Cria os novos campos
+                    const camposDeposito = document.getElementById('campos-deposito');
+
+                    // Cria um novo div para os campos adicionais
+                    const novosCamposDiv = document.createElement('div');
+                    novosCamposDiv.id = 'novos-campos';
+
+                    // Adiciona os campos
+                    novosCamposDiv.innerHTML = `
+                        <br><br><br><br><br><br>
+                        <div class="campo">
+                            <label for="valor-original">Valor original:</label>
+                            <input type="text" id="valor-original" name="Valor_original">
+                        </div>
+                        <div class="campo">
+                            <label for="inss">INSS:</label>
+                            <input type="text" id="inss" name="INSS">
+                        </div>
+                        <div class="campo">
+                            <label for="iss">ISS:</label>
+                            <input type="text" id="iss" name="ISS">
+                        </div>
+                        <div class="campo">
+                            <label for="pis-confins-cssl">PIS, CONFINS, CSSL:</label>
+                            <input type="text" id="pis-confins-cssl" name="PIS_CONFINS_CSSL">
+                        </div>
+                        <div class="campo">
+                            <label for="desconto-comercial">Desconto comercial ou parcela:</label>
+                            <input type="text" id="desconto-comercial" name="Desconto_comercial">
+                        </div>
+                        <div class="campo">
+                            <label for="descontos-total">DESCONTOS (total):</label>
+                            <input type="text" id="descontos-total" name="Descontos_total">
+                        </div>
+                        <div class="campo">
+                            <label for="acrescimo">ACRESCIMO (tarifa bancária):</label>
+                            <input type="text" id="acrescimo" name="Acrescimo">
+                        </div>
+                        <div class="campo">
+                            <label for="valor-total-pagar">VALOR TOTAL A PAGAR:</label>
+                            <input type="text" id="valor-total-pagar" name="Valor_total_a_pagar">
+                        </div>
+                        <br><br><br><br><br><br>
+                    `;
+                    console.log("[CHEGOU ATÉ AQUI] => ");
+
+                    // Insere os novos campos após campos-deposito
+                    camposDeposito.parentNode.insertBefore(novosCamposDiv, camposDeposito.nextSibling);
+                }
             }
             else
             {
@@ -518,8 +581,7 @@ async function processarAprovacaoCotacao() {
 async function processarDadosPDC() {
     //const cPDC = "(" + (globais.numPDC ? `numero_de_PDC=="${globais.numPDC}"` : (globais.numPDC_temp ? `id_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
     const cPDC = "(" + globais.numPDC_temp?`id_temp=="${globais.numPDC_temp}")`:"ID==0)";
-    console.log("[CRITERIOS PDC] => ", cPDC);
-
+    console.log("Criterios PDC => ", cPDC);
     const respPDC = await executar_apiZoho({ 
         tipo: "busc_reg", 
         criterios: cPDC, 
@@ -527,10 +589,9 @@ async function processarDadosPDC() {
     });
 
     if (respPDC.code == 3000) {
-        console.log("Tem PDC");
+
         globais.tipo = 'editar_pdc';
-        console.log('[DADOS DO PDC] =>', JSON.stringify(respPDC));
-        console.log('[DADOS CLASSIFICAÇÃO] =>', JSON.stringify(respPDC.data[0].Classificacao_contabil));
+
         preencherDadosPDC(respPDC);
     } else {
         console.log("Não tem PDC");
@@ -540,13 +601,13 @@ async function processarDadosPDC() {
 async function processarDadosCotacao() {
     //const idCriterio = globais.numPDC ? `numero_de_PDC=="${globais.numPDC}"` : (globais.numPDC_temp ?`num_PDC_temp=="${globais.numPDC_temp}"` :"ID==0");
     const idCriterio = "(" + globais.numPDC_temp ?`num_PDC_temp=="${globais.numPDC_temp}")` :"ID==0)";
-    console.log("[ID CRITERIO] => ", idCriterio);
 
     const aprovadoCriterio = !["editar_cotacao", "aprovar_cotacao", "ver_cotacao"].includes(globais.pag) ? 
         " && Aprovado==true" : "";
-
+    console.log("pag => ", globais.pag);
+    
     let cCot = `(${idCriterio} && Ativo==true${aprovadoCriterio})`;
-
+    console.log("Criterio => ", cCot);
     const respCot = await executar_apiZoho({ 
         tipo: "busc_reg", 
         criterios: cCot, 
@@ -554,7 +615,7 @@ async function processarDadosCotacao() {
     });
 
     if (respCot.code == 3000) {
-        console.log("Tem Cotação");
+
         await prenchTabCot(respCot);
     } else {
         console.log("Não tem Cotação");
