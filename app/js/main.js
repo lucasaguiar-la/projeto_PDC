@@ -323,6 +323,76 @@ async function executarProcessosParalelos() {
                     //==========ADICIONA O BOTÃO DE FINALIZAR PROVISIONAMENTO==========//
                     saveBtnContainer.appendChild(finalizarProvisionamentoButton);
                 };
+            } else if(globais.pag === "receber_compra")
+            {
+                // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
+                const approveButton = document.createElement('button');
+                approveButton.classList.add('confirm-purchase-btn', 'approve-btn');
+                approveButton.textContent = 'Confirmar recebimento';
+                approveButton.onclick = function () {
+                    customModal({botao: this, tipo: "confirmar_recebimento", mensagem: "Deseja confirmar o RECEBIMENTO dessa compra?" });
+                };
+
+                //ADICIONA O BOTão solicitar ajuste//
+                const adjustButton = document.createElement('button');
+                adjustButton.classList.add('confirm-purchase-btn', 'adjust-btn');
+                adjustButton.textContent = 'Solicitar ajuste';
+                adjustButton.onclick = function () {
+                    customModal({botao: this, tipo: "solicitar_ajuste_ao_compras", mensagem: "Deseja solicitar o AJUSTE deste PDC?" });
+                };
+
+                //==========REMOVE O BOTÃO DE SALVAR==========//
+                const saveButton = saveBtnContainer.querySelector('.save-btn');
+                if (saveButton) {
+
+                    saveBtnContainer.removeChild(saveButton);
+                }
+
+                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
+                saveBtnContainer.appendChild(approveButton);
+                saveBtnContainer.appendChild(adjustButton);
+            }else if(globais.pag === "ajustar_compra_compras")
+            {
+                // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
+                const approveButton = document.createElement('button');
+                approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
+                approveButton.textContent = 'Enviar p/ checagem final';
+                approveButton.onclick = function () {
+                    customModal({botao: this, tipo: "enviar_p_checagem_final", mensagem: "Deseja enviar o PDC para a CHECAGEM FINAL da controladoria?" });
+                };
+
+                // Cria o botão "Arquivar"
+                const archiveButton = document.createElement('button');
+                archiveButton.className = 'archive-btn';
+                archiveButton.textContent = 'Arquivar';
+                archiveButton.onclick = function () {
+                    customModal({ botao: this, tipo: "arquivar_cot", titulo: "Arquivar", mensagem: "Você tem certeza de que deseja arquivar este registro?" });
+                };
+
+                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
+                saveBtnContainer.appendChild(approveButton);
+                saveBtnContainer.appendChild(archiveButton);
+            }else if(globais.pag === "checagem_final")
+            {
+                // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
+                const approveButton = document.createElement('button');
+                approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
+                approveButton.textContent = 'Sol. aut. Síndico';
+                approveButton.onclick = function () {
+                    customModal({botao: this, tipo: "enviar_p_assinatura", mensagem: "Deseja enviar o PDC para que o SÍNDICO e o SUBSÍNDICO possa autorizar?" });
+                };
+
+                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
+                saveBtnContainer.appendChild(approveButton);
+            }
+            else
+            {
+                //==========REMOVE O BOTÃO DE SALVAR==========//
+                const saveButton = saveBtnContainer.querySelector('.save-btn');
+                if (saveButton) {
+
+                    saveBtnContainer.removeChild(saveButton);
+                }
             };
         }
         else 
@@ -334,6 +404,7 @@ async function executarProcessosParalelos() {
             approveButton.onclick = function () {
                 customModal({botao: this, tipo: "solicitar_aprovacao_sindico", mensagem: "Deseja solicitar a aprovação do síndico?" });
             };
+
             // Cria o botão "Arquivar"
             const archiveButton = document.createElement('button');
             archiveButton.className = 'archive-btn';
@@ -432,15 +503,6 @@ async function processarAprovacaoCotacao() {
             rejectButton.onclick = function () {
                 customModal({ botao: this, tipo: "suspender_pagamento", titulo: "Suspender Pagamento", mensagem: "Tem certeza que deseja SUSPENDER o pagamento deste PDC?" });
             };
-
-            /*VAI MUDAR PARA SOLICITAR AJUSTE
-            const closeButton = document.createElement('button');
-            closeButton.className = 'archive-btn';
-            closeButton.textContent = 'Fechar';
-            closeButton.onclick = function () {
-                window.close();
-            };
-            */
 
             // Adiciona o botão "Autorizar" ao contêiner
             saveBtnContainer.appendChild(approveButton);

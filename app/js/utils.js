@@ -431,7 +431,12 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
         'arquivar_cot': {
             placeholder: 'Ex.: Arquivo devido a não resposta do fornecedor...',
             buttonClass: 'customArchive-confirmButton'
+        },
+        'solicitar_ajuste_ao_compras': {
+            placeholder: 'Ex.: Produto veio quebrado, não recebido...',
+            buttonClass: 'customAdjust-confirmButton'
         }
+
     };
 
     // Adiciona input se necessário
@@ -554,6 +559,20 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
             'confirmar_compra': {
                 Status_geral: 'Compra realizada'
             },
+            'confirmar_recebimento': {
+                Status_geral: 'Recebimento confirmado'
+            },
+            'solicitar_ajuste_ao_compras': {
+                Status_geral: 'Ajuste Solicitado Pelo Almoxarifado',
+                Solicitacao_de_ajuste: inputElement ? inputElement.value : null
+            },
+            'enviar_p_checagem_final': {
+                Status_geral: 'Enviado para checagem final'
+            },
+            'enviar_p_assinatura':
+            {
+                Status_geral:'Assinatura Confirmada Controladoria'
+            },
             'autorizar_pagamento_sindico': {
                 Status_geral: 'Assinatura Confirmada Sindico'
             },
@@ -567,13 +586,20 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
 
         // Verifica se o tipo está no mapa e cria o payload
         if (payloadMap[tipo]) {
-            if(tipo === "solicitar_aprovacao_sindico" || tipo ==="finalizar_provisionamento")
-            {
+
+            const tiposValidos = [
+                "solicitar_aprovacao_sindico",
+                "finalizar_provisionamento",
+                "enviar_p_checagem_final",
+                "enviar_p_assinatura"
+            ];
+            if (tiposValidos.includes(tipo)) {
                 await saveTableData({ tipo });
-                
             }
+
             console.log("[CHEGOU AQUI]")
             payload = { data: [payloadMap[tipo]] };
+            
         } else if (tipo === 'salvar_cot' || tipo === 'editar_pdc') {
             console.log(`[${tipo.toUpperCase()}]`);
             toggleElements(false);

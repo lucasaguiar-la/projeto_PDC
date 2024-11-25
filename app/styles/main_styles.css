@@ -135,6 +135,8 @@ select option[disabled] {
 }
 
 .form-compra input[type="radio"] {
+    display: flex;
+    align-items: flex-start;
     margin-right: 5px;
 }
 
