@@ -66,6 +66,7 @@ export function preencherDadosPDC(resp)
     globais.cotacaoExiste = true;
     const data = resp.data[0];
     globais.idPDC = data.ID;
+    globais.numPDC = data.Numero_do_PDC;
 
     //==========SESSÃO 1==========//
     const formDadosPDC = document.querySelector('#dados-PDC');

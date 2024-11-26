@@ -626,6 +626,26 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
             // Fecha o modal após sucesso
             if (resposta && resposta.code === 3000) {
                 overlay.remove();
+                if(tipo == "confirmar_compra")
+                {
+
+                    // Obtém o valor da entidade selecionada
+                    const entidadeSelecionada = document.getElementById('entidade').value;
+    
+                    let link_layout;
+                    // [LAYOUT]
+                    if(entidadeSelecionada == "3938561000066182591")
+                    {
+                        link_layout= `${url}guillaumon/app-envio-de-notas-boletos-guillaumon/pdf/Laranj_layout_impressao_pedido?ID_entry=${globais.idPDC}&id_pdc=${globais.idPDC}&zc_PdfSize=A4&zc_FileName=${globais.numPDC}_Laranjeiras`;
+                    }
+                    else if(entidadeSelecionada == "3938561000066182595")
+                    {
+                        link_layout= `${url}guillaumon/app-envio-de-notas-boletos-guillaumon/pdf/AssociacaoServir_layout_impressao_pedido?ID_entry=${globais.idPDC}&id_pdc=${globais.idPDC}&zc_PdfSize=A4&zc_FileName=${globais.numPDC}_Ass_Servir`;
+                    }
+    
+                    window.open(`${link_layout}`, '_blank', 'noopener,noreferrer');
+                }
+
                 // Opcional: recarregar a página ou atualizar a interface
                 window.open(`${url}#Script:page.refresh`, '_top');
             } else {

@@ -879,11 +879,21 @@ export async function prenchTabCot(resp) {
             Fornecedor: item.Fornecedor.trim(), 
             id_fornecedor: item.id_fornecedor 
         })))].map(item => JSON.parse(item));
-        console.log("fornecedores => ",  fornecedores);
-        const valoresFrete = [...new Set(data.map(item => item.Valor_do_frete))];
-        console.log("Valores frete => ", valoresFrete);
+
         const valoresAprovado = data.map(item => item.Aprovado);
-        const valoresDescontos = [...new Set(data.map(item => item.Descontos))];
+        const valoresFrete = [];
+        const valoresDescontos = [];
+
+        data.forEach(item => {
+            const frete = item.Valor_do_frete;
+            const desconto = item.Descontos;
+
+            // Adiciona o frete ao array
+            valoresFrete.push(frete);
+
+            // Adiciona o desconto ao array
+            valoresDescontos.push(desconto);
+        });
 
         idsCotacao = [...new Set(data.map(item => item.ID))].sort((a, b) => a - b);
         
