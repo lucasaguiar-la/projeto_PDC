@@ -33,7 +33,7 @@ body{
     padding-bottom: 40px;
 }
 
-.section5
+.section-final
 {
     padding-bottom: 20px;
 }
@@ -60,7 +60,7 @@ select option[disabled] {
 }
 
 /*==========SECAO 01==========*/
-.form-compra, .form-pagamento {
+.form-compra, .form-pagamento, .form-dados-nf {
     font-family: Arial, sans-serif;
     color: #333;
     display: flex;
@@ -70,6 +70,7 @@ select option[disabled] {
 }
 
 .form-container {
+    min-width: 550px;
     border: 1px solid #ddd;
     padding: 3.5%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -103,7 +104,11 @@ select option[disabled] {
     grid-column-end: 3;
 }
 
-.form-compra label, .form-pagamento label, .form-classificacao label {
+.form-compra label, 
+.form-pagamento label, 
+.form-classificacao label,
+.form-dados-nf label,
+.campos-retencao-nf label {
     font-weight: bold;
     margin-bottom: 5px;
     display: block;
@@ -111,7 +116,8 @@ select option[disabled] {
 }
 
 .form-compra textarea,
-.form-compra input[type="text"],
+.form-compra input,
+.form-dados-nf input,
 .form-pagamento textarea,
 .form-pagamento input[type="text"] 
 {
@@ -185,12 +191,9 @@ select option[disabled] {
     grid-column: 1 / -1;
 }
 
-.hidden {
-    display: none;
-}
-
-
 /*==========SECAO 02==========*/
+
+
 
 #priceTable,
 #otherDataTable {
@@ -203,7 +206,7 @@ select option[disabled] {
 .tabela th,
 .tabela td
 {
-    max-width: 200px;
+    max-width: 300px;
     border: 1px solid #0000003d;
     padding: 8px;
     text-align: center;
@@ -326,8 +329,22 @@ button:hover {
 .save-btn:hover {
     background-color: #45a049;
 }
-/*==========SECAO 03==========*/
+/*==========SECAO 05==========*/
+/* Adiciona bordas à tabela de campos de retenção */
+.campos-retencao-nf {
+    border-collapse: collapse; /* Colapsa as bordas */
+    width: 100%; /* Define a largura da tabela */
+}
 
+.campos-retencao-nf th, .campos-retencao-nf td {
+    border: 1px solid #000; /* Borda preta de 1px */
+    padding: 8px; /* Espaçamento interno */
+    text-align: left; /* Alinhamento do texto à esquerda */
+}
+
+.campos-retencao-nf th {
+    background-color: #f2f2f2; /* Cor de fundo para cabeçalhos */
+}
 
 /*========================BOTÕES EDIÇÃO=================*/
 .approve-btn,
@@ -551,6 +568,11 @@ button:hover {
     animation: spin 1s linear infinite;
 }
 
+
+
+
+
+
 /*==========Botões de mudar de seção==========*/
 /* Estilos para os botões flutuantes */
 .button-up,
@@ -660,14 +682,16 @@ button:hover {
     gap: 8px;
 }
 
-.parcela {
+.parcela,
+.campos-iniciais-nf{
     display: flex;
     align-items: center;
+    justify-content: space-around;
     gap: 8px;
     padding: 4px 0;
 }
 
-.parcela label {
+.parcela label{
     font-weight: bold;
     font-size: 90%;
     min-width: 85px;
@@ -675,8 +699,9 @@ button:hover {
     margin: 0;
 }
 
-.parcela input[type="date"],
-.parcela input[type="text"] {
+.parcela input,
+.campos-iniciais-nf input,
+.campos-retencao-nf input {
     font-family: Arial, sans-serif;
     background-color: #fff;
     border: 1px solid #ddd;
@@ -1127,4 +1152,8 @@ button:hover {
     opacity: 0.5; /* Torna o botão semi-transparente */
     pointer-events: none; /* Desabilita interações com o botão */
     cursor: not-allowed; /* Muda o cursor para indicar que o botão está desabilitado */
+}
+
+.hidden {
+    display: none;
 }

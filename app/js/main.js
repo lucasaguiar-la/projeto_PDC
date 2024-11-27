@@ -350,6 +350,40 @@ async function executarProcessosParalelos() {
                 saveBtnContainer.appendChild(adjustButton);
             }else if(globais.pag === "ajustar_compra_compras")
             {
+                const camposNF = document.getElementById('section5');
+
+                // Remove a classe 'hidden' da section-header que está acima de section5
+                const sectionHeader = camposNF.previousElementSibling;
+                console.log(sectionHeader);
+                if (sectionHeader && sectionHeader.classList.contains('section-header')) {
+                    sectionHeader.classList.remove("hidden");
+                }
+
+                camposNF.classList.remove("hidden");
+
+                // Verifica se o tipo de solicitação é "SERVIÇO"
+                const tipoSolicitacao = document.querySelector('select[name="Tipo_de_solicitacao"]').options[document.querySelector('select[name="Tipo_de_solicitacao"]').selectedIndex].text;
+
+                if (tipoSolicitacao === "SERVIÇO") {
+
+                    camposNF.querySelectorAll('*').forEach(child => child.classList.remove("hidden"));
+                }else{
+
+                    camposNF.querySelector('.campos-iniciais-nf').classList.remove("hidden");
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+
                 // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
                 const approveButton = document.createElement('button');
                 approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
@@ -371,19 +405,7 @@ async function executarProcessosParalelos() {
                 saveBtnContainer.appendChild(archiveButton);
             }else if(globais.pag === "checagem_final")
             {
-                // Oculta apenas as duas primeiras seções
-                const allSections = document.querySelectorAll('.section');
-                allSections.forEach((section, index) => {
-                    const header = section.previousElementSibling; // Seleciona o header correspondente
-                    if (index < 2) { // Verifica se é uma das duas primeiras seções
-                        section.classList.add('collapsed'); // Adiciona a classe para colapsar
-                        if (header && header.classList.contains('section-header')) {
-                            header.classList.add('collapsed'); // Adiciona a classe para a setinha
-                        }
-                    }
-                });
-
-                // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
+                // Adiciona o botão "ENVIAR PARA ASSINATURA"//
                 const approveButton = document.createElement('button');
                 approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
                 approveButton.textContent = 'Sol. aut. Síndico';
@@ -399,53 +421,14 @@ async function executarProcessosParalelos() {
                 
                 if (tipoSolicitacao === "SERVIÇO") {
                     // Cria os novos campos
-                    const camposDeposito = document.getElementById('campos-deposito');
-
-                    // Cria um novo div para os campos adicionais
-                    const novosCamposDiv = document.createElement('div');
-                    novosCamposDiv.id = 'novos-campos';
-
-                    // Adiciona os campos
-                    novosCamposDiv.innerHTML = `
-                        <br><br><br><br><br><br>
-                        <div class="campo">
-                            <label for="valor-original">Valor original:</label>
-                            <input type="text" id="valor-original" name="Valor_original">
-                        </div>
-                        <div class="campo">
-                            <label for="inss">INSS:</label>
-                            <input type="text" id="inss" name="INSS">
-                        </div>
-                        <div class="campo">
-                            <label for="iss">ISS:</label>
-                            <input type="text" id="iss" name="ISS">
-                        </div>
-                        <div class="campo">
-                            <label for="pis-confins-cssl">PIS, CONFINS, CSSL:</label>
-                            <input type="text" id="pis-confins-cssl" name="PIS_CONFINS_CSSL">
-                        </div>
-                        <div class="campo">
-                            <label for="desconto-comercial">Desconto comercial ou parcela:</label>
-                            <input type="text" id="desconto-comercial" name="Desconto_comercial">
-                        </div>
-                        <div class="campo">
-                            <label for="descontos-total">DESCONTOS (total):</label>
-                            <input type="text" id="descontos-total" name="Descontos_total">
-                        </div>
-                        <div class="campo">
-                            <label for="acrescimo">ACRESCIMO (tarifa bancária):</label>
-                            <input type="text" id="acrescimo" name="Acrescimo">
-                        </div>
-                        <div class="campo">
-                            <label for="valor-total-pagar">VALOR TOTAL A PAGAR:</label>
-                            <input type="text" id="valor-total-pagar" name="Valor_total_a_pagar">
-                        </div>
-                        <br><br><br><br><br><br>
-                    `;
-                    console.log("[CHEGOU ATÉ AQUI] => ");
-
-                    // Insere os novos campos após campos-deposito
-                    camposDeposito.parentNode.insertBefore(novosCamposDiv, camposDeposito.nextSibling);
+                    const camposNF = document.getElementById('section5');
+                    camposNF.querySelectorAll('*').forEach(child => child.classList.remove("hidden"));
+                    // Remove a classe 'hidden' da section-header que está acima de section5
+                    const sectionHeader = camposNF.previousElementSibling;
+                    console.log(sectionHeader);
+                    if (sectionHeader && sectionHeader.classList.contains('section-header')) {
+                        sectionHeader.classList.remove("hidden");
+                    }
                 }
             }
             else
