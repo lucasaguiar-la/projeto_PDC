@@ -236,8 +236,12 @@
                             <input type="date" id="numero-nf" name="Numero_N_Fiscal">
                         </div>
                     </div>
+                    
                     <table class="campos-retencao-nf hidden">
                         <thead>
+                            <tr>
+                                <th colspan="2">DESCONTOS</th>
+                            </tr>
                             <tr>
                                 <th>Descrição</th>
                                 <th>Valor</th>
@@ -246,7 +250,7 @@
                         <tbody>
                             <tr>
                                 <td>Valor original:</td>
-                                <td id="valor-original">0,00</td>
+                                <td id="valor-original" class="numeric-cell">0,00</td>
                             </tr>
                             <tr>
                                 <td>INSS:</td>
@@ -266,7 +270,7 @@
                             </tr>
                             <tr>
                                 <td>DESCONTOS (total):</td>
-                                <td id="descontos-total">0,00</td>
+                                <td id="descontos-total" class="numeric-cell">0,00</td>
                             </tr>
                             <tr>
                                 <td>ACRESCIMO (tarifa bancária):</td>
@@ -274,7 +278,7 @@
                             </tr>
                             <tr>
                                 <td>VALOR TOTAL A PAGAR:</td>
-                                <td id="valor-total-pagar">0,00</td>
+                                <td id="valor-total-pagar" class="numeric-cell">0,00</td>
                             </tr>
                         </tbody>
                     </table>

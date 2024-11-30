@@ -373,17 +373,6 @@ async function executarProcessosParalelos() {
                 }
 
 
-
-
-
-
-
-
-
-
-
-
-
                 // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
                 const approveButton = document.createElement('button');
                 approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
