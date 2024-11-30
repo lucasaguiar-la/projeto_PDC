@@ -161,58 +161,36 @@ async function setupListenersAndInit() {
 async function executarProcessosParalelos() {
 
     if (globais.pag != "criar_cotacao") {
-
         await ZOHO.CREATOR.init();
 
         // Executa processos em paralelo
         const tarefas = [
-            processarAprovacaoCotacao(),
             processarDadosPDC(),
             processarDadosCotacao()
         ];
 
         await Promise.all(tarefas);
+        console.log("[PÁGINA] => ", globais.pag);
         const saveBtnContainer = document.querySelector('.save-btn-container');
         if(globais.pag != "editar_cotacao") {
             desabilitarTodosElementosEditaveis();
             
-            if(globais.pag === "confirmar_compra")
-            {
 
-                criarBotao({page:globais.page, removeExistingButtons: true});
+            if (globais.pag == "aprovar_cotacao") {
+                criarBotao({page: "aprovar_cotacao", removeExistingButtons:true});
+
+            }else if(globais.pag === "confirmar_compra")
+            {
+                criarBotao({page:globais.pag, removeExistingButtons: true});
 
             } else if (globais.pag === "criar_numero_de_PDC") 
             {
+                criarBotao({page:globais.pag});
 
-                criarBotao({page:globais.page});
             }else if(globais.pag === "receber_compra")
             {
-                // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
-                const approveButton = document.createElement('button');
-                approveButton.classList.add('confirm-purchase-btn', 'approve-btn');
-                approveButton.textContent = 'Confirmar recebimento';
-                approveButton.onclick = function () {
-                    customModal({botao: this, tipo: "confirmar_recebimento", mensagem: "Deseja confirmar o RECEBIMENTO dessa compra?" });
-                };
+                criarBotao({page:globais.pag, removeExistingButtons: true});
 
-                //ADICIONA O BOTão solicitar ajuste//
-                const adjustButton = document.createElement('button');
-                adjustButton.classList.add('confirm-purchase-btn', 'adjust-btn');
-                adjustButton.textContent = 'Solicitar ajuste';
-                adjustButton.onclick = function () {
-                    customModal({botao: this, tipo: "solicitar_ajuste_ao_compras", mensagem: "Deseja solicitar o AJUSTE deste PDC?" });
-                };
-
-                //==========REMOVE O BOTÃO DE SALVAR==========//
-                const saveButton = saveBtnContainer.querySelector('.save-btn');
-                if (saveButton) {
-
-                    saveBtnContainer.removeChild(saveButton);
-                }
-
-                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
-                saveBtnContainer.appendChild(approveButton);
-                saveBtnContainer.appendChild(adjustButton);
             }else if(globais.pag === "ajustar_compra_compras")
             {
                 const camposNF = document.getElementById('section5');
@@ -236,26 +214,8 @@ async function executarProcessosParalelos() {
 
                     camposNF.querySelector('.campos-iniciais-nf').classList.remove("hidden");
                 }
+                criarBotao({page:globais.pag});
 
-                // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
-                const approveButton = document.createElement('button');
-                approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
-                approveButton.textContent = 'Enviar p/ checagem final';
-                approveButton.onclick = function () {
-                    customModal({botao: this, tipo: "enviar_p_checagem_final", mensagem: "Deseja enviar o PDC para a CHECAGEM FINAL da controladoria?" });
-                };
-
-                // Cria o botão "Arquivar"
-                const archiveButton = document.createElement('button');
-                archiveButton.className = 'archive-btn';
-                archiveButton.textContent = 'Arquivar';
-                archiveButton.onclick = function () {
-                    customModal({ botao: this, tipo: "arquivar_cot", titulo: "Arquivar", mensagem: "Você tem certeza de que deseja arquivar este registro?" });
-                };
-
-                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
-                saveBtnContainer.appendChild(approveButton);
-                saveBtnContainer.appendChild(archiveButton);
             }else if(globais.pag === "checagem_final")
             {
                     
@@ -286,6 +246,16 @@ async function executarProcessosParalelos() {
                 }
 
 
+            }else if (globais.pag == "autorizar_pagamento_subsindico" || globais.pag == "autorizar_pagamento_sindico" || globais.pag == "confirmar_todas_as_assinaturas") {
+                criarBotao({page: globais.pag, removeExistingButtons: true});
+
+            }else if(globais.pag === "arquivar_cotacao")
+            {
+                criarBotao({page: globais.pag, removeExistingButtons:true});
+            }
+            else
+            {
+                criarBotao({removeExistingButtons:true});
             }
         }
         else 
@@ -298,14 +268,6 @@ async function executarProcessosParalelos() {
     }
     document.body.classList.remove('hidden');
     atualizarOuvintesTabCot();
-}
-
-async function processarAprovacaoCotacao() {
-    if (globais.pag == "aprovar_cotacao") {
-        criarBotao({page: "aprovar_cotacao"});
-    } else if (globais.pag == "autorizar_pagamento_subsindico" || globais.pag == "autorizar_pagamento_sindico" || globais.pag == "confirmar_todas_as_assinaturas") {
-        criarBotao({page: globais.page, removeExistingButtons: true});
-    }
 }
 
 async function processarDadosPDC() {

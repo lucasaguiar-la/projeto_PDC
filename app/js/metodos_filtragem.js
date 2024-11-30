@@ -4,19 +4,17 @@ import { customModal } from './utils.js';
 export function criarBotao({page = null, removeExistingButtons = false})
 {
     console.log("[ENTROU NA CRIAR BOTÃO]", page);
+    //==========BUSCA O CONTAINER DOS BOTÕES, SE NECESSÁRIO, REMOVE OS BOTÕES EXISTENTES==========//
+    const saveBtnContainer = document.querySelector('.save-btn-container');
+        
+    if(removeExistingButtons)//REMOVE TODOS OS BOTÕES DENTRO DA SEÇÃO DE BOTÕES
+    {
+        while (saveBtnContainer.firstChild) {
+            saveBtnContainer.removeChild(saveBtnContainer.firstChild);
+        }
+    }
 
     if (page  !== null){
-        //==========BUSCA O CONTAINER DOS BOTÕES, SE NECESSÁRIO, REMOVE OS BOTÕES EXISTENTES==========//
-        const saveBtnContainer = document.querySelector('.save-btn-container');
-        
-        
-        if(removeExistingButtons)//REMOVE TODOS OS BOTÕES DENTRO DA SEÇÃO DE BOTÕES
-        {
-            while (saveBtnContainer.firstChild) {
-                saveBtnContainer.removeChild(saveBtnContainer.firstChild);
-            }
-        }
-
         //==========CRIA O NOVO BOTÃO SOLICITADO=========//
         const newButton = document.createElement('button');
         let type = page;
@@ -39,13 +37,13 @@ export function criarBotao({page = null, removeExistingButtons = false})
             case "criar_cotacao":
             case "editar_cotacao":
                 configurarBotao('approve-sindico-btn adjust-btn', 'Sol. Aprov. Síndico', "solicitar_aprovacao_sindico", null, "Deseja solicitar a aprovação do síndico?");
-                if (page === "editar_cotacao") criarBotao({page: "arquivar_cotacao"});
+                if (page === "editar_cotacao") setTimeout(() => criarBotao({page: "arquivar_cotacao"}), 0);
                 break;
 
             case "aprovar_cotacao":
                 configurarBotao('approve-btn', 'Aprovar', "aprov_cot", "Aprovar proposta", "Tem certeza que deseja APROVAR a proposta do fornecedor selecionado?");
-                criarBotao({page: "ajust_cot"});
-                criarBotao({page: "arquivar_cotacao"});
+                setTimeout(() => criarBotao({page: "ajustar_cotacao"}), 0);
+                setTimeout(() => criarBotao({page: "arquivar_cotacao"}), 0);
                 break;
 
             case "ajustar_cotacao":
@@ -62,11 +60,129 @@ export function criarBotao({page = null, removeExistingButtons = false})
 
             case "criar_numero_de_PDC":
                 configurarBotao('criar-pdc-btn adjust-btn', 'Criar PDC', null, null, null);
-                newButton.onclick = () => { /* lógica do modal */ };
+
+                if(globais.numPDC)
+                {
+                    newButton.disabled = true;
+                    newButton.classList.add('disabled');
+    
+                    const allSections = document.querySelectorAll('.section');
+                    allSections.forEach(section => {
+                        const header = section.previousElementSibling; // Seleciona o header correspondente
+                        if (!section.classList.contains('form-pagamento') && !section.classList.contains('section-buttons')) { // Verifica se não é a seção de parcelas e não é a seção de botões
+                            section.classList.add('collapsed'); // Adiciona a classe para colapsar
+                            if (header && header.classList.contains('section-header')) {
+                                header.classList.add('collapsed'); // Adiciona a classe para a setinha
+                            }
+                        }
+                    });
+                    setTimeout(() => criarBotao({page: "finalizar_provisionamento", removeExistingButtons:false}), 0);
+                }else
+                {
+                    newButton.onclick = () => {
+                        //Abre modal em popup
+                        const overlay = document.createElement('div');
+                        overlay.className = 'customConfirm-overlay-div'; //Classe para o overlay
+                        const popup = document.createElement('div');
+                        popup.className = 'customConfirm-div'; //Classe para o popup
+        
+                        //CRIA O LAYOUT DO POPUP COM O CAMPO DE PREENCHER O PDC//
+                        const title = document.createElement('h3');
+                        title.className = 'customConfirm-title';
+                        title.textContent = 'Inserir Número do PDC';
+        
+                        const label = document.createElement('label');
+                        label.setAttribute('for', 'numeroPDC');
+                        label.textContent = 'Número do PDC:';
+        
+                        const input = document.createElement('input');
+                        input.type = 'number';
+                        input.id = 'numeroPDC';
+                        input.name = 'numeroPDC';
+        
+                        const buttonContainer = document.createElement('div');
+                        buttonContainer.className = 'customConfirm-button-container';
+        
+                        const salvarButton = document.createElement('button');
+                        salvarButton.id = 'salvarPDC';
+                        salvarButton.className = 'customConfirm-confirmButton';
+                        salvarButton.textContent = 'Salvar';
+        
+                        const fecharButton = document.createElement('button');
+                        fecharButton.id = 'fecharModal';
+                        fecharButton.className = 'customConfirm-cancelButton';
+                        fecharButton.textContent = 'Fechar';
+        
+                        buttonContainer.appendChild(salvarButton);
+                        buttonContainer.appendChild(fecharButton);
+                        popup.appendChild(title);
+                        popup.appendChild(label);
+                        popup.appendChild(input);
+                        popup.appendChild(buttonContainer);
+        
+                        overlay.appendChild(popup);
+                        document.body.appendChild(overlay);
+        
+                        // Função para salvar o número do PDC
+                        salvarButton.onclick = function () {
+                            const numeroPDC = document.getElementById('numeroPDC').value;
+                            const parcelas = document.querySelectorAll('#camposData .parcela');
+                            parcelas.forEach((parcela, index) => {
+                                const pdcValue = parcelas.length > 1 ? `${numeroPDC}/${String(index + 1).padStart(2, '0')}` : numeroPDC;
+                                const inputPDC = document.createElement('input');
+                                inputPDC.classList.add("campo-datas");
+                                inputPDC.type = 'text';
+                                inputPDC.value = pdcValue;
+                                inputPDC.contentEditable = true; // Campo somente leitura
+                                inputPDC.name = 'Num_PDC_parcela';
+                                parcela.appendChild(inputPDC); // Adiciona o campo na parcela
+                            });
+                            overlay.remove(); // Fecha o modal
+                            
+                            // Desabilita o botão de criar PDC
+                            newButton.disabled = true;
+                            newButton.classList.add('disabled'); // Adiciona a classe para estilo visual
+                            
+                            // Adiciona o novo botão após o botão "Criar PDC"
+                            setTimeout(() => criarBotao({page: "finalizar_provisionamento", removeExistingButtons:false}), 0);
+        
+                            // Oculta todas as seções, exceto a seção de parcelas
+                            const allSections = document.querySelectorAll('.section');
+                            allSections.forEach(section => {
+                                const header = section.previousElementSibling; // Seleciona o header correspondente
+                                if (!section.classList.contains('form-pagamento') && !section.classList.contains('section-buttons')) { // Verifica se não é a seção de parcelas e não é a seção de botões
+                                    section.classList.add('collapsed'); // Adiciona a classe para colapsar
+                                    if (header && header.classList.contains('section-header')) {
+                                        header.classList.add('collapsed'); // Adiciona a classe para a setinha
+                                    }
+                                }
+                            });
+                        };
+                        // Função para fechar o modal
+                        document.getElementById('fecharModal').onclick = function () {
+                            overlay.remove();
+                        };
+    
+                    }
+                }
                 break;
 
             case "finalizar_provisionamento":
                 configurarBotao('finalizar-provisionamento-btn adjust-btn', 'Finalizar Provisionamento', page, null, "Deseja realmente finalizar o provisionamento?\nPDC será enviado para realização da compra.");
+                break;
+
+            case "receber_compra":
+                configurarBotao('confirm-purchase-btn approve-btn', 'Confirmar recebimento', page, null, "Deseja confirmar o RECEBIMENTO dessa compra?");
+                setTimeout(() => criarBotao({page: "solicitar_ajuste_ao_compras"}));
+                break;
+
+            case "solicitar_ajuste_ao_compras":
+                configurarBotao('confirm-purchase-btn adjust-btn', 'Solicitar ajuste', page, null, 'Deseja solicitar o AJUSTE deste PDC?');
+                break;
+            
+            case "ajustar_compra_compras":
+                configurarBotao('confirm-purchase-btn adjust-btn', 'Enviar p/ checagem final', 'enviar_p_checagem_final', null, 'Deseja enviar o PDC para a CHECAGEM FINAL da controladoria?');
+                //setTimeout(() => criarBotao({page: "arquivar_cotacao"}));
                 break;
 
             case "suspender_pagamento":
@@ -76,7 +192,7 @@ export function criarBotao({page = null, removeExistingButtons = false})
             default:
                 if (tiposAssinatura.includes(page)) {
                     configurarBotao('approve-btn', 'Autorizar', page, "Autorizar Pagamento", "Tem certeza que deseja AUTORIZAR o pagamento deste PDC?");
-                    criarBotao({page: "suspender_pagamento"});
+                    setTimeout(() => criarBotao({page: "suspender_pagamento"}), 0);
                 }
                 break;
         }
