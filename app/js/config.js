@@ -13,6 +13,7 @@ export const CONFIG = {
         classificacoes: null,
         centrosCusto: null,
         numPDC_temp: null,
+        numPDC: null,
         idProduto: 2,
         idPDC: null,
         tipo: null

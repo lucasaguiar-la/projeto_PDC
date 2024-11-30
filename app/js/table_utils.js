@@ -257,12 +257,41 @@ export async function addSupplierColumn() {
                 checkbox.type = 'checkbox';
                 checkbox.classList.add('supplier-checkbox');
                 checkbox.addEventListener('change', function () {
+                    // Obtém as linhas de cabeçalho diretamente
+                    const headerRow1 = checkbox.closest('table').querySelector('thead tr:nth-child(1)');
+                    const headerRow2 = checkbox.closest('table').querySelector('thead tr:nth-child(2)');
+
+                    // Remove a classe 'forn-aprovado' de todas as células de cabeçalho
+                    const allHeaderCells = headerRow1.querySelectorAll('th, td'); // Seleciona todas as células do cabeçalho
+                    allHeaderCells.forEach(cell => {
+                        cell.classList.remove('forn-aprovado'); // Remove a classe de todas as células
+                    });
+
+                    // Remove a classe 'forn-aprovado' de todas as células de cabeçalho
+                    const allHeaderCells2 = headerRow2.querySelectorAll('th, td'); // Seleciona todas as células do cabeçalho
+                    allHeaderCells2.forEach(cell => {
+                        cell.classList.remove('forn-aprovado'); // Remove a classe de todas as células
+                    });
+
                     if (checkbox.checked) {
                         if (selectedCheckbox && selectedCheckbox !== checkbox) {
                             selectedCheckbox.checked = false;
                         }
                         selectedCheckbox = checkbox;
                         globais.idFornAprovado = dadosFornecedor[0];
+
+                        
+                        // Adiciona a classe 'forn-aprovado' às células do fornecedor selecionado
+                        const headerCell = checkbox.closest('th'); // Célula do cabeçalho correspondente
+                        headerCell.classList.add('forn-aprovado'); // Adiciona a classe ao cabeçalho do fornecedor
+
+                        // Adiciona a classe 'forn-aprovado' às células de valor unitário e total
+                        const colIndex = Array.from(headerRow1.cells).indexOf(headerCell); // Índice da célula do cabeçalho
+                        const unitPriceHeader = headerRow2.cells[colIndex * 2 - ipcv]; // Célula de valor unitário
+                        const totalPriceHeader = headerRow2.cells[colIndex * 2 - (ipcv - 1)]; // Célula de valor total
+                        unitPriceHeader.classList.add('forn-aprovado'); // Adiciona a classe ao valor unitário
+                        totalPriceHeader.classList.add('forn-aprovado'); // Adiciona a classe ao valor total
+                    
                     } else {
                         selectedCheckbox = null;
                         globais.idFornAprovado = null;
@@ -611,7 +640,6 @@ export function handlePasteEventPriceTable(event) {
 
             const cell = cells[startCellIndex + cellIndex];
             let value = pastedRows[rowIndex][cellIndex];
-            console.log('type of value: ', typeof value);
 
             // Converte para formato apropriado baseado na classe da célula
             if(cell.classList.contains('integer-cell')) {
@@ -852,9 +880,21 @@ export async function prenchTabCot(resp) {
             Fornecedor: item.Fornecedor.trim(), 
             id_fornecedor: item.id_fornecedor 
         })))].map(item => JSON.parse(item));
-        const valoresFrete = [...new Set(data.map(item => item.Valor_do_frete))];
+
         const valoresAprovado = data.map(item => item.Aprovado);
-        const valoresDescontos = [...new Set(data.map(item => item.Descontos))];
+        const valoresFrete = [];
+        const valoresDescontos = [];
+
+        data.forEach(item => {
+            const frete = item.Valor_do_frete;
+            const desconto = item.Descontos;
+
+            // Adiciona o frete ao array
+            valoresFrete.push(frete);
+
+            // Adiciona o desconto ao array
+            valoresDescontos.push(desconto);
+        });
 
         idsCotacao = [...new Set(data.map(item => item.ID))].sort((a, b) => a - b);
 
@@ -986,6 +1026,22 @@ export async function prenchTabCot(resp) {
                 }
 
                 checkbox.addEventListener('change', function () {
+                    // Obtém as linhas de cabeçalho diretamente
+                    const headerRow1 = checkbox.closest('table').querySelector('thead tr:nth-child(1)');
+                    const headerRow2 = checkbox.closest('table').querySelector('thead tr:nth-child(2)');
+
+                    // Remove a classe 'forn-aprovado' de todas as células de cabeçalho
+                    const allHeaderCells = headerRow1.querySelectorAll('th, td'); // Seleciona todas as células do cabeçalho
+                    allHeaderCells.forEach(cell => {
+                        cell.classList.remove('forn-aprovado'); // Remove a classe de todas as células
+                    });
+
+                    // Remove a classe 'forn-aprovado' de todas as células de cabeçalho
+                    const allHeaderCells2 = headerRow2.querySelectorAll('th, td'); // Seleciona todas as células do cabeçalho
+                    allHeaderCells2.forEach(cell => {
+                        cell.classList.remove('forn-aprovado'); // Remove a classe de todas as células
+                    });
+
                     if (checkbox.checked) {
 
                         if (selectedCheckbox && selectedCheckbox !== checkbox) {
@@ -993,6 +1049,18 @@ export async function prenchTabCot(resp) {
                         }
                         selectedCheckbox = checkbox;
                         globais.idFornAprovado = fornecedorObj.id_fornecedor;
+                        
+                        // Adiciona a classe 'forn-aprovado' às células do fornecedor selecionado
+                        const headerCell = checkbox.closest('th'); // Célula do cabeçalho correspondente
+                        headerCell.classList.add('forn-aprovado'); // Adiciona a classe ao cabeçalho do fornecedor
+
+                        // Adiciona a classe 'forn-aprovado' às células de valor unitário e total
+                        const colIndex = Array.from(headerRow1.cells).indexOf(headerCell); // Índice da célula do cabeçalho
+                        const unitPriceHeader = headerRow2.cells[colIndex * 2 - ipcv]; // Célula de valor unitário
+                        const totalPriceHeader = headerRow2.cells[colIndex * 2 - (ipcv - 1)]; // Célula de valor total
+                        unitPriceHeader.classList.add('forn-aprovado'); // Adiciona a classe ao valor unitário
+                        totalPriceHeader.classList.add('forn-aprovado'); // Adiciona a classe ao valor total
+                    
                     } else {
                         selectedCheckbox = null;
                         globais.idFornAprovado = null;
@@ -1098,6 +1166,15 @@ export async function prenchTabCot(resp) {
 
                 const obsCell = detailRow.insertCell();
                 obsCell.textContent = dadosFornecedor?.Observacoes || '';
+
+                // Adiciona a classe 'forn-aprovado' se o fornecedor estiver aprovado
+                if (valoresAprovado[index] == 'true') {
+                    celulaCabecalho.classList.add('forn-aprovado');
+
+                    // Adiciona a classe 'forn-aprovado' às células de valor unitário e total
+                    unitPriceHeader.classList.add('forn-aprovado'); // Adiciona a classe ao valor unitário
+                    totalPriceHeader.classList.add('forn-aprovado'); // Adiciona a classe ao valor total
+                }
             });
         }
         // Adiciona os cabeçalhos dos fornecedores na ordem correta
@@ -1141,19 +1218,26 @@ async function pegarDadosPDC(){
     // Obter todos os elementos do formulário
     const parcelas = document.querySelectorAll('.parcela');
     const vencimentos = [];
-    console.log("<============PEGANDO PARCELAS============>");
     parcelas.forEach(parcela => {
         const dataInput = parcela.querySelector('input[type="date"]');
         const valorInput = parcela.querySelector('input[name="Valor"]');
         const numPDC = parcela.querySelector('input[name="Num_PDC_parcela"]');
 
-        if (dataInput?.value && valorInput?.value) {
+        const vencimentoObj = {};
+        if (dataInput?.value) {
             const [ano, mes, dia] = dataInput.value.split('-');
-            vencimentos.push({
-                "Vencimento_previsto": `${dia}/${mes}/${ano}`,
-                "Valor": converterStringParaDecimal(valorInput.value),
-                "Num_PDC_parcela": numPDC.value
-            });
+            vencimentoObj["Vencimento_previsto"] = `${dia}/${mes}/${ano}`;
+        }
+        if (valorInput?.value) {
+            vencimentoObj["Valor"] = converterStringParaDecimal(valorInput.value);
+        }
+        if (numPDC?.value) {
+            vencimentoObj["Num_PDC_parcela"] = numPDC.value;
+        }
+
+        // Adiciona o objeto ao array apenas se tiver pelo menos uma propriedade
+        if (Object.keys(vencimentoObj).length > 0) {
+            vencimentos.push(vencimentoObj);
         }
     });
 
@@ -1163,7 +1247,6 @@ async function pegarDadosPDC(){
 
         if (elemento.classList.contains("campo-datas") &&
             (elemento.type !== 'radio' || elemento.checked)) {
-            console.log("[ELEMENTO] => ", elemento);
             dadosIniciaisPdc[elemento.name] = elemento.value;
         }
     }
@@ -1172,8 +1255,12 @@ async function pegarDadosPDC(){
     if (vencimentos.length > 0) {
         dadosIniciaisPdc["Datas"] = vencimentos;
         // Adiciona o primeiro vencimento em um campo separado para referência
-        dadosIniciaisPdc["Vencimento_previsto"] = vencimentos[0].Vencimento_previsto;
-        dadosIniciaisPdc["Numero_do_PDC"] = vencimentos[0].Num_PDC_parcela.split('/')[0];
+        if (vencimentos[0].Vencimento_previsto) {
+            dadosIniciaisPdc["Vencimento_previsto"] = vencimentos[0].Vencimento_previsto;
+        }
+        if (vencimentos[0].Num_PDC_parcela) {
+            dadosIniciaisPdc["Numero_do_PDC"] = vencimentos[0].Num_PDC_parcela.split('/')[0];
+        }
     }
 
     return dadosIniciaisPdc;
@@ -1297,7 +1384,7 @@ async function pegarDadostabPrecos(){
             dados.push(dadosLinha);
         }
     }
-    console.log('dados: ', JSON.stringify(dados, null, 2));
+
     return {
         dadostabPrecos: dados,
         dadosExtrasPDC
@@ -1400,7 +1487,6 @@ export async function saveTableData({tipo = null}) {
         const dadosIniciaisPdc = await pegarDadosPDC();
         const dadosClassificacao = await pegarDadosClassificacao();
         const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosClassificacao};
-        console.log("[DADOS PDC] => ", JSON.stringify(dadosPDC));
 
         //====================CRIA O REGISTRO DO PDC====================//
         let respPDC;
@@ -1414,7 +1500,6 @@ export async function saveTableData({tipo = null}) {
         }else{
 
             respPDC = await executar_apiZoho({ tipo: "add_reg", corpo: JSON.stringify(dadosPDC, null, 2),  nomeF: globais.nomeFormPDC});
-            console.log("[respPDC] => ", JSON.stringify(respPDC));
 
             // Verifica se a resposta foi bem-sucedida e se globais.idPDC é null
             if (respPDC.code === 3000 && globais.idPDC === null) {

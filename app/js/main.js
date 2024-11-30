@@ -28,6 +28,7 @@ import {
     atualizarValorTotalClassificacoes
 } from './forms_utils.js';
 import { CONFIG } from './config.js';
+import { criarBotao } from './metodos_filtragem.js';
 
 class Globais {
     constructor() {
@@ -83,8 +84,6 @@ async function initGenericItems() {
         } else {
             await setupListenersAndInit();
         }
-
-        console.log('[BUSCOU AS BASES]');
     } catch (error) {
         console.error('Erro ao inicializar:', error);
     }
@@ -160,9 +159,9 @@ async function setupListenersAndInit() {
 }
 
 async function executarProcessosParalelos() {
-    console.log('[Page] =>', globais.pag);
+
     if (globais.pag != "criar_cotacao") {
-        console.log('[BUSCANDO DADOS DO ZOHO]');
+
         await ZOHO.CREATOR.init();
 
         // Executa processos em paralelo
@@ -180,184 +179,123 @@ async function executarProcessosParalelos() {
             if(globais.pag === "confirmar_compra")
             {
 
-                // Adiciona o botão "Sol. Aprov. Síndico"
+                criarBotao({page:globais.page, removeExistingButtons: true});
+
+            } else if (globais.pag === "criar_numero_de_PDC") 
+            {
+
+                criarBotao({page:globais.page});
+            }else if(globais.pag === "receber_compra")
+            {
+                // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
                 const approveButton = document.createElement('button');
-                approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
-                approveButton.textContent = 'Confirmar compra';
+                approveButton.classList.add('confirm-purchase-btn', 'approve-btn');
+                approveButton.textContent = 'Confirmar recebimento';
                 approveButton.onclick = function () {
-                    customModal({botao: this, tipo: "confirmar_compra", mensagem: "Deseja marcar essa solicitação como COMPRADA?" });
+                    customModal({botao: this, tipo: "confirmar_recebimento", mensagem: "Deseja confirmar o RECEBIMENTO dessa compra?" });
+                };
+
+                //ADICIONA O BOTão solicitar ajuste//
+                const adjustButton = document.createElement('button');
+                adjustButton.classList.add('confirm-purchase-btn', 'adjust-btn');
+                adjustButton.textContent = 'Solicitar ajuste';
+                adjustButton.onclick = function () {
+                    customModal({botao: this, tipo: "solicitar_ajuste_ao_compras", mensagem: "Deseja solicitar o AJUSTE deste PDC?" });
                 };
 
                 //==========REMOVE O BOTÃO DE SALVAR==========//
                 const saveButton = saveBtnContainer.querySelector('.save-btn');
                 if (saveButton) {
+
                     saveBtnContainer.removeChild(saveButton);
                 }
 
                 //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
                 saveBtnContainer.appendChild(approveButton);
-
-            } else if (globais.pag === "criar_numero_de_PDC") 
+                saveBtnContainer.appendChild(adjustButton);
+            }else if(globais.pag === "ajustar_compra_compras")
             {
+                const camposNF = document.getElementById('section5');
 
-                //==========CRIA O BOTÃO DE CRIAR NÚMERO DE PDC==========//
-                const criarPDCButton = document.createElement('button');
-                criarPDCButton.classList.add('criar-pdc-btn', 'adjust-btn');
-                criarPDCButton.textContent = 'Criar PDC';
-                console.log("[NUM PDC] =>", globais.numPDC);
-                console.log("[NUM PDC TEMP] =>", globais.numPDC_temp);
+                // Remove a classe 'hidden' da section-header que está acima de section5
+                const sectionHeader = camposNF.previousElementSibling;
+                console.log(sectionHeader);
+                if (sectionHeader && sectionHeader.classList.contains('section-header')) {
+                    sectionHeader.classList.remove("hidden");
+                }
 
-                //==========ADICIONA O ONCLICK NO CRIAR BOTÃO==========//
-                criarPDCButton.onclick = function () {
-                    //Abre modal em popup
-                    const overlay = document.createElement('div');
-                    overlay.className = 'customConfirm-overlay-div'; //Classe para o overlay
-                    const popup = document.createElement('div');
-                    popup.className = 'customConfirm-div'; //Classe para o popup
+                camposNF.classList.remove("hidden");
 
-                    //CRIA O LAYOUT DO POPUP COM O CAMPO DE PREENCHER O PDC//
-                    const title = document.createElement('h3');
-                    title.className = 'customConfirm-title';
-                    title.textContent = 'Inserir Número do PDC';
+                // Verifica se o tipo de solicitação é "SERVIÇO"
+                const tipoSolicitacao = document.querySelector('select[name="Tipo_de_solicitacao"]').options[document.querySelector('select[name="Tipo_de_solicitacao"]').selectedIndex].text;
 
-                    const label = document.createElement('label');
-                    label.setAttribute('for', 'numeroPDC');
-                    label.textContent = 'Número do PDC:';
+                if (tipoSolicitacao === "SERVIÇO") {
 
-                    const input = document.createElement('input');
-                    input.type = 'number';
-                    input.id = 'numeroPDC';
-                    input.name = 'numeroPDC';
+                    camposNF.querySelectorAll('*').forEach(child => child.classList.remove("hidden"));
+                }else{
 
-                    const buttonContainer = document.createElement('div');
-                    buttonContainer.className = 'customConfirm-button-container';
+                    camposNF.querySelector('.campos-iniciais-nf').classList.remove("hidden");
+                }
 
-                    const salvarButton = document.createElement('button');
-                    salvarButton.id = 'salvarPDC';
-                    salvarButton.className = 'customConfirm-confirmButton';
-                    salvarButton.textContent = 'Salvar';
-
-                    const fecharButton = document.createElement('button');
-                    fecharButton.id = 'fecharModal';
-                    fecharButton.className = 'customConfirm-cancelButton';
-                    fecharButton.textContent = 'Fechar';
-
-                    buttonContainer.appendChild(salvarButton);
-                    buttonContainer.appendChild(fecharButton);
-                    popup.appendChild(title);
-                    popup.appendChild(label);
-                    popup.appendChild(input);
-                    popup.appendChild(buttonContainer);
-
-                    overlay.appendChild(popup);
-                    document.body.appendChild(overlay);
-
-                    // Função para salvar o número do PDC
-                    salvarButton.onclick = function () {
-                        const numeroPDC = document.getElementById('numeroPDC').value;
-                        const parcelas = document.querySelectorAll('#camposData .parcela');
-                        parcelas.forEach((parcela, index) => {
-                            const pdcValue = parcelas.length > 1 ? `${numeroPDC}/${String(index + 1).padStart(2, '0')}` : numeroPDC;
-                            const inputPDC = document.createElement('input');
-                            inputPDC.classList.add("campo-datas");
-                            inputPDC.type = 'text';
-                            inputPDC.value = pdcValue;
-                            inputPDC.contentEditable = true; // Campo somente leitura
-                            inputPDC.name = 'Num_PDC_parcela';
-                            parcela.appendChild(inputPDC); // Adiciona o campo na parcela
-                        });
-                        overlay.remove(); // Fecha o modal
-                        
-                        // Desabilita o botão de criar PDC
-                        criarPDCButton.disabled = true;
-                        criarPDCButton.classList.add('disabled'); // Adiciona a classe para estilo visual
-
-                        // Adiciona o novo botão após o botão "Criar PDC"
-                        saveBtnContainer.appendChild(finalizarProvisionamentoButton);
-
-                        // Oculta todas as seções, exceto a seção de parcelas
-                        const allSections = document.querySelectorAll('.section');
-                        allSections.forEach(section => {
-                            const header = section.previousElementSibling; // Seleciona o header correspondente
-                            if (!section.classList.contains('form-pagamento') && !section.classList.contains('section-buttons')) { // Verifica se não é a seção de parcelas e não é a seção de botões
-                                section.classList.add('collapsed'); // Adiciona a classe para colapsar
-                                if (header && header.classList.contains('section-header')) {
-                                    header.classList.add('collapsed'); // Adiciona a classe para a setinha
-                                }
-                            }
-                        });
-                    };
-                    // Função para fechar o modal
-                    document.getElementById('fecharModal').onclick = function () {
-                        overlay.remove();
-                    };
-                };
-                //
-                saveBtnContainer.appendChild(criarPDCButton);
-
-                //==========CRIA O BOTÃO DE CONCLUIR PROVISIONAMENTO==========//
-                const finalizarProvisionamentoButton = document.createElement('button');
-                finalizarProvisionamentoButton.classList.add('finalizar-provisionamento-btn', 'adjust-btn');
-                finalizarProvisionamentoButton.textContent = 'Finalizar Provisionamento';
-                finalizarProvisionamentoButton.onclick = function () {
-                    customModal({botao: this, tipo: "finalizar_provisionamento", mensagem: "Deseja realmente finalizar o provisionamento?\nPDC será enviado para realização da compra." });
+                // Adiciona o botão "CONFIRAMAR RECEBIMENTO"
+                const approveButton = document.createElement('button');
+                approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
+                approveButton.textContent = 'Enviar p/ checagem final';
+                approveButton.onclick = function () {
+                    customModal({botao: this, tipo: "enviar_p_checagem_final", mensagem: "Deseja enviar o PDC para a CHECAGEM FINAL da controladoria?" });
                 };
 
-                if(globais.numPDC)
-                {
-                    //==========DESABILITA O BOTÃO DE CRIAR PDC==========//
-                    criarPDCButton.disabled = true; // Desabilita o botão de criar PDC
-                    criarPDCButton.classList.add('disabled'); // Adiciona a classe para estilo visual
-
-                    const allSections = document.querySelectorAll('.section');
-                    allSections.forEach(section => {
-                        const header = section.previousElementSibling; // Seleciona o header correspondente
-                        if (!section.classList.contains('form-pagamento') && !section.classList.contains('section-buttons')) { // Verifica se não é a seção de parcelas e não é a seção de botões
-                            section.classList.add('collapsed'); // Adiciona a classe para colapsar
-                            if (header && header.classList.contains('section-header')) {
-                                header.classList.add('collapsed'); // Adiciona a classe para a setinha
-                            }
-                        }
-                    });
-
-                    //==========ADICIONA O BOTÃO DE FINALIZAR PROVISIONAMENTO==========//
-                    saveBtnContainer.appendChild(finalizarProvisionamentoButton);
+                // Cria o botão "Arquivar"
+                const archiveButton = document.createElement('button');
+                archiveButton.className = 'archive-btn';
+                archiveButton.textContent = 'Arquivar';
+                archiveButton.onclick = function () {
+                    customModal({ botao: this, tipo: "arquivar_cot", titulo: "Arquivar", mensagem: "Você tem certeza de que deseja arquivar este registro?" });
                 };
-            };
+
+                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
+                saveBtnContainer.appendChild(approveButton);
+                saveBtnContainer.appendChild(archiveButton);
+            }else if(globais.pag === "checagem_final")
+            {
+                    
+                // Adiciona o botão "ENVIAR PARA ASSINATURA"//
+                const approveButton = document.createElement('button');
+                approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
+                approveButton.textContent = 'Sol. aut. Síndico';
+                approveButton.onclick = function () {
+                    customModal({botao: this, tipo: "enviar_p_assinatura", mensagem: "Deseja enviar o PDC para que o SÍNDICO e o SUBSÍNDICO possa autorizar?" });
+                };
+
+                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
+                saveBtnContainer.appendChild(approveButton);
+                // Verifica se o tipo de solicitação é "SERVIÇO"
+                const tipoSolicitacao = document.querySelector('select[name="Tipo_de_solicitacao"]').options[document.querySelector('select[name="Tipo_de_solicitacao"]').selectedIndex].text;
+                console.log("[tipoSolicitacao] => ", tipoSolicitacao);
+                
+                if (tipoSolicitacao === "SERVIÇO") {
+
+                    // Cria os novos campos
+                    const camposNF = document.getElementById('section5');
+                    camposNF.querySelectorAll('*').forEach(child => child.classList.remove("hidden"));
+                    // Remove a classe 'hidden' da section-header que está acima de section5
+                    const sectionHeader = camposNF.previousElementSibling;
+                    console.log(sectionHeader);
+                    if (sectionHeader && sectionHeader.classList.contains('section-header')) {
+                        sectionHeader.classList.remove("hidden");
+                    }
+                }
+
+
+            }
         }
         else 
         {
-            // Adiciona o botão "Sol. Aprov. Síndico"
-            const approveButton = document.createElement('button');
-            approveButton.classList.add('approve-sindico-btn', 'adjust-btn');
-            approveButton.textContent = 'Sol. Aprov. Síndico';
-            approveButton.onclick = function () {
-                customModal({botao: this, tipo: "solicitar_aprovacao_sindico", mensagem: "Deseja solicitar a aprovação do síndico?" });
-            };
-            // Cria o botão "Arquivar"
-            const archiveButton = document.createElement('button');
-            archiveButton.className = 'archive-btn';
-            archiveButton.textContent = 'Arquivar';
-            archiveButton.onclick = function () {
-                customModal({ botao: this, tipo: "arquivar_cot", titulo: "Arquivar", mensagem: "Você tem certeza de que deseja arquivar este registro?" });
-            };
-
-            // Seleciona o contêiner onde o botão "Salvar" está localizado
-            saveBtnContainer.appendChild(approveButton);
-            saveBtnContainer.appendChild(archiveButton);
+            criarBotao({page:"editar_cotacao"});
         }
     }else
     {
-        // Adiciona o botão "Sol. Aprov. Síndico"
-        const approveButton = document.createElement('button');
-        approveButton.classList.add('approve-sindico-btn', 'adjust-btn');
-        approveButton.textContent = 'Sol. Aprov. Síndico';
-        approveButton.onclick = function () {
-            customModal({botao: this, tipo: "solicitar_aprovacao_sindico", mensagem: "Deseja solicitar a aprovação do síndico?" });
-        };
-
-        const saveBtnContainer = document.querySelector('.save-btn-container');
-        saveBtnContainer.appendChild(approveButton);
+        criarBotao({page: "criar_cotacao"});
     }
     document.body.classList.remove('hidden');
     atualizarOuvintesTabCot();
@@ -365,98 +303,15 @@ async function executarProcessosParalelos() {
 
 async function processarAprovacaoCotacao() {
     if (globais.pag == "aprovar_cotacao") {
-        function replaceSaveButton() {
-            // Seleciona o contêiner onde o botão "Salvar" está localizado
-            const saveBtnContainer = document.querySelector('.save-btn-container');
-
-            // Remove o botão "Salvar" existente, se houver
-            const saveButton = saveBtnContainer.querySelector('.save-btn');
-            if (saveButton) {
-                saveBtnContainer.removeChild(saveButton);
-            }
-
-            // Cria o botão "Aprovar"
-            const approveButton = document.createElement('button');
-            approveButton.className = 'approve-btn';
-            approveButton.textContent = 'Aprovar';
-            approveButton.onclick = function () {
-                customModal({ botao: this, tipo: "aprov_cot", titulo: "Aprovar proposta", mensagem: "Tem certeza que deseja APROVAR a proposta do fornecedor selecionado?" });
-            };
-
-            // Cria o botão "Solicitar Ajuste"
-            const adjustButton = document.createElement('button');
-            adjustButton.className = 'adjust-btn';
-            adjustButton.textContent = 'Solicitar Ajuste';
-            adjustButton.onclick = function () {
-                customModal({ botao: this, tipo: "ajustar_cot", titulo: "Solicitação de Ajuste", mensagem: "Por favor, descreva abaixo o ajuste que deseja fazer:" });
-            };
-
-            // Cria o botão "Arquivar"
-            const archiveButton = document.createElement('button');
-            archiveButton.className = 'archive-btn';
-            archiveButton.textContent = 'Arquivar';
-            archiveButton.onclick = function () {
-                customModal({ botao: this, tipo: "arquivar_cot", titulo: "Arquivar", mensagem: "Você tem certeza de que deseja arquivar este registro?" });
-            };
-
-            // Adiciona os novos botões ao contêiner
-            saveBtnContainer.appendChild(approveButton);
-            saveBtnContainer.appendChild(adjustButton);
-            saveBtnContainer.appendChild(archiveButton);
-        }
-
-        // Chame a função para substituir o botão "Salvar" pelos novos botões
-        replaceSaveButton();
+        criarBotao({page: "aprovar_cotacao"});
     } else if (globais.pag == "autorizar_pagamento_subsindico" || globais.pag == "autorizar_pagamento_sindico" || globais.pag == "confirmar_todas_as_assinaturas") {
-        function adicionarBotaoAutorizar() {
-            // Seleciona o contêiner onde o botão "Salvar" está localizado
-            const saveBtnContainer = document.querySelector('.save-btn-container');
-
-            // Remove o botão "Salvar" existente, se houver
-            const saveButton = saveBtnContainer.querySelector('.save-btn');
-            if (saveButton) {
-                saveBtnContainer.removeChild(saveButton);
-            }
-
-            // Cria o botão "Autorizar"
-            const approveButton = document.createElement('button');
-            approveButton.className = 'approve-btn';
-            approveButton.textContent = 'Autorizar';
-            approveButton.onclick = function () {
-                customModal({ botao: this, tipo: globais.pag, titulo: "Autorizar Pagamento", mensagem: "Tem certeza que deseja AUTORIZAR o pagamento deste PDC?" });
-            };
-
-            const rejectButton = document.createElement('button');
-            rejectButton.className = 'adjust-btn';
-            rejectButton.textContent = 'Suspender';
-            rejectButton.onclick = function () {
-                customModal({ botao: this, tipo: "suspender_pagamento", titulo: "Suspender Pagamento", mensagem: "Tem certeza que deseja SUSPENDER o pagamento deste PDC?" });
-            };
-
-            /*VAI MUDAR PARA SOLICITAR AJUSTE
-            const closeButton = document.createElement('button');
-            closeButton.className = 'archive-btn';
-            closeButton.textContent = 'Fechar';
-            closeButton.onclick = function () {
-                window.close();
-            };
-            */
-
-            // Adiciona o botão "Autorizar" ao contêiner
-            saveBtnContainer.appendChild(approveButton);
-            saveBtnContainer.appendChild(rejectButton);
-            /*VAI MUDAR PARA SOLICITAR AJUSTE
-            saveBtnContainer.appendChild(closeButton);
-            */
-        }
-        adicionarBotaoAutorizar();
+        criarBotao({page: globais.page, removeExistingButtons: true});
     }
 }
 
 async function processarDadosPDC() {
     //const cPDC = "(" + (globais.numPDC ? `numero_de_PDC=="${globais.numPDC}"` : (globais.numPDC_temp ? `id_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
     const cPDC = "(" + globais.numPDC_temp?`id_temp=="${globais.numPDC_temp}")`:"ID==0)";
-    console.log("[CRITERIOS PDC] => ", cPDC);
 
     const respPDC = await executar_apiZoho({ 
         tipo: "busc_reg", 
@@ -465,10 +320,7 @@ async function processarDadosPDC() {
     });
 
     if (respPDC.code == 3000) {
-        console.log("Tem PDC");
         globais.tipo = 'editar_pdc';
-        console.log('[DADOS DO PDC] =>', JSON.stringify(respPDC));
-        console.log('[DADOS CLASSIFICAÇÃO] =>', JSON.stringify(respPDC.data[0].Classificacao_contabil));
         preencherDadosPDC(respPDC);
     } else {
         console.log("Não tem PDC");
@@ -478,7 +330,6 @@ async function processarDadosPDC() {
 async function processarDadosCotacao() {
     //const idCriterio = globais.numPDC ? `numero_de_PDC=="${globais.numPDC}"` : (globais.numPDC_temp ?`num_PDC_temp=="${globais.numPDC_temp}"` :"ID==0");
     const idCriterio = "(" + globais.numPDC_temp ?`num_PDC_temp=="${globais.numPDC_temp}")` :"ID==0)";
-    console.log("[ID CRITERIO] => ", idCriterio);
 
     const aprovadoCriterio = !["editar_cotacao", "aprovar_cotacao", "ver_cotacao"].includes(globais.pag) ? 
         " && Aprovado==true" : "";

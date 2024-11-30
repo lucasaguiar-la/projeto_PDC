@@ -49,7 +49,7 @@
 
                         <div class="campos-texto-mais-largos">
 
-                            <label for="Justificativa">Compras emergenciais (Ocorrência):</label>
+                            <label for="Justificativa">Ocorrências:</label>
                             <input type="text" name="Justificativa" id="justificativa"></input>
                         </div>
                     </div>
@@ -217,6 +217,73 @@
                 </form>
             </div>
         </div>
+        <!--FORM DE DADOS DA NOTA FISCAL-->
+        <div class="section-header hidden">
+            <h2 class="titulos">DADOS DA NOTA FISCAL</h2>
+            <button class="toggle-section"></button>
+        </div>
+        <div class="section form-dados-nf hidden" id="section5">
+            <div class="form-container">
+                <form action="#" id="dados-nf">
+                    <div class="campos-iniciais-nf hidden">
+
+                        <div class="campo ">
+                            <label for="data-emissao-nf">Data da emissão da NF:</label>
+                            <input type="date" id="data-emissao" name="Data_emissao_N_Fiscal">
+                        </div>
+                        <div class="campo">
+                            <label for="numero-nf">Número da NF:</label>
+                            <input type="date" id="numero-nf" name="Numero_N_Fiscal">
+                        </div>
+                    </div>
+                    <table class="campos-retencao-nf hidden">
+                        <thead>
+                            <tr>
+                                <th colspan="2">DESCONTOS</th>
+                            </tr>
+                            <tr>
+                                <th>Descrição</th>
+                                <th>Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Valor original:</td>
+                                <td id="valor-original" class="numeric-cell">0,00</td>
+                            </tr>
+                            <tr>
+                                <td>INSS:</td>
+                                <td><input type="text" id="inss" class="input-number" name="INSS"></td>
+                            </tr>
+                            <tr>
+                                <td>ISS:</td>
+                                <td><input type="text" id="iss" class="input-number" name="ISS"></td>
+                            </tr>
+                            <tr>
+                                <td>PIS, CONFINS, CSSL:</td>
+                                <td><input type="text" id="pis-confins-cssl" class="input-number" name="PIS_CONFINS_CSSL"></td>
+                            </tr>
+                            <tr>
+                                <td>Desconto comercial ou parcela:</td>
+                                <td><input type="text" id="desconto-comercial" class="input-number" name="Desconto_comercial"></td>
+                            </tr>
+                            <tr>
+                                <td>DESCONTOS (total):</td>
+                                <td id="descontos-total" class="numeric-cell">0,00</td>
+                            </tr>
+                            <tr>
+                                <td>ACRESCIMO (tarifa bancária):</td>
+                                <td><input type="text" id="acrescimo" class="input-number" name="Acrescimo"></td>
+                            </tr>
+                            <tr>
+                                <td>VALOR TOTAL A PAGAR:</td>
+                                <td id="valor-total-pagar" class="numeric-cell">0,00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </form>
+            </div>
+        </div>
         <!--FORM DE CLASSIFICAÇÃO CONTÁBIL-->
         <div class="section-header">
             <h2 class="titulos">CLASSIFICAÇÃO CONTÁBIL</h2>
@@ -245,7 +312,7 @@
             </div>
         </div>
         <!--BOTÃO SALVAR-->
-        <div class="section section-buttons" id="section5">
+        <div class="section section-buttons" id="section-final">
             <div class="save-btn-container">
                 <button class="save-btn">Salvar</button>
             </div>

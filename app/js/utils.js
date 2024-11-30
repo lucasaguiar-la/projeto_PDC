@@ -431,6 +431,10 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
         'arquivar_cot': {
             placeholder: 'Ex.: Arquivo devido a não resposta do fornecedor...',
             buttonClass: 'customArchive-confirmButton'
+        },
+        'solicitar_ajuste_ao_compras': {
+            placeholder: 'Ex.: Produto veio quebrado, não recebido...',
+            buttonClass: 'customAdjust-confirmButton'
         }
     };
 
@@ -554,6 +558,20 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
             'confirmar_compra': {
                 Status_geral: 'Compra realizada'
             },
+            'confirmar_recebimento': {
+                Status_geral: 'Recebimento confirmado'
+            },
+            'solicitar_ajuste_ao_compras': {
+                Status_geral: 'Ajuste Solicitado Pelo Almoxarifado',
+                Solicitacao_de_ajuste: inputElement ? inputElement.value : null
+            },
+            'enviar_p_checagem_final': {
+                Status_geral: 'Enviado para checagem final'
+            },
+            'enviar_p_assinatura':
+            {
+                Status_geral:'Assinatura Confirmada Controladoria'
+            },
             'autorizar_pagamento_sindico': {
                 Status_geral: 'Assinatura Confirmada Sindico'
             },
@@ -567,7 +585,13 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
 
         // Verifica se o tipo está no mapa e cria o payload
         if (payloadMap[tipo]) {
-            if(tipo === "solicitar_aprovacao_sindico" || tipo ==="finalizar_provisionamento")
+            const tiposValidos = [
+                "solicitar_aprovacao_sindico",
+                "finalizar_provisionamento",
+                "enviar_p_checagem_final",
+                "enviar_p_assinatura"
+            ];
+            if (tiposValidos.includes(tipo)) 
             {
                 await saveTableData({ tipo });
                 
@@ -610,6 +634,25 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
             // Fecha o modal após sucesso
             if (resposta && resposta.code === 3000) {
                 overlay.remove();
+                if(tipo == "confirmar_compra")
+                {
+
+                    // Obtém o valor da entidade selecionada
+                    const entidadeSelecionada = document.getElementById('entidade').value;
+    
+                    let link_layout;
+                    // [LAYOUT]
+                    if(entidadeSelecionada == "3938561000066182591")
+                    {
+                        link_layout= `${url}guillaumon/app-envio-de-notas-boletos-guillaumon/pdf/Laranj_layout_impressao_pedido?ID_entry=${globais.idPDC}&id_pdc=${globais.idPDC}&zc_PdfSize=A4&zc_FileName=${globais.numPDC}_Laranjeiras`;
+                    }
+                    else if(entidadeSelecionada == "3938561000066182595")
+                    {
+                        link_layout= `${url}guillaumon/app-envio-de-notas-boletos-guillaumon/pdf/AssociacaoServir_layout_impressao_pedido?ID_entry=${globais.idPDC}&id_pdc=${globais.idPDC}&zc_PdfSize=A4&zc_FileName=${globais.numPDC}_Ass_Servir`;
+                    }
+    
+                    window.open(`${link_layout}`, '_blank', 'noopener,noreferrer');
+                }
                 // Opcional: recarregar a página ou atualizar a interface
                 window.open(`${url}#Script:page.refresh`, '_top');
             } else {
