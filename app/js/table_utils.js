@@ -1516,3 +1516,60 @@ export async function saveTableData({tipo = null}) {
         globais.cotacaoExiste = true;
     }
 }
+
+// Função para atualizar o valor original com o total do fornecedor aprovado
+export function atualizarValorOriginal() {
+    const totalFornecedor = calcularTotalFornecedorAprovado(); // Função que você deve implementar
+    const valorOriginalCell = document.getElementById('valor-original');
+    valorOriginalCell.innerText = formatToBRL(totalFornecedor);
+}
+
+// Função para calcular o total do fornecedor aprovado
+function calcularTotalFornecedorAprovado() {
+    const table = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
+    let total = 0;
+    const totalCells = table.querySelectorAll('.total-fornecedor');
+
+    totalCells.forEach(cell => {
+        total += converterStringParaDecimal(cell.innerText) || 0;
+    });
+
+    return total;
+}
+
+// Função para calcular o valor total a pagar com base nos descontos
+export function calcularValorTotalPagar() {
+    console.log("[CALCULANDO VALOR TOTAL A PAGAR]");
+    const valorOriginal = converterStringParaDecimal(document.getElementById('valor-original').innerText) || 0;
+    console.log("[Valor original] => ", valorOriginal);
+    const descontoCells = document.querySelectorAll('.campos-ret-desc'); // Selecione os inputs de desconto
+    let totalDescontos = 0;
+
+    descontoCells.forEach(cell => {
+        totalDescontos += converterStringParaDecimal(cell.value) || 0; // Acesse o valor do input
+    });
+    console.log("[Total descontos] => ", totalDescontos);
+
+    // Atualiza o valor total de descontos no campo "campos-ret-total-desc"
+    const totalDescElements = document.getElementsByClassName('campos-ret-total-desc');
+    if (totalDescElements.length > 0) {
+        totalDescElements[0].innerText = formatToBRL(totalDescontos); // Acessa o primeiro elemento da coleção
+    }
+
+    // Inicializa o valor total a pagar com o valor original
+    const valorTotalPagar = valorOriginal - totalDescontos;
+
+    // Soma todos os campos "campos-ret-acr"
+    const acrescimoCells = document.querySelectorAll('.campos-ret-acr'); // Selecione os inputs de acréscimo
+    let totalAcrescimos = 0;
+
+    acrescimoCells.forEach(cell => {
+        totalAcrescimos += converterStringParaDecimal(cell.value) || 0; // Acesse o valor do input
+    });
+    console.log("[Total acréscimos] => ", totalAcrescimos);
+
+    // Atualiza o valor total a pagar com os acréscimos
+    const valorTotalFinal = valorTotalPagar + totalAcrescimos;
+    console.log("[Total a pagar com acréscimos] => ", valorTotalFinal);
+    document.getElementById('valor-total-pagar').innerText = formatToBRL(valorTotalFinal);
+}

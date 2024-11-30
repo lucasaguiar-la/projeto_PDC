@@ -327,20 +327,26 @@ button:hover {
     background-color: #45a049;
 }
 /*==========SECAO 05==========*/
-/* Adiciona bordas à tabela de campos de retenção */
+
 .campos-retencao-nf {
-    border-collapse: collapse; /* Colapsa as bordas */
-    width: 100%; /* Define a largura da tabela */
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 20px;
 }
 
 .campos-retencao-nf th, .campos-retencao-nf td {
-    border: 1px solid #000; /* Borda preta de 1px */
-    padding: 8px; /* Espaçamento interno */
-    text-align: left; /* Alinhamento do texto à esquerda */
+    /*border: 1px solid #000;*/
+    padding: 8px;
 }
 
-.campos-retencao-nf th {
-    background-color: #f2f2f2; /* Cor de fundo para cabeçalhos */
+.campos-retencao-nf th
+{
+    text-align: center;
+}
+
+.campos-retencao-nf td
+{
+    text-align: left;
 }
 
 /*========================BOTÕES EDIÇÃO=================*/

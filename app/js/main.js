@@ -3,7 +3,9 @@ import {
     removeProductRow,
     addSupplierColumn,
     atualizarOuvintesTabCot,
-    prenchTabCot
+    prenchTabCot,
+    atualizarValorOriginal,
+    calcularValorTotalPagar
 } from './table_utils.js'
 import {
     buscarFornecedores,
@@ -116,6 +118,8 @@ async function setupListenersAndInit() {
         "remover-classificacao": { handler: (elemento) => removerLinhaClassificacao(elemento), type: 'click' },
         "valor-parcela": { handler: (elemento) => { formatToBRL(elemento); atualizarValorTotalParcelas();}, type: 'blur' },
         "valor-classificacao": { handler: (elemento) => { formatToBRL(elemento); atualizarValorTotalClassificacoes();}, type: 'blur' },
+        "campos-ret-desc":{handler: (elemento) => {calcularValorTotalPagar();}, type: 'blur'},
+        "campos-ret-acr":{handler: (elemento) => {calcularValorTotalPagar();}, type: 'blur'},
         "": { handler: (elemento) => handleEnterKeyNavigation(elemento), type: 'keydown' }
     };
 
@@ -173,9 +177,8 @@ async function executarProcessosParalelos() {
         console.log("[PÁGINA] => ", globais.pag);
         const saveBtnContainer = document.querySelector('.save-btn-container');
         if(globais.pag != "editar_cotacao") {
-            desabilitarTodosElementosEditaveis();
-            
 
+            //desabilitarTodosElementosEditaveis();
             if (globais.pag == "aprovar_cotacao") {
                 criarBotao({page: "aprovar_cotacao", removeExistingButtons:true});
 
@@ -307,6 +310,8 @@ async function processarDadosCotacao() {
     if (respCot.code == 3000) {
 
         await prenchTabCot(respCot);
+        atualizarValorOriginal();
+        calcularValorTotalPagar();
     } else {
         console.log("Não tem Cotação");
     }
