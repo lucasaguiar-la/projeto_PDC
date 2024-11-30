@@ -737,9 +737,7 @@ export function atualizarValorTotalClassificacoes() {
             
             let total = converterStringParaDecimal(valorTotalFornecedor).toFixed(2);
 
-
             const valoresClassificacoes = document.querySelectorAll('#form-classificacao input[name="Valor"]');
-            
             valoresClassificacoes.forEach(input => {
 
                 const valor = converterStringParaDecimal(input.value).toFixed(2) || 0;

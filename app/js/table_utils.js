@@ -280,7 +280,6 @@ export async function addSupplierColumn() {
                         selectedCheckbox = checkbox;
                         globais.idFornAprovado = dadosFornecedor[0];
 
-                        
                         // Adiciona a classe 'forn-aprovado' às células do fornecedor selecionado
                         const headerCell = checkbox.closest('th'); // Célula do cabeçalho correspondente
                         headerCell.classList.add('forn-aprovado'); // Adiciona a classe ao cabeçalho do fornecedor
@@ -862,6 +861,7 @@ export function atualizarOuvintesTabDetlhesForn()
  */
 export async function prenchTabCot(resp) {
     if (resp && resp.code === 3000 && Array.isArray(resp.data) && resp.data.length > 0) {
+        console.log(JSON.stringify(resp));
 
         globais.cotacaoExiste = true;
         const table = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
@@ -897,7 +897,7 @@ export async function prenchTabCot(resp) {
         });
 
         idsCotacao = [...new Set(data.map(item => item.ID))].sort((a, b) => a - b);
-
+        
         //=====Cria linhas dos produtos=====//
         idProdutos.forEach((idProduto, index) => {
             //Busca dados do produto atual//
@@ -1042,8 +1042,8 @@ export async function prenchTabCot(resp) {
                         cell.classList.remove('forn-aprovado'); // Remove a classe de todas as células
                     });
 
+                    //
                     if (checkbox.checked) {
-
                         if (selectedCheckbox && selectedCheckbox !== checkbox) {
                             selectedCheckbox.checked = false;
                         }
@@ -1114,12 +1114,14 @@ export async function prenchTabCot(resp) {
 
                 //=====ADICIONA A CELULA DE FRETE=====//
                 const cellFrete = document.createElement('td');
+                console.log("valores frete => ", valoresFrete[index]);
                 cellFrete.innerText = formatToBRL(valoresFrete[index] || '0,00');
                 cellFrete.classList.add('numeric-cell');
                 cellFrete.colSpan = 2;
                 cellFrete.contentEditable = "true";
                 cellFrete.style.margin = '0 auto';
                 linhaFrete.insertBefore(cellFrete, linhaFrete.cells[linhaFrete.cells.length -1]);
+                
 
                 //=====ADICIONA A CELULA DE DESCONTO=====//
                 const cellDescontos = document.createElement('td');

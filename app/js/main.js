@@ -274,7 +274,6 @@ async function executarProcessosParalelos() {
                 console.log("[tipoSolicitacao] => ", tipoSolicitacao);
                 
                 if (tipoSolicitacao === "SERVIÇO") {
-
                     // Cria os novos campos
                     const camposNF = document.getElementById('section5');
                     camposNF.querySelectorAll('*').forEach(child => child.classList.remove("hidden"));
@@ -312,7 +311,6 @@ async function processarAprovacaoCotacao() {
 async function processarDadosPDC() {
     //const cPDC = "(" + (globais.numPDC ? `numero_de_PDC=="${globais.numPDC}"` : (globais.numPDC_temp ? `id_temp=="${globais.numPDC_temp}"` : "ID==0")) + ")";
     const cPDC = "(" + globais.numPDC_temp?`id_temp=="${globais.numPDC_temp}")`:"ID==0)";
-
     const respPDC = await executar_apiZoho({ 
         tipo: "busc_reg", 
         criterios: cPDC, 
@@ -320,6 +318,7 @@ async function processarDadosPDC() {
     });
 
     if (respPDC.code == 3000) {
+        
         globais.tipo = 'editar_pdc';
         preencherDadosPDC(respPDC);
     } else {
@@ -333,9 +332,10 @@ async function processarDadosCotacao() {
 
     const aprovadoCriterio = !["editar_cotacao", "aprovar_cotacao", "ver_cotacao"].includes(globais.pag) ? 
         " && Aprovado==true" : "";
-
+    console.log("pag => ", globais.pag);
+    
     let cCot = `(${idCriterio} && Ativo==true${aprovadoCriterio})`;
-
+    console.log("Criterio => ", cCot);
     const respCot = await executar_apiZoho({ 
         tipo: "busc_reg", 
         criterios: cCot, 
@@ -343,7 +343,7 @@ async function processarDadosCotacao() {
     });
 
     if (respCot.code == 3000) {
-        console.log("Tem Cotação");
+
         await prenchTabCot(respCot);
     } else {
         console.log("Não tem Cotação");

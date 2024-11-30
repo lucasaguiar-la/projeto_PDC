@@ -141,8 +141,7 @@ select option[disabled] {
 }
 
 .form-compra input[type="radio"] {
-    display: flex;
-    align-items: flex-start;
+    
     margin-right: 5px;
 }
 
@@ -190,10 +189,6 @@ select option[disabled] {
 /* Ocupa a última linha inteira */
 #campos-deposito .campo:nth-child(4) {
     grid-column: 1 / -1;
-}
-
-.hidden {
-    display: none;
 }
 
 /*==========SECAO 02==========*/
@@ -331,7 +326,6 @@ button:hover {
 .save-btn:hover {
     background-color: #45a049;
 }
-
 /*==========SECAO 05==========*/
 /* Adiciona bordas à tabela de campos de retenção */
 .campos-retencao-nf {
@@ -348,7 +342,6 @@ button:hover {
 .campos-retencao-nf th {
     background-color: #f2f2f2; /* Cor de fundo para cabeçalhos */
 }
-
 
 /*========================BOTÕES EDIÇÃO=================*/
 .approve-btn,
@@ -571,6 +564,11 @@ button:hover {
     height: 30px;
     animation: spin 1s linear infinite;
 }
+
+
+
+
+
 
 /*==========Botões de mudar de seção==========*/
 /* Estilos para os botões flutuantes */
