@@ -149,6 +149,31 @@ export function preencherDadosPDC(resp)
         });
     }
 
+    // =====[SESSÃO DE RETENÇÕES]=====//
+    console.log(JSON.stringify(data));
+    const inputDataEmissaoNF = document.querySelector('#data-emissao-nf');
+    const inputNumeroNF = document.querySelector('#numero-nf');
+    const inputInss = document.querySelector('#inss');
+    const inputIss = document.querySelector('#iss');
+    const inputPisConfinsCssl = document.querySelector('#pis-confins-cssl');
+    const inputDescontoComercial = document.querySelector('#desconto-comercial');
+    const inputAcrescimo = document.querySelector('#acrescimo');
+
+    // Preenche os campos de retenção com os dados da resposta
+    if(data.Data_emissao_N_Fiscal)
+    {
+        const [dia, mes, ano] = data.Data_emissao_N_Fiscal.split('/');
+        inputDataEmissaoNF.value = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+
+    }
+
+    if(data.Numero_N_Fiscal) inputNumeroNF.value = data.Numero_N_Fiscal;
+    if (data.INSS) inputInss.value = formatToBRL(data.INSS);
+    if (data.ISS) inputIss.value = formatToBRL(data.ISS);
+    if (data.PIS_COFINS_CSSL) inputPisConfinsCssl.value = formatToBRL(data.PIS_COFINS_CSSL);
+    if (data.Desconto_comercial_ou_parcela) inputDescontoComercial.value = formatToBRL(data.Desconto_comercial_ou_parcela);
+    if (data.Acrescimo_tarifa_bancaria) inputAcrescimo.value = formatToBRL(data.Acrescimo_tarifa_bancaria);
+
     // Mostra os campos relevantes baseado na forma de pagamento
     const formaPagamentoSelecionada = formPagamento.querySelector('input[name="Forma_de_pagamento"]:checked');
     if (formaPagamentoSelecionada) {
@@ -156,6 +181,9 @@ export function preencherDadosPDC(resp)
     }
 
     preencherDadosClassificacao(data.Classificacao_contabil);
+
+    atualizarValorOriginal();
+    calcularValorTotalPagar();
     atualizarValorTotalParcelas();
     atualizarValorTotalClassificacoes();
 }
@@ -478,6 +506,41 @@ function preencherDadosClassificacao(classificacoes) {
         inputValor.value = formatToBRL({ target: { value: valor } });
     });
 }
+/**
+ * Inicializa o formulário de classificação após carregar os dados
+ * 
+ * @function initClassificacaoForm
+ * @param {Map} classificacoes - Map contendo as classificações operacionais
+ * @param {Map} centrosCusto - Map contendo os centros de custo
+ * @returns {void}
+ */
+export function initClassificacaoForm(classificacoes, centrosCusto) {
+
+    // Oculta mensagem de carregamento
+    const loadingMessage = document.getElementById('loading-classificacao');
+    loadingMessage.style.display = 'none';
+    
+    // Mostra o formulário
+    const form = document.getElementById('form-classificacao');
+    // Adiciona ouvinte para formatar o campo valor como moeda brasileira
+    const camposValor = form.querySelectorAll('input[name="Valor"]');
+    camposValor.forEach(campo => {
+        campo.type = 'text';
+        campo.addEventListener('blur', function() {
+            formatToBRL(this);
+        });
+    });
+    
+    // Adiciona ouvinte para formatar o campo valor como moeda brasileira
+    form.style.display = 'block';
+    
+    // Popula os selects
+    popularSelects(classificacoes, centrosCusto);
+    
+    // Mostra o primeiro conjunto de campos de classificação
+    const camposClassificacao = document.getElementById('camposClassificacao');
+    camposClassificacao.classList.remove('hidden');
+}
 
 /**
  * Popula os selects de classificação contábil e centro de custo
@@ -522,40 +585,67 @@ export function popularSelects(classificacoes, centrosCusto) {
 }
 
 /**
- * Inicializa o formulário de classificação após carregar os dados
+ * Atualiza o valor total das classificações contábeis sempre que um campo de valor é alterado
  * 
- * @function initClassificacaoForm
- * @param {Map} classificacoes - Map contendo as classificações operacionais
- * @param {Map} centrosCusto - Map contendo os centros de custo
+ * @function atualizarValorTotalClassificacoes
  * @returns {void}
  */
-export function initClassificacaoForm(classificacoes, centrosCusto) {
+export function atualizarValorTotalClassificacoes() {
 
-    // Oculta mensagem de carregamento
-    const loadingMessage = document.getElementById('loading-classificacao');
-    loadingMessage.style.display = 'none';
-    
-    // Mostra o formulário
-    const form = document.getElementById('form-classificacao');
-    // Adiciona ouvinte para formatar o campo valor como moeda brasileira
-    const camposValor = form.querySelectorAll('input[name="Valor"]');
-    camposValor.forEach(campo => {
-        campo.type = 'text';
-        campo.addEventListener('blur', function() {
-            formatToBRL(this);
-        });
-    });
-    
-    // Adiciona ouvinte para formatar o campo valor como moeda brasileira
-    form.style.display = 'block';
-    
-    // Popula os selects
-    popularSelects(classificacoes, centrosCusto);
-    
-    // Mostra o primeiro conjunto de campos de classificação
-    const camposClassificacao = document.getElementById('camposClassificacao');
-    camposClassificacao.classList.remove('hidden');
+    const labelTotal = document.getElementById('valor-total-classificacoes');
+    if(globais.idFornAprovado) {
+        const table = document.getElementById('priceTable');
+        const headerRow = table.rows[0];
+        const totalRow = table.rows[table.rows.length - 2];
+        
+        const colIndex = Array.from(headerRow.cells).findIndex(cell => cell.dataset.id_forn === globais.idFornAprovado);
+
+        if (colIndex !== -1) {
+            const valorTotalFornecedor = totalRow.cells[colIndex - 2].innerText;
+            
+            let total = converterStringParaDecimal(valorTotalFornecedor).toFixed(2);
+
+            const valoresClassificacoes = document.querySelectorAll('#form-classificacao input[name="Valor"]');
+            valoresClassificacoes.forEach(input => {
+
+                const valor = converterStringParaDecimal(input.value).toFixed(2) || 0;
+                total -= valor; // Reduz o valor da classificação do total
+                total = parseFloat(total).toFixed(2); // Converte total para número antes de usar toFixed
+            });
+        
+            
+            labelTotal.innerText = formatToBRL(total);
+            
+            if (total == 0) {
+                labelTotal.classList.add('valor-igual');
+                labelTotal.classList.remove('valor-diferente');
+            } else {
+                labelTotal.classList.add('valor-diferente');
+                labelTotal.classList.remove('valor-igual');
+            }
+        } else {
+            labelTotal.innerText = "-";
+            labelTotal.classList.add('valor-diferente');
+            labelTotal.classList.remove('valor-igual');
+        }
+    }else
+    {
+        labelTotal.innerText = "-";
+        labelTotal.classList.add('valor-diferente');
+        labelTotal.classList.remove('valor-igual');
+    }
+
+
+
+
+
+
+
 }
+
+//===============================================================//
+//====================OUTRAS FUNÇÕES DE APOIO====================//
+//===============================================================//
 
 export function setupPixValidation() {
     const tipoPix = document.getElementById('tipo-pix');
@@ -716,61 +806,62 @@ export function atualizarValorTotalParcelas() {
     }
 }
 
-/**
- * Atualiza o valor total das classificações contábeis sempre que um campo de valor é alterado
- * 
- * @function atualizarValorTotalClassificacoes
- * @returns {void}
- */
-export function atualizarValorTotalClassificacoes() {
+//=========================================================//
+//====================DADOS DE RETENÇÃO====================//
+//=========================================================//
+// Função para atualizar o valor original com o total do fornecedor aprovado
+export function atualizarValorOriginal() {
+    const totalFornecedor = calcularTotalFornecedorAprovado(); // Função que você deve implementar
+    const valorOriginalCell = document.getElementById('valor-original');
+    valorOriginalCell.innerText = formatToBRL(totalFornecedor);
+}
 
-    const labelTotal = document.getElementById('valor-total-classificacoes');
-    if(globais.idFornAprovado) {
-        const table = document.getElementById('priceTable');
-        const headerRow = table.rows[0];
-        const totalRow = table.rows[table.rows.length - 2];
-        
-        const colIndex = Array.from(headerRow.cells).findIndex(cell => cell.dataset.id_forn === globais.idFornAprovado);
+// Função para calcular o total do fornecedor aprovado
+function calcularTotalFornecedorAprovado() {
+    const table = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
+    let total = 0;
+    const totalCells = table.querySelectorAll('.total-fornecedor');
 
-        if (colIndex !== -1) {
-            const valorTotalFornecedor = totalRow.cells[colIndex - 2].innerText;
-            
-            let total = converterStringParaDecimal(valorTotalFornecedor).toFixed(2);
+    totalCells.forEach(cell => {
+        total += converterStringParaDecimal(cell.innerText) || 0;
+    });
 
-            const valoresClassificacoes = document.querySelectorAll('#form-classificacao input[name="Valor"]');
-            valoresClassificacoes.forEach(input => {
+    return total;
+}
 
-                const valor = converterStringParaDecimal(input.value).toFixed(2) || 0;
-                total -= valor; // Reduz o valor da classificação do total
-                total = parseFloat(total).toFixed(2); // Converte total para número antes de usar toFixed
-            });
-        
-            
-            labelTotal.innerText = formatToBRL(total);
-            
-            if (total == 0) {
-                labelTotal.classList.add('valor-igual');
-                labelTotal.classList.remove('valor-diferente');
-            } else {
-                labelTotal.classList.add('valor-diferente');
-                labelTotal.classList.remove('valor-igual');
-            }
-        } else {
-            labelTotal.innerText = "-";
-            labelTotal.classList.add('valor-diferente');
-            labelTotal.classList.remove('valor-igual');
-        }
-    }else
-    {
-        labelTotal.innerText = "-";
-        labelTotal.classList.add('valor-diferente');
-        labelTotal.classList.remove('valor-igual');
+// Função para calcular o valor total a pagar com base nos descontos
+export function calcularValorTotalPagar() {
+    console.log("[CALCULANDO VALOR TOTAL A PAGAR]");
+    const valorOriginal = converterStringParaDecimal(document.getElementById('valor-original').innerText) || 0;
+    console.log("[Valor original] => ", valorOriginal);
+    const descontoCells = document.querySelectorAll('.campos-ret-desc'); // Selecione os inputs de desconto
+    let totalDescontos = 0;
+
+    descontoCells.forEach(cell => {
+        totalDescontos += converterStringParaDecimal(cell.value) || 0; // Acesse o valor do input
+    });
+    console.log("[Total descontos] => ", totalDescontos);
+
+    // Atualiza o valor total de descontos no campo "campos-ret-total-desc"
+    const totalDescElements = document.getElementsByClassName('campos-ret-total-desc');
+    if (totalDescElements.length > 0) {
+        totalDescElements[0].innerText = formatToBRL(totalDescontos); // Acessa o primeiro elemento da coleção
     }
 
+    // Inicializa o valor total a pagar com o valor original
+    const valorTotalPagar = valorOriginal - totalDescontos;
 
+    // Soma todos os campos "campos-ret-acr"
+    const acrescimoCells = document.querySelectorAll('.campos-ret-acr'); // Selecione os inputs de acréscimo
+    let totalAcrescimos = 0;
 
+    acrescimoCells.forEach(cell => {
+        totalAcrescimos += converterStringParaDecimal(cell.value) || 0; // Acesse o valor do input
+    });
+    console.log("[Total acréscimos] => ", totalAcrescimos);
 
-
-
-
+    // Atualiza o valor total a pagar com os acréscimos
+    const valorTotalFinal = valorTotalPagar + totalAcrescimos;
+    console.log("[Total a pagar com acréscimos] => ", valorTotalFinal);
+    document.getElementById('valor-total-pagar').innerText = formatToBRL(valorTotalFinal);
 }

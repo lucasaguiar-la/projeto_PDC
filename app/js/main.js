@@ -4,8 +4,6 @@ import {
     addSupplierColumn,
     atualizarOuvintesTabCot,
     prenchTabCot,
-    atualizarValorOriginal,
-    calcularValorTotalPagar
 } from './table_utils.js'
 import {
     buscarFornecedores,
@@ -27,7 +25,9 @@ import {
     preencherDadosPDC,
     setupPixValidation,
     atualizarValorTotalParcelas,
-    atualizarValorTotalClassificacoes
+    atualizarValorTotalClassificacoes,
+    atualizarValorOriginal,
+    calcularValorTotalPagar
 } from './forms_utils.js';
 import { CONFIG } from './config.js';
 import { criarBotao } from './metodos_filtragem.js';
@@ -118,8 +118,8 @@ async function setupListenersAndInit() {
         "remover-classificacao": { handler: (elemento) => removerLinhaClassificacao(elemento), type: 'click' },
         "valor-parcela": { handler: (elemento) => { formatToBRL(elemento); atualizarValorTotalParcelas();}, type: 'blur' },
         "valor-classificacao": { handler: (elemento) => { formatToBRL(elemento); atualizarValorTotalClassificacoes();}, type: 'blur' },
-        "campos-ret-desc":{handler: (elemento) => {calcularValorTotalPagar();}, type: 'blur'},
-        "campos-ret-acr":{handler: (elemento) => {calcularValorTotalPagar();}, type: 'blur'},
+        "campos-ret-desc":{handler: (elemento) => {calcularValorTotalPagar(); formatToBRL(elemento);}, type: 'blur'},
+        "campos-ret-acr":{handler: (elemento) => {calcularValorTotalPagar(); formatToBRL(elemento);}, type: 'blur'},
         "": { handler: (elemento) => handleEnterKeyNavigation(elemento), type: 'keydown' }
     };
 

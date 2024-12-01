@@ -1394,6 +1394,56 @@ async function pegarDadostabPrecos(){
 }
 
 /**
+ * Busca os dados do formulário de Nota Fiscal.
+ * 
+ * @function pegarDadosNF
+ * @returns {Object} Os dados do formulário de Nota Fiscal.
+ * 
+ * @description
+ * Esta função busca os dados do formulário de Nota Fiscal e os organiza em um objeto.
+ */
+async function pegarDadosNF() {
+    //====================BUSCA OS DADOS DO FORMULÁRIO DE NOTA FISCAL====================//
+    const formDdsNF = document.querySelector('#dados-nf');
+    const dadosNF = {};
+
+    // Obter todos os elementos do formulário
+    const elementosNF = formDdsNF.elements;
+    for (let elemento of elementosNF) {
+        
+        if (elemento.classList.contains('input-number')) {
+            dadosNF[elemento.name] = converterStringParaDecimal(elemento.value);
+
+        } else if(elemento.type == "date"){
+            const [ano, mes, dia] = elemento.value.split('-');
+            dadosNF[elemento.name] = `${dia}/${mes}/${ano}`;
+
+        }else
+        {
+            dadosNF[elemento.name] = elemento.value;
+        }
+    }
+
+    // Adiciona os dados dos tds usando o atributo name como chave
+    const valorOriginal = document.querySelector('#valor-original');
+    const totalDescontos = document.querySelector('#descontos-total');
+    const valorTotalPagar = document.querySelector('#valor-total-pagar');
+
+    if (valorOriginal && valorOriginal.hasAttribute('name')) {
+        dadosNF[valorOriginal.getAttribute('name')] = converterStringParaDecimal(valorOriginal.textContent || '');
+    }
+    if (totalDescontos && totalDescontos.hasAttribute('name')) {
+        dadosNF[totalDescontos.getAttribute('name')] = converterStringParaDecimal(totalDescontos.textContent || '');
+    }
+    if (valorTotalPagar && valorTotalPagar.hasAttribute('name')) {
+        dadosNF[valorTotalPagar.getAttribute('name')] = converterStringParaDecimal(valorTotalPagar.textContent || '');
+    }
+
+    console.log("dadosNF => ", dadosNF);
+    return dadosNF;
+}
+
+/**
  * Busca os dados de classificação.
  * 
  * @function pegarDadosClassificacao
@@ -1469,8 +1519,9 @@ async function pegarDadosClassificacao() {
  * Esta função é responsável por salvar os dados da tab. Se uma cotação já existe, ela limpa a cotação antiga e salva a nova. Caso contrário, cria uma nova cotação.
  */
 export async function saveTableData({tipo = null}) {
-
+    console.log("[SAVE TABLE DATA]");
     if (globais.cotacaoExiste) {
+        console.log("--Cotacao existe--")
 
         for (const id of idsCotacao) {
             let payload = {
@@ -1483,13 +1534,14 @@ export async function saveTableData({tipo = null}) {
         globais.cotacaoExiste = false;
         await saveTableData(globais.tipo);
     } else {
-
+        console.log("--Cotacao NÃO existe--")
         const {dadostabPrecos, dadosExtrasPDC} = await pegarDadostabPrecos();
 
         const dadosIniciaisPdc = await pegarDadosPDC();
         const dadosClassificacao = await pegarDadosClassificacao();
-        const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosClassificacao};
-
+        const dadosNF = await pegarDadosNF();
+        const dadosPDC = {...dadosIniciaisPdc, ...dadosExtrasPDC, ...dadosClassificacao, ...dadosNF};
+        console.log("dados PDC => ", JSON.stringify(dadosPDC))
         //====================CRIA O REGISTRO DO PDC====================//
         let respPDC;
         if(globais.tipo === 'editar_pdc'){
@@ -1508,6 +1560,7 @@ export async function saveTableData({tipo = null}) {
                 globais.idPDC = respPDC.data.ID; // Preenche globais.idPDC com o ID retornado
             }
         }
+        console.log("resp PDC => ", JSON.stringify(respPDC));
         
         //====================CRIA O REGISTRO DA COTAÇÃO====================//
         const json = JSON.stringify(dadostabPrecos, null, 2);
@@ -1515,61 +1568,4 @@ export async function saveTableData({tipo = null}) {
         
         globais.cotacaoExiste = true;
     }
-}
-
-// Função para atualizar o valor original com o total do fornecedor aprovado
-export function atualizarValorOriginal() {
-    const totalFornecedor = calcularTotalFornecedorAprovado(); // Função que você deve implementar
-    const valorOriginalCell = document.getElementById('valor-original');
-    valorOriginalCell.innerText = formatToBRL(totalFornecedor);
-}
-
-// Função para calcular o total do fornecedor aprovado
-function calcularTotalFornecedorAprovado() {
-    const table = document.getElementById('priceTable').getElementsByTagName('tbody')[0];
-    let total = 0;
-    const totalCells = table.querySelectorAll('.total-fornecedor');
-
-    totalCells.forEach(cell => {
-        total += converterStringParaDecimal(cell.innerText) || 0;
-    });
-
-    return total;
-}
-
-// Função para calcular o valor total a pagar com base nos descontos
-export function calcularValorTotalPagar() {
-    console.log("[CALCULANDO VALOR TOTAL A PAGAR]");
-    const valorOriginal = converterStringParaDecimal(document.getElementById('valor-original').innerText) || 0;
-    console.log("[Valor original] => ", valorOriginal);
-    const descontoCells = document.querySelectorAll('.campos-ret-desc'); // Selecione os inputs de desconto
-    let totalDescontos = 0;
-
-    descontoCells.forEach(cell => {
-        totalDescontos += converterStringParaDecimal(cell.value) || 0; // Acesse o valor do input
-    });
-    console.log("[Total descontos] => ", totalDescontos);
-
-    // Atualiza o valor total de descontos no campo "campos-ret-total-desc"
-    const totalDescElements = document.getElementsByClassName('campos-ret-total-desc');
-    if (totalDescElements.length > 0) {
-        totalDescElements[0].innerText = formatToBRL(totalDescontos); // Acessa o primeiro elemento da coleção
-    }
-
-    // Inicializa o valor total a pagar com o valor original
-    const valorTotalPagar = valorOriginal - totalDescontos;
-
-    // Soma todos os campos "campos-ret-acr"
-    const acrescimoCells = document.querySelectorAll('.campos-ret-acr'); // Selecione os inputs de acréscimo
-    let totalAcrescimos = 0;
-
-    acrescimoCells.forEach(cell => {
-        totalAcrescimos += converterStringParaDecimal(cell.value) || 0; // Acesse o valor do input
-    });
-    console.log("[Total acréscimos] => ", totalAcrescimos);
-
-    // Atualiza o valor total a pagar com os acréscimos
-    const valorTotalFinal = valorTotalPagar + totalAcrescimos;
-    console.log("[Total a pagar com acréscimos] => ", valorTotalFinal);
-    document.getElementById('valor-total-pagar').innerText = formatToBRL(valorTotalFinal);
 }

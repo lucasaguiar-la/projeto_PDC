@@ -348,7 +348,6 @@ function createEl(tag, className = '', innerHTML = '') {
     return element;
 }
 
-
 /**
  * Cria e exibe um modal customizado com diferentes funcionalidades
  * 
