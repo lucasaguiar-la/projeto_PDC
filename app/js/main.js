@@ -27,7 +27,8 @@ import {
     atualizarValorTotalParcelas,
     atualizarValorTotalClassificacoes,
     atualizarValorOriginal,
-    calcularValorTotalPagar
+    calcularValorTotalPagar,
+    preencherListaAnexos
 } from './forms_utils.js';
 import { CONFIG } from './config.js';
 import { criarBotao } from './metodos_filtragem.js';
@@ -222,7 +223,8 @@ async function executarProcessosParalelos() {
 
                 if(globais.pag === "checagem_final")
                 {
-                    //MOSTRA OS CAMPOS DE ARQUIVO//
+                    console.log("Deixando campos de anexos visiveis");
+                    document.querySelector('.form-anexos').style.display = 'block';
                 }
 
             }else if (globais.pag == "autorizar_pagamento_subsindico" || globais.pag == "autorizar_pagamento_sindico" || globais.pag == "confirmar_todas_as_assinaturas") {

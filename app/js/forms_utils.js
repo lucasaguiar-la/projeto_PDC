@@ -180,12 +180,186 @@ export function preencherDadosPDC(resp)
         mostrarCamposPagamento();
     }
 
+    if (data.anexo_arquivos && data.anexo_arquivos.length > 0) {
+        console.log("ANEXOS EXISTENTES, CARREGANDO...")
+        preencherListaAnexos(data.anexo_arquivos);
+    }
+
     preencherDadosClassificacao(data.Classificacao_contabil);
 
     atualizarValorOriginal();
     calcularValorTotalPagar();
     atualizarValorTotalParcelas();
     atualizarValorTotalClassificacoes();
+}
+
+// Função para preencher a lista de anexos
+export function preencherListaAnexos(anexos) {
+    const listaAnexos = document.getElementById('lista-anexos');
+    listaAnexos.innerHTML = ''; // Limpa a lista existente
+
+    // Adiciona estilo ao contêiner da lista
+    listaAnexos.style.textAlign = 'center';
+    listaAnexos.style.listStyle = 'none';
+    listaAnexos.style.display = 'flex';
+    listaAnexos.style.flexWrap = 'wrap';
+    listaAnexos.style.justifyContent = 'center';
+    listaAnexos.style.gap = '20px';
+    listaAnexos.style.borderRadius = '5px';
+
+    if (anexos && anexos.length > 0) {
+        anexos.forEach(anexo => {
+            const listItem = document.createElement('li');
+            const imgContainer = document.createElement('div'); // Contêiner para a imagem e o ícone
+            const img = document.createElement('img');
+            const fileType = anexo.display_value.split('.').pop().toLowerCase(); // Obtém a extensão do arquivo
+            img.src = `https://creatorapp.zoho.com${anexo.display_value}`; // URL da miniatura
+            img.alt = 'Anexo';
+            img.style.maxWidth = '100px'; // Define a largura da miniatura
+            img.style.maxHeight = '100px'; // Mantém a proporção da imagem
+            imgContainer.style.position = 'relative'; // Para posicionar o ícone de olho
+
+            imgContainer.addEventListener('click', () => {
+                if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
+                    abrirModalImagem(img.src);
+                } else {
+                    abrirModalArquivo(`https://creatorapp.zohopublic.com/guillaumon/app-envio-de-notas-boletos-guillaumon/report-perma/Laranj_PDC_Digital_ADM/QYWzURS71BZCM0mF2C6hvOe0eQKWvRHNBDxsjuyw2mUHB99jC8gvjDupKw5n4vrDPwDBGyauRuqK4yatFRRUPtYJB1GKEtKabwBt`);
+                }
+            });
+
+            // Cria o ícone de olho
+            const eyeIcon = document.createElement('span');
+            eyeIcon.innerText = '👁‍🗨'; // Ícone de olho
+            eyeIcon.style.position = 'absolute';
+            eyeIcon.style.top = '50%';
+            eyeIcon.style.left = '50%';
+            eyeIcon.style.transform = 'translate(-50%, -50%)';
+            eyeIcon.style.fontSize = '24px';
+            eyeIcon.style.color = 'black';
+            eyeIcon.style.opacity = '0'; // Inicialmente invisível
+            eyeIcon.style.transition = 'opacity 0.2s'; // Transição suave
+
+            // Efeito ao passar o mouse
+            imgContainer.addEventListener('mouseenter', () => {
+                img.style.filter = 'brightness(70%)'; // Escurece a imagem
+                eyeIcon.style.opacity = '1'; // Torna o ícone visível
+            });
+
+            imgContainer.addEventListener('mouseleave', () => {
+                img.style.filter = 'none'; // Remove o escurecimento
+                eyeIcon.style.opacity = '0'; // Torna o ícone invisível
+            });
+
+            imgContainer.style.cursor = 'pointer'; // Muda o cursor para pointer
+            imgContainer.appendChild(img);
+            imgContainer.appendChild(eyeIcon); // Adiciona o ícone ao contêiner
+            listItem.appendChild(imgContainer);
+            listaAnexos.appendChild(listItem);
+        });
+    } else {
+        const p = document.createElement('p');
+        p.style.textAlign = 'center';
+        p.style.listStyle = 'none';
+        p.textContent = 'Não há anexos...';
+        listaAnexos.appendChild(p);
+    }
+}
+
+// Função para abrir a imagem em um modal
+function abrirModalImagem(src) {
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = '1000';
+
+    const img = document.createElement('img');
+    img.src = src;
+    img.style.maxWidth = '90%';
+    img.style.maxHeight = '90%';
+
+    // Cria o botão de fechar
+    const closeButton = document.createElement('button');
+    closeButton.innerText = '✖'; // Usando um 'x' como texto
+    closeButton.style.position = 'absolute';
+    closeButton.style.top = '20px';
+    closeButton.style.right = '20px';
+    closeButton.style.backgroundColor = 'transparent';
+    closeButton.style.color = 'white';
+    closeButton.style.border = 'none';
+    closeButton.style.fontSize = '24px';
+    closeButton.style.cursor = 'pointer';
+
+    // Adiciona evento de clique para fechar o modal
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+
+    modal.appendChild(img);
+    modal.appendChild(closeButton); // Adiciona o botão de fechar ao modal
+    document.body.appendChild(modal);
+
+    // Fecha o modal ao clicar na imagem ou no modal
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
+}
+
+// Função para abrir arquivos (PDF ou outros) em uma nova aba
+function abrirModalArquivo(anexo) {
+    const url = `https://docs.google.com/gview?url=${encodeURIComponent(anexo)}&embedded=true`;
+    console.log(url);
+
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed';
+    modal.style.top = '0';
+    modal.style.left = '0';
+    modal.style.width = '100%';
+    modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.zIndex = '1000';
+
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.width = '600';
+    iframe.height = '780';
+    iframe.style.border = 'none';
+
+    const closeButton = document.createElement('button');
+    closeButton.innerText = '✖';
+    closeButton.style.position = 'absolute';
+    closeButton.style.top = '20px';
+    closeButton.style.right = '20px';
+    closeButton.style.backgroundColor = 'transparent';
+    closeButton.style.color = 'white';
+    closeButton.style.border = 'none';
+    closeButton.style.fontSize = '24px';
+    closeButton.style.cursor = 'pointer';
+
+    closeButton.addEventListener('click', () => {
+        document.body.removeChild(modal);
+    });
+
+    modal.appendChild(iframe);
+    modal.appendChild(closeButton);
+    document.body.appendChild(modal);
+
+    modal.addEventListener('click', (event) => {
+        if (event.target === modal) {
+            document.body.removeChild(modal);
+        }
+    });
 }
 
 //==============================================================================//
