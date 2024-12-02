@@ -84,7 +84,7 @@
                 <tbody>
                     <tr id="linha-inicial" data-id_produto="1">
                         <td contenteditable="true" data-idProd="1"></td>
-                        <td contenteditable="true" class="numeric-cell integer-cell"></td>
+                        <td contenteditable="true" class="numeric-cell integer-cell quantidade"></td>
                         <td contenteditable="true"></td>
                         <td class="action-buttons">
                             <button class="remove-btn remove-product-btn">
@@ -143,7 +143,7 @@
             <div class="form-container">
                 <form action="#" id="form-pagamento">
                     <label>Forma de Pagamento:</label>
-                    <div class="radio-group">
+                    <div class="radio-group" name="tipo-pag">
                         <input type="radio" id="boleto" name="Forma_de_pagamento" value="Boleto" class="formas-pagamento">
                         <label for="boleto">Boleto</label>
                         <input type="radio" id="dep_cc" name="Forma_de_pagamento" value="Dep. em CC" class="formas-pagamento">

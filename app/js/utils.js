@@ -684,66 +684,127 @@ export async function customModal({botao = null, tipo = null, titulo = null, men
 }
 
 /**
- * Desabilita todos os elementos editáveis da página
+ * Oculta todos os campos da página, exceto os especificados
  * 
- * @function desabilitarTodosElementosEditaveis
+ * @function ocultarCamposExcessao
  * @description
- * Desabilita:
- * - Inputs, textareas e selects
- * - Elementos com contenteditable
- * - Botões
- * - Radio buttons e checkboxes
- * - Células de tabela editáveis
+ * Esta função oculta todos os campos da página, exceto:
+ * - Entidade
+ * - Datas
+ * - Valor
+ * - Campos que precisam estar habilitados:
+ *   let campos = ["Entidade", "Datas", "Valor", "Valor"];
+ *   let camposCond = {"quantidade": "Poder alterar somente para menos", "valor-unit": "Poder alterar somente para menos, ou até um real a mais"};
+ *   let botoes = ["add-parcela", "remover-parcela"];
+ *   let forms = ["form-pagamento", "dados-nf"];
  */
-export function desabilitarTodosElementosEditaveis() {
-    // Desabilita inputs, textareas e selects
-    const elementosFormulario = document.querySelectorAll('input, textarea, select');
-    elementosFormulario.forEach(elemento => {
+export function desabilitarCampos() {
+    console.log("[DESABILITANDO CAMPOS]");
+    console.log("Página => ", globais.page);
 
-        if (!(elemento.classList.contains('num-pdc') && globais.pag === 'criar_numero_de_PDC')) {
+    let camposParaManterVisiveis;
+    let botoesParaManterVisiveis;
+    let formsParaManterVisiveis;
+    if(globais.pag === "ajustar_compra_compras" || globais.pag === "checagem_final")
+    {
+        camposParaManterVisiveis = ["Entidade", "Datas", "Valor", "quantidade", "valor-unit"];
+        botoesParaManterVisiveis = ["add-parcela", "remover-parcela"];
+        formsParaManterVisiveis =  ["form-pagamento", "dados-nf"];
+    }else
+    {
+        camposParaManterVisiveis = [];
+        botoesParaManterVisiveis = [];
+        formsParaManterVisiveis =  [];
+    }
+
+    // Seleciona todos os elementos de input, textarea e select
+    const campos = document.querySelectorAll('input, textarea, select');
+    campos.forEach(elemento => {
+        // Verifica se o elemento deve ser mantido visível
+        if (!camposParaManterVisiveis.includes(elemento.name)) {
             elemento.disabled = true;
+            elemento.readOnly = true; // Adiciona o atributo readonly
             elemento.style.cursor = 'not-allowed';
-        };
-    });
 
-    // Desabilita elementos com contenteditable
-    const elementosEditaveis = document.querySelectorAll('[contenteditable="true"]');
-    elementosEditaveis.forEach(elemento => {
-        // Verifica se o elemento possui a classe 'campo-datas' e se globais.pag é 'criar_numero_de_PDC'
-        elemento.contentEditable = false;
-        elemento.style.cursor = 'not-allowed';
-    });
-
-    // Desabilita botões, exceto os dentro de save-button-container
-    const botoes = document.querySelectorAll('button');
-    botoes.forEach(botao => {
-        if(globais.pag === "ver_cotacao" || globais.pag === "ver_proposta_ganha") {
-            if (!botao.classList.contains('toggle-section')) { // Verifica se o botão não tem a classe 'toggle-section'
-                botao.disabled = true;
-                botao.style.display = 'none';
-            }
-        } else
-        {
-            if (!botao.closest('.save-btn-container') && !botao.classList.contains('toggle-section')) {
-                botao.disabled = true;
-                botao.style.display = 'none';
-            }
+            // Adiciona um listener para reverter alterações
+            elemento.addEventListener('input', (event) => {
+                event.target.value = event.target.defaultValue; // Reverte para o valor original
+            });
         }
     });
 
-    // Remove event listeners de células de tabela
-    const celulasDaTabela = document.querySelectorAll('td, th');
-    celulasDaTabela.forEach(celula => {
-        celula.style.pointerEvents = 'none';
-        celula.style.cursor = 'not-allowed';
+    console.log("Botoes vizíveis => ", botoesParaManterVisiveis);
+    const botoes = document.querySelectorAll('button');
+    botoes.forEach(botao => {
+        if (!botao.closest('.save-btn-container') && !botao.classList.contains('toggle-section')) { 
+
+            // Verifica se o botão deve ser mantido visível
+            const deveManterVisivel = botoesParaManterVisiveis.some(classe => botao.classList.contains(classe));
+            if (!deveManterVisivel) {
+                const computedStyle = getComputedStyle(botao);
+                const placeholder = document.createElement('div'); // Cria um elemento vazio
+                
+                // Verifica o tamanho do before
+                const beforeWidth = parseFloat(computedStyle.getPropertyValue('width')) + parseFloat(computedStyle.getPropertyValue('padding-left')) + parseFloat(computedStyle.getPropertyValue('padding-right'));
+                const beforeHeight = parseFloat(computedStyle.getPropertyValue('height')) + parseFloat(computedStyle.getPropertyValue('padding-top')) + parseFloat(computedStyle.getPropertyValue('padding-bottom'));
+                
+                // Verifica o tamanho do after
+                const afterWidth = parseFloat(computedStyle.getPropertyValue('width')) + parseFloat(computedStyle.getPropertyValue('padding-left')) + parseFloat(computedStyle.getPropertyValue('padding-right'));
+                const afterHeight = parseFloat(computedStyle.getPropertyValue('height')) + parseFloat(computedStyle.getPropertyValue('padding-top')) + parseFloat(computedStyle.getPropertyValue('padding-bottom'));
+    
+                // Define o tamanho do placeholder com base nos tamanhos verificados
+                placeholder.style.width = `${Math.max(beforeWidth, afterWidth, botao.offsetWidth)}px`;
+                placeholder.style.height = `${Math.max(beforeHeight, afterHeight, botao.offsetHeight)}px`;
+                placeholder.style.display = 'inline-block'; // Mantém o layout
+                botao.parentNode.replaceChild(placeholder, botao); // Substitui o botão pelo placeholder
+            }
+        }   
     });
 
-    // Desabilita links
-    const links = document.querySelectorAll('a');
-    links.forEach(link => {
-        link.style.pointerEvents = 'none';
-        link.style.cursor = 'not-allowed';
+    // Seleciona todos os elementos com contenteditable
+    const elementosEditaveis = document.querySelectorAll('[contenteditable="true"], [contenteditable="false"]');
+    elementosEditaveis.forEach(elemento => {
+        console.log("Classe => ", elemento.className);
+        // Verifica se o elemento deve ser mantido visível
+        const temClasseVisivel = camposParaManterVisiveis.some(classe => elemento.classList.contains(classe));
+        if (temClasseVisivel) {
+            console.log("tem classe vizivel");
+            elemento.contentEditable = true; // Habilita para edição
+            elemento.style.cursor = 'text'; // Altera o cursor para indicar que é editável
+        } else {
+            console.log("NÃO tem classe vizivel");
+            elemento.contentEditable = false; // Desabilita para edição
+            elemento.style.cursor = 'not-allowed'; // Altera o cursor para indicar que não é editável
+        }
     });
+
+    // Habilita campos nos formulários que devem ser mantidos visíveis
+    formsParaManterVisiveis.forEach(formClass => {
+        const formulario = document.querySelector(`#${formClass}`);
+        if (formulario) {
+            const camposFormulario = formulario.querySelectorAll('input, textarea, select');
+            camposFormulario.forEach(campo => {
+                campo.disabled = false; // Habilita o campo
+                campo.readOnly = false; // Remove o atributo readonly
+                
+                // Altera o cursor dependendo do tipo de campo
+                campo.style.cursor = campo.tagName.toLowerCase() === 'select' ? 'pointer' : 'text';
+            });
+        }
+    });
+
+    /*
+    // Seleciona todos os formulários
+    const formularios = document.querySelectorAll('form');
+    formularios.forEach(form => {
+        // Desabilita todos os campos dentro do formulário
+        const campos = form.querySelectorAll('input, textarea, select, [contenteditable], [type="date"], [type="text"], [type="number"], [type="email"], [type="url"], [type="tel"]');
+        campos.forEach(campo => {
+            campo.disabled = true;
+            campo.style.cursor = 'not-allowed';
+        });
+    });
+    */
 }
 
 

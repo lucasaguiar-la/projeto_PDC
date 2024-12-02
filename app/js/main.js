@@ -14,7 +14,7 @@ import {
     customModal,
     executar_apiZoho,
     formatToBRL,
-    desabilitarTodosElementosEditaveis
+    desabilitarCampos
 } from './utils.js'
 import {
     adicionarCampoVenc,
@@ -179,6 +179,7 @@ async function executarProcessosParalelos() {
         if(globais.pag != "editar_cotacao") {
 
             //desabilitarTodosElementosEditaveis();
+            desabilitarCampos()
             if (globais.pag == "aprovar_cotacao") {
                 criarBotao({page: "aprovar_cotacao", removeExistingButtons:true});
 
@@ -194,7 +195,7 @@ async function executarProcessosParalelos() {
             {
                 criarBotao({page:globais.pag, removeExistingButtons: true});
 
-            }else if(globais.pag === "ajustar_compra_compras")
+            }else if(globais.pag === "ajustar_compra_compras" || globais.pag === "checagem_final" )
             {
                 const camposNF = document.getElementById('section5');
 
@@ -219,35 +220,10 @@ async function executarProcessosParalelos() {
                 }
                 criarBotao({page:globais.pag});
 
-            }else if(globais.pag === "checagem_final")
-            {
-                    
-                // Adiciona o botão "ENVIAR PARA ASSINATURA"//
-                const approveButton = document.createElement('button');
-                approveButton.classList.add('confirm-purchase-btn', 'adjust-btn');
-                approveButton.textContent = 'Sol. aut. Síndico';
-                approveButton.onclick = function () {
-                    customModal({botao: this, tipo: "enviar_p_assinatura", mensagem: "Deseja enviar o PDC para que o SÍNDICO e o SUBSÍNDICO possa autorizar?" });
-                };
-
-                //==========ADICIONA O BOTÃO DE APROVAR PDC==========//
-                saveBtnContainer.appendChild(approveButton);
-                // Verifica se o tipo de solicitação é "SERVIÇO"
-                const tipoSolicitacao = document.querySelector('select[name="Tipo_de_solicitacao"]').options[document.querySelector('select[name="Tipo_de_solicitacao"]').selectedIndex].text;
-                console.log("[tipoSolicitacao] => ", tipoSolicitacao);
-                
-                if (tipoSolicitacao === "SERVIÇO") {
-                    // Cria os novos campos
-                    const camposNF = document.getElementById('section5');
-                    camposNF.querySelectorAll('*').forEach(child => child.classList.remove("hidden"));
-                    // Remove a classe 'hidden' da section-header que está acima de section5
-                    const sectionHeader = camposNF.previousElementSibling;
-                    console.log(sectionHeader);
-                    if (sectionHeader && sectionHeader.classList.contains('section-header')) {
-                        sectionHeader.classList.remove("hidden");
-                    }
+                if(globais.pag === "checagem_final")
+                {
+                    //MOSTRA OS CAMPOS DE ARQUIVO//
                 }
-
 
             }else if (globais.pag == "autorizar_pagamento_subsindico" || globais.pag == "autorizar_pagamento_sindico" || globais.pag == "confirmar_todas_as_assinaturas") {
                 criarBotao({page: globais.pag, removeExistingButtons: true});

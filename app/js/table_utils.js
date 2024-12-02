@@ -49,7 +49,7 @@ export function addProductRow() {
         } else if (i === 1) {
             // Coluna de quantidade (apenas números inteiros)
             newCell.contentEditable = "true";
-            newCell.classList.add('numeric-cell', 'integer-cell');
+            newCell.classList.add('numeric-cell', 'integer-cell', 'quantidade');
         } else if (i === rowCount - 1) {
             // Última coluna - botão de remoção
             const removeButton = document.createElement('button');
@@ -76,7 +76,7 @@ export function addProductRow() {
         }else if ((mpcv && i % 2 !== 0) || (!mpcv && i % 2 === 0) && i > ipcv) {
             // Colunas de valores unitários (aceita decimais)
             newCell.contentEditable = "true";
-            newCell.classList.add('numeric-cell');
+            newCell.classList.add('numeric-cell', 'valor-unit');
         } else {
             // Células de totais (não editáveis)
             newCell.innerText = "";
@@ -331,7 +331,7 @@ export async function addSupplierColumn() {
                         // Células para produtos
                         const celulaPrecoUnitarioLinha = linhas[i].insertCell(linhas[i].cells.length - 1);
                         celulaPrecoUnitarioLinha.contentEditable = "true";
-                        celulaPrecoUnitarioLinha.classList.add('numeric-cell');
+                        celulaPrecoUnitarioLinha.classList.add('numeric-cell', 'valor-unit');
     
                         const celulaPrecoTotalLinha = linhas[i].insertCell(linhas[i].cells.length - 1);
                         celulaPrecoTotalLinha.classList.add('numeric-cell');
@@ -915,7 +915,7 @@ export async function prenchTabCot(resp) {
 
             //QUANTIDADE//
             const quantidadeCell = newRow.insertCell(1);
-            quantidadeCell.classList.add('numeric-cell', 'integer-cell');
+            quantidadeCell.classList.add('numeric-cell', 'integer-cell', 'quantidade');
             quantidadeCell.innerText = objProduto[0].Quantidade || '';
             quantidadeCell.contentEditable = 'true';
             quantidadeCell.addEventListener('input', restrictIntegerInput);
@@ -929,7 +929,7 @@ export async function prenchTabCot(resp) {
             fornecedores.forEach((fornecedorObj, fornecedorIndex) => {
                 //VALOR UNITÁRIO//
                 const valorUnitarioCell = newRow.insertCell(fornecedorIndex * 2 + ipcv);
-                valorUnitarioCell.classList.add('numeric-cell');
+                valorUnitarioCell.classList.add('numeric-cell', 'valor-unit');
                 valorUnitarioCell.contentEditable = "true";
 
                 //VALOR TOTAL//
