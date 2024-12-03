@@ -223,7 +223,7 @@ export function preencherListaAnexos(anexos) {
                 if (['jpg', 'jpeg', 'png', 'gif'].includes(fileType)) {
                     abrirModalImagem(img.src);
                 } else {
-                    abrirModalArquivo(`https://creatorapp.zohopublic.com/guillaumon/app-envio-de-notas-boletos-guillaumon/report-perma/Laranj_PDC_Digital_ADM/QYWzURS71BZCM0mF2C6hvOe0eQKWvRHNBDxsjuyw2mUHB99jC8gvjDupKw5n4vrDPwDBGyauRuqK4yatFRRUPtYJB1GKEtKabwBt`);
+                    abrirModalArquivo(anexo.display_value);
                 }
             });
 
@@ -265,6 +265,68 @@ export function preencherListaAnexos(anexos) {
     }
 }
 
+// Substituir abrirModalArquivo para usar PDF.js
+async function abrirModalArquivo(anexo) {
+    console.log("LINK DO ANEXO => ", anexo);
+    const urlCrua = `https://creatorapp.zoho.com${anexo}`;
+    window.open(urlCrua, '_blank');
+
+    await ZOHO.CREATOR.init();
+    const regexID = /\/(\d+)\/anexo_arquivos\.Arquivos/;
+    const regexParentID = /anexo_arquivos\.Arquivos\/(\d+)\/download/;
+
+    const matchPrimeiroID = anexo.match(regexID);
+    const primeiroID = matchPrimeiroID ? matchPrimeiroID[1] : null;
+    const matchSegundoID = anexo.match(regexParentID);
+    const segundoID = matchSegundoID ? matchSegundoID[1] : null;
+
+    console.log("Primeiro ID:", primeiroID);
+    console.log("Segundo ID:", segundoID);
+
+    const config = {
+        reportName : "Laranj_PDC_Digital_ADM",
+        id: `${segundoID}`,
+        fieldName : "anexo_arquivos.Arquivos",
+        parentId : `${primeiroID}`
+    }
+
+    console.log("RESPOSTA DA API:")
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+    ZOHO.CREATOR.API.readFile(config).then(function(response) {
+        const blob = new Blob([response], { type: 'application/pdf' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        // Usando PDF.js para abrir o PDF
+        const loadingTask = pdfjsLib.getDocument(response);
+        loadingTask.promise.then(function(pdf) {
+            // Aqui você pode renderizar o PDF em um canvas ou em um modal
+            console.log(`PDF carregado`);
+
+            // Exemplo de renderização em um canvas
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            document.body.appendChild(canvas);
+
+            // Renderiza a primeira página
+            pdf.getPage(1).then(function(page) {
+                const viewport = page.getViewport({ scale: 1 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: context,
+                    viewport: viewport
+                };
+                page.render(renderContext);
+            });
+        }, function (reason) {
+            console.error(reason);
+        });
+    })
+}
+
 // Função para abrir a imagem em um modal
 function abrirModalImagem(src) {
     const modal = document.createElement('div');
@@ -281,8 +343,8 @@ function abrirModalImagem(src) {
 
     const img = document.createElement('img');
     img.src = src;
-    img.style.maxWidth = '90%';
-    img.style.maxHeight = '90%';
+    img.style.width = '100%';
+    img.style.height = '150px';
 
     // Cria o botão de fechar
     const closeButton = document.createElement('button');
@@ -306,55 +368,6 @@ function abrirModalImagem(src) {
     document.body.appendChild(modal);
 
     // Fecha o modal ao clicar na imagem ou no modal
-    modal.addEventListener('click', (event) => {
-        if (event.target === modal) {
-            document.body.removeChild(modal);
-        }
-    });
-}
-
-// Função para abrir arquivos (PDF ou outros) em uma nova aba
-function abrirModalArquivo(anexo) {
-    const url = `https://docs.google.com/gview?url=${encodeURIComponent(anexo)}&embedded=true`;
-    console.log(url);
-
-    const modal = document.createElement('div');
-    modal.style.position = 'fixed';
-    modal.style.top = '0';
-    modal.style.left = '0';
-    modal.style.width = '100%';
-    modal.style.height = '100%';
-    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-    modal.style.display = 'flex';
-    modal.style.alignItems = 'center';
-    modal.style.justifyContent = 'center';
-    modal.style.zIndex = '1000';
-
-    const iframe = document.createElement('iframe');
-    iframe.src = url;
-    iframe.width = '600';
-    iframe.height = '780';
-    iframe.style.border = 'none';
-
-    const closeButton = document.createElement('button');
-    closeButton.innerText = '✖';
-    closeButton.style.position = 'absolute';
-    closeButton.style.top = '20px';
-    closeButton.style.right = '20px';
-    closeButton.style.backgroundColor = 'transparent';
-    closeButton.style.color = 'white';
-    closeButton.style.border = 'none';
-    closeButton.style.fontSize = '24px';
-    closeButton.style.cursor = 'pointer';
-
-    closeButton.addEventListener('click', () => {
-        document.body.removeChild(modal);
-    });
-
-    modal.appendChild(iframe);
-    modal.appendChild(closeButton);
-    document.body.appendChild(modal);
-
     modal.addEventListener('click', (event) => {
         if (event.target === modal) {
             document.body.removeChild(modal);
@@ -575,7 +588,35 @@ export function adicionarLinhaClassificacao() {
     const campoClasse = criarCampo({inputType:'select', inputName:'Classe_operacional', id:'classe', options:opcoesClasse});
     const campoValor = criarCampo({inputType:'number', inputName:'Valor', id:'valor'});
 
+    // Adiciona seleção da conta a debitar
+    Array.from(campoConta.querySelector('select').options).forEach(option => {
+        if (option.text === 'CUSTEIO') {
+            option.selected = true;
+        }
+    });
+
     // Adiciona evento de mudança na classe para filtrar centro de custo
+    campoClasse.querySelector('select').addEventListener('change', () => {
+        const classeSelecionada = campoClasse.querySelector('select').value;
+        const centrosFiltrados = Array.from(globais.baseCentrosCusto.entries()).filter(([id, dados]) => {
+            return dados.classeOperacional === classeSelecionada;
+        });
+
+        const opcoesCentroFiltradas = centrosFiltrados.map(([id, dados]) => [
+            id,
+            `${dados.codigoCentro} - ${dados.nomeCentro}`
+        ]);
+
+        const selectCentro = campoCentro.querySelector('select');
+        selectCentro.innerHTML = '<option value="" disabled selected>Selecione...</option>';
+        opcoesCentroFiltradas.forEach(([value, text]) => {
+            const option = document.createElement('option');
+            option.value = value;
+            option.textContent = text;
+            selectCentro.appendChild(option);
+        });
+    });
+
     // Cria o botão de remoção
     const botaoRemover = document.createElement('button');
     botaoRemover.type = 'button';
