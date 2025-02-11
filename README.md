@@ -1,7 +1,7 @@
 # PDC DIGITAL
 
 <p>
-Widget feito para a substituição de PDCs (Processo de Decisão de Compra) feitos em papel, na área de condomínios. O processo contempla ampla parte do processo, coletando os dados através de inputs do usuário no layout e salvando em um ticket no banco de dados online (Zoho Creator). Os dados são coletados em diferentes sessões do documento, sendo eles:
+Widget feito para a substituição de PDCs (Processo de Decisão de Compra) feitos em papel, na área de condomínios. O processo contempla ampla parte do fluxo de trabalho, coletando os dados através de inputs do usuário no layout e salvando em um ticket no banco de dados online (Zoho Creator). Os dados são coletados em diferentes sessões do documento, sendo eles:
 </p>
 
 * Dados do Pedido
